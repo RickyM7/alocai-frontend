@@ -1,5 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-export default defineNuxtConfig({
+export default ({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
@@ -8,6 +8,33 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@nuxt/fonts'
-  ]
+    '@nuxt/fonts',
+  ],
+
+  ui: {
+    icons: ['heroicons', 'lucide']
+  },
+
+  typescript: {
+    typeCheck: true
+  },
+
+  app: {
+    head: {
+      script: [
+        {
+          src: 'https://accounts.google.com/gsi/client',
+          async: true,
+          defer: true,
+        },
+      ],
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      googleClientId: process.env.GOOGLE_CLIENT_ID,
+      apiUrl: process.env.API_URL
+    }
+  }
 })
