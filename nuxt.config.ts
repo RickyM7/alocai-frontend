@@ -36,5 +36,11 @@ export default ({
       googleClientId: process.env.GOOGLE_CLIENT_ID,
       apiUrl: process.env.API_URL
     }
-  }
+  },
+
+  vite: {
+    esbuild: {
+      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    },
+  },
 })
