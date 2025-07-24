@@ -1,4 +1,4 @@
-# Sistema de Gerenciamento de Laboratórios - Alocaí
+# Sistema de Gerenciamento de Laboratórios - Alocaí (Frontend)
 ## :octocat: Integrantes
 [Gison Vilaça](https://github.com/gison-vilaca) | [Lucas Victor](https://github.com/lucasvictoor) | [Ricardo Martins](https://github.com/RickyM7) | [Sara Abreu](https://github.com/ynjisng)
 ## :page_with_curl: Sobre o Projeto
