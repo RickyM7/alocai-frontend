@@ -21,6 +21,7 @@ export default ({
 
   app: {
     head: {
+      title: 'Alocaí',
       script: [
         {
           src: 'https://accounts.google.com/gsi/client',
