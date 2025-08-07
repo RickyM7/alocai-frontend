@@ -72,7 +72,7 @@ onMounted(() => {
     if (googleSignInButton.value) {
       (window as any).google.accounts.id.renderButton(
         googleSignInButton.value,
-        { theme: 'outline', size: 'large', text: 'signin_with', width: '250' } // Personalize o estilo do botão
+        { theme: 'outline', size: 'large', text: 'signin_with', width: '400' } // Personalize o estilo do botão
       );
     }
   } else {
@@ -82,5 +82,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Você pode adicionar estilos específicos para o seu botão aqui, se necessário */
+/* Estilos específicos para o botão de login do Google */
+
+.google-sign-in-button {
+  display: inline-block;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.google-sign-in-button:hover {
+  background-color: #515E54;
+  opacity: 0.5;
+}
 </style>

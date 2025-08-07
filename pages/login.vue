@@ -1,9 +1,12 @@
 <template>
+  <BackgroundImage />
   <div class="login-container">
+
     <div class="login-card">
       <div class="logo-section">
-        <!-- <img src="/img/logo-ufrpe.png" alt="Logo UFRPE" class="logo" /> -->
+        <img src="/img/logo.png" alt="Logo Instituição" class="logo" />
         <h1 class="welcome-text">Bem Vindo</h1>
+        <h1>Alocaí</h1>
         <h2 class="app-title">Agendamento de Recursos Compartilhados</h2>
       </div>
 
@@ -12,6 +15,7 @@
         :client-id="googleClientId"
         @success="handleLoginSuccess"
         @error="handleLoginError"
+        class="google-sign-in-button"
       />
 
       <!-- Mensagem de sucesso -->
@@ -88,14 +92,15 @@ definePageMeta({
 }
 
 .login-card {
-  background-color: var(--card-background);
+  background-color: #fff;
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   width: 100%;
-  max-width: 400px; /* Largura máxima para o cartão de login */
-  box-sizing: border-box; /* Garante que padding não adicione largura extra */
+  max-width: 600px; /* Largura máxima para o cartão de login */
+  box-sizing: border-box;
+  height: 500px;
 }
 
 .logo-section {
