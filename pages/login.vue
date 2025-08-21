@@ -30,11 +30,14 @@
 
     </div>
   </div>
+  <NuxtLoadingIndicator />
+  <NuxtPage />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import GoogleSignInButton from '~/components/GoogleSignInButton.vue'; // Ajuste o caminho se necessário
+import type { User } from '~/types/user';
 
 const message = ref<string | null>(null);
 const erro = ref<string | null>(null);
@@ -42,13 +45,19 @@ const erro = ref<string | null>(null);
 /**
  * @description Função chamada quando o login com Google é bem-sucedido.
  */
-const handleLoginSuccess = (userData: any) => {
-  message.value = `Login bem-sucedido! Bem-vindo, ${userData.name}!`;
-  // Você pode armazenar os dados do usuário no Vuex/Pinia, ou em LocalStorage
-  // Exemplo: localStorage.setItem('user', JSON.stringify(userData));
-  console.log('Dados do usuário:', userData);
-  // Redirecionar para a página principal ou dashboard
-  // useRouter().push('/dashboard');
+const handleLoginSuccess = (userData: User) => {
+  message.value = `Login bem-sucedido! Bem-vindo, ${userData.nome}!`;
+  if (userData) {
+    // Armazena os dados do usuário no localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+  }
+  
+  // Redirecionar para a página principal caso o id_perfil exista
+  if (userData.id_perfil) {
+    useRouter().push('/');
+  } else {
+    useRouter().push('/onboarding'); // Redireciona para a página de onboarding se id_perfil não existir
+  }
 };
 
 /**

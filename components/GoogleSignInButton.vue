@@ -6,6 +6,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRuntimeConfig } from '#app';
+import type { User } from '~/types/user';
 
 // Define as propriedades que o componente pode receber
 interface Props {
@@ -25,14 +26,16 @@ interface GoogleCredentialResponse {
   credential: string;
 }
 
+interface UserResult {
+  access: string;
+  user_data: User;
+}
+
 // Função que será chamada quando o Google retornar o token
 const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
-  console.log('Token do Google recebido:', response.credential);
-
   try {
 
     // Envia o token para o backend para autenticação
-    console.log('Enviando token para o backend: ' + `${apiUrl}/api/google-sign-in/`);
     const backendResponse = await fetch(`${apiUrl}/api/google-sign-in/`, {
       method: 'POST',
       headers: {
@@ -41,18 +44,19 @@ const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
       body: JSON.stringify({ credential: response.credential }),
     });
 
-    console.log('Resposta do backend recebida:', backendResponse);
-
-    const data = await backendResponse.json();
+    const data: UserResult = await backendResponse.json();
 
     if (backendResponse.ok) {
-      console.log('Login bem-sucedido no backend:', data.user_data);
+      if (data.access) {
+        localStorage.setItem('access', data.access);
+      }
+
       props.onSuccess(data.user_data);
       // Exemplo: Redirecionar para uma página após o login
       // router.push('/dashboard');
     } else {
-      console.error('Erro no login do backend:', data.error);
-      props.onError(data.error || 'Erro desconhecido no backend.');
+      console.error('Erro no login do backend:', data);
+      props.onError('Erro desconhecido no backend.');
     }
   } catch (error) {
     console.error('Erro ao enviar token para o backend:', error);
