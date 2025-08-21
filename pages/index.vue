@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
+
+const isLoggedIn = ref(false);
+
+onMounted(() => {
+  // Verifica se o usuário está logado
+  isLoggedIn.value = !!localStorage.getItem('access');
+});
 </script>
 
 <template>
@@ -18,6 +26,13 @@
     <UButton icon="i-lucide-rocket" size="md" color="primary" variant="solid">Nova Reserva</UButton>
     <UButton icon="i-lucide-calendar" size="md" color="secondary" variant="outline">Minhas Reservas</UButton>
   </div>
+
+  <!-- Área de conteúdo após login -->
+  <div v-if="isLoggedIn">
+    <h1>Bem-vindo ao Alocaí</h1>
+    <p>Você está logado e pode fazer reservas.</p>
+  </div>
+
 </template>
 
 <style scoped>
