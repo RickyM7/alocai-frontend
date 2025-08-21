@@ -9,6 +9,7 @@ export default ({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@nuxt/fonts',
+    '@pinia/nuxt',
   ],
 
   ui: {
