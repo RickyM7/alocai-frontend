@@ -1,5 +1,4 @@
 <template>
-  <BackgroundImage />
   <div class="onboarding-container">
 
     <div class="onboarding-card">

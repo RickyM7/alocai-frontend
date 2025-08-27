@@ -4,14 +4,15 @@
 
 <style scoped>
 .background-image {
-  background-image: url('/img/background.jpeg'); /* Ajuste o caminho da imagem */
+  background-image: url('/img/background.jpeg');
   background-size: cover;
-  background-position: center;
+  background-position: center center;
+  background-repeat: no-repeat;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1; /* Coloca a imagem atrás do conteúdo */
+  z-index: -1;
 }
 </style>

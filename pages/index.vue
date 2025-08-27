@@ -1,34 +1,51 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import type { User } from '~/types/user';
 
-const isLoggedIn = ref(false);
+const user = ref<User | null>(null);
 
 onMounted(() => {
-  // Verifica se o usuário está logado
-  isLoggedIn.value = !!localStorage.getItem('access');
+  const userDataString = localStorage.getItem('user_data');
+  if (userDataString) {
+    user.value = JSON.parse(userDataString);
+  }
+});
+
+// Computed property para verificar se o usuário pode fazer reservas
+const canMakeReservations = computed(() => {
+  if (!user.value || !user.value.nome_perfil) {
+    return false;
+  }
+  // Verifica se o perfil do usuário é um dos permitidos
+  return ['Administrador', 'Servidor'].includes(user.value.nome_perfil);
 });
 </script>
 
 <template>
-  <BackgroundImage />
+  <div class="page-container">
+    <div v-if="user" class="welcome-message">
+      <h1>Bem-vindo, {{ user.nome.split(' ')[0] }}!</h1>
+    </div>
+    <div v-else class="welcome-message">
+      <h1>Bem-vindo ao Alocaí</h1>
+      <p>Faça login para gerenciar e criar suas reservas.</p>
+    </div>
 
-  <TheHeader />
-
-  <div>
-    <NuxtLink to="/agendamentoSelectRecurso">
-      <UButton icon="i-lucide-rocket" size="md" color="primary" variant="solid">Nova Reserva</UButton>
-    </NuxtLink>
-    <NuxtLink to="/minhasReservas">
-      <UButton icon="i-lucide-calendar" size="md" color="secondary" variant="outline">Minhas Reservas</UButton>
-    </NuxtLink>
+    <div class="actions-container">
+      <template v-if="canMakeReservations">
+        <NuxtLink to="/agendamentoSelectRecurso">
+          <UButton icon="i-lucide-rocket" size="lg" color="primary" variant="solid">Nova Reserva</UButton>
+        </NuxtLink>
+        <NuxtLink to="/minhasReservas">
+          <UButton icon="i-lucide-calendar" size="lg" color="secondary" variant="outline">Minhas Reservas</UButton>
+        </NuxtLink>
+      </template>
+      
+      <NuxtLink to="/dashboard">
+        <UButton icon="i-lucide-layout-dashboard" size="lg" color="secondary" variant="outline">Dashboard</UButton>
+      </NuxtLink>
+    </div>
   </div>
-
-  <!-- Área de conteúdo após login -->
-  <div v-if="isLoggedIn">
-    <h1>Bem-vindo ao Alocaí</h1>
-    <p>Você está logado e pode fazer reservas.</p>
-  </div>
-
 </template>
 
 <style scoped>

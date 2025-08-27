@@ -3,15 +3,8 @@ import { authenticatedFetch } from '~/utils/api';
 
 export const useAgendamentoStore = defineStore('agendamento', {
   state: () => ({
-    tipoAgendamento: '',
-    datasSelecionadas: [],
-    horariosSelecionados: {},
-    diaDaSemana: '',
-    horarioPeriodo: '',
-    dataInicio: '',
-    dataFim: '',
+    agendamentos: [], // Formato: [{ data, hora_inicio, hora_fim }]
     finalidade: '',
-    participantes: '',
     observacoes: '',
     recursoSelecionado: null,
     responsavel: null,
@@ -19,19 +12,13 @@ export const useAgendamentoStore = defineStore('agendamento', {
   }),
 
   actions: {
-    setAgendamento(dados) {
-      this.tipoAgendamento = dados.tipo;
-      this.datasSelecionadas = dados.datas;
-      this.horariosSelecionados = dados.horarios;
-      this.diaDaSemana = dados.diaSemana;
-      this.horarioPeriodo = dados.horarioPeriodo;
-      this.dataInicio = dados.inicio;
-      this.dataFim = dados.fim;
+    // CORREÇÃO: Nome da função atualizado para corresponder ao chamado.
+    setDatasEHorarios(agendamentos) {
+      this.agendamentos = agendamentos;
     },
 
     setInfo(dados) {
       this.finalidade = dados.finalidade;
-      this.participantes = dados.participantes;
       this.observacoes = dados.observacoes;
     },
     
@@ -45,57 +32,16 @@ export const useAgendamentoStore = defineStore('agendamento', {
 
     async salvarAgendamento() {
       if (this.salvando) return;
-      if (!this.temDadosCompletos) {
-        throw new Error('Dados incompletos para criar o agendamento');
-      }
       this.salvando = true;
       const config = useRuntimeConfig();
 
       try {
-        const datasParaEnviar = [];
-
-        if (this.tipoAgendamento === 'Datas Específicas') {
-          for (const data of this.datasSelecionadas) {
-            const dataISO = data.toISOString().split('T')[0];
-            const horario = this.horariosSelecionados[dataISO];
-            if (!horario) continue;
-
-            const [horas, minutos] = horario.split(':');
-            const horaFim = (parseInt(horas) + 2).toString().padStart(2, '0');
-
-            datasParaEnviar.push({
-              data_inicio: dataISO,
-              hora_inicio: horario,
-              data_fim: dataISO,
-              hora_fim: `${horaFim}:${minutos}`,
-            });
-          }
-        } else if (this.tipoAgendamento === 'Período Recorrente') {
-          const inicio = new Date(`${this.dataInicio}T00:00:00`);
-          const fim = new Date(`${this.dataFim}T00:00:00`);
-          const diasMap = {'Domingo':0,'Segunda-feira':1,'Terça-feira':2,'Quarta-feira':3,'Quinta-feira':4,'Sexta-feira':5,'Sábado':6};
-          const diaSemanaNum = diasMap[this.diaDaSemana];
-          let dataAtual = new Date(inicio);
-
-          while (dataAtual.getDay() !== diaSemanaNum) {
-            dataAtual.setDate(dataAtual.getDate() + 1);
-            if (dataAtual > fim) break;
-          }
-
-          while (dataAtual <= fim) {
-            const dataISO = dataAtual.toISOString().split('T')[0];
-            const [horas, minutos] = this.horarioPeriodo.split(':');
-            const horaFim = (parseInt(horas) + 2).toString().padStart(2, '0');
-
-            datasParaEnviar.push({
-              data_inicio: dataISO,
-              hora_inicio: this.horarioPeriodo,
-              data_fim: dataISO,
-              hora_fim: `${horaFim}:${minutos}`,
-            });
-            dataAtual.setDate(dataAtual.getDate() + 7);
-          }
-        }
+        const datasParaEnviar = this.agendamentos.map(ag => ({
+          data_inicio: ag.data,
+          hora_inicio: ag.hora_inicio,
+          data_fim: ag.data,
+          hora_fim: ag.hora_fim,
+        }));
 
         if (datasParaEnviar.length === 0) {
           throw new Error("Nenhuma data válida foi selecionada para o agendamento.");
@@ -115,11 +61,12 @@ export const useAgendamentoStore = defineStore('agendamento', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Erro na API: ${JSON.stringify(errorData)}`);
+          // Tenta ler o erro como JSON, se falhar, usa uma mensagem padrão
+          const errorData = await response.json().catch(() => ({ detail: 'Erro desconhecido do servidor.' }));
+          throw new Error(`Erro na API: ${JSON.stringify(errorData.detail || errorData)}`);
         }
 
-        return [await response.json()];
+        return await response.json();
 
       } finally {
         this.salvando = false;
@@ -127,31 +74,12 @@ export const useAgendamentoStore = defineStore('agendamento', {
     },
     
     limparStore() {
-        this.tipoAgendamento = '';
-        this.datasSelecionadas = [];
-        this.horariosSelecionados = {};
-        this.diaDaSemana = '';
-        this.horarioPeriodo = '';
-        this.dataInicio = '';
-        this.dataFim = '';
-        this.finalidade = '';
-        this.participantes = '';
-        this.observacoes = '';
-        this.recursoSelecionado = null;
-        this.responsavel = null;
-        this.salvando = false;
+      this.agendamentos = [];
+      this.finalidade = '';
+      this.observacoes = '';
+      this.recursoSelecionado = null;
+      this.responsavel = null;
+      this.salvando = false;
     }
   },
-
-  getters: {
-    temDadosCompletos: (state) => {
-      const temInfoBasica = state.tipoAgendamento && state.finalidade && state.recursoSelecionado;
-      if (!temInfoBasica) return false;
-      
-      const temDataEspecifica = state.tipoAgendamento === 'Datas Específicas' && state.datasSelecionadas.length > 0;
-      const temPeriodoRecorrente = state.tipoAgendamento === 'Período Recorrente' && state.diaDaSemana && state.dataInicio && state.dataFim;
-      
-      return temDataEspecifica || temPeriodoRecorrente;
-    }
-  }
 });
