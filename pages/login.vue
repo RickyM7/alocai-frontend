@@ -49,7 +49,7 @@ const handleLoginSuccess = (userData: User) => {
   message.value = `Login bem-sucedido! Bem-vindo, ${userData.nome}!`;
   if (userData) {
     // Armazena os dados do usuário no localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user_data', JSON.stringify(userData));
   }
   
   // Redirecionar para a página principal caso o id_perfil exista
