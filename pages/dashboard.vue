@@ -19,7 +19,7 @@
 
         <div v-else-if="recursos.length === 0" class="status-container">
           <Icon name="i-lucide-search-x" class="icon-empty" />
-          <p>Nenhum recurso ativo encontrado.</p>
+          <p>Nenhum recurso disponível encontrado.</p>
         </div>
 
         <div v-else class="recursos-container">
