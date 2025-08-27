@@ -1,5 +1,4 @@
 <template>
-  <BackgroundImage />
   <div class="login-container">
 
     <div class="login-card">
@@ -54,7 +53,7 @@ const handleLoginSuccess = (userData: User) => {
   
   // Redirecionar para a página principal caso o id_perfil exista
   if (userData.id_perfil) {
-    useRouter().push('/');
+    window.location.href = '/';
   } else {
     useRouter().push('/onboarding'); // Redireciona para a página de onboarding se id_perfil não existir
   }
@@ -83,7 +82,7 @@ onMounted(() => {
       // Verifica se o usuário já tem um perfil definido
       if (user.id_perfil) {
         // Se tem perfil, vai para a página inicial
-        useRouter().push('/');
+        window.location.href = '/';
       } else {
         // Se não tem perfil, vai para o onboarding
         useRouter().push('/onboarding');

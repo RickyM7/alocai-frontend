@@ -1,70 +1,72 @@
 <template>
-  <backgroundImage />
+  <div class="page-container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">Informações Adicionais</h1>
+      </div>
 
-  <TheHeader />
-
-  <div class="tela fundo-centro centralizado">
-    <div class="caixa">
-      <!-- Linha de Progresso -->
-      <!-- Fase - Agendamento - Data: -->
-      <Icon name="heroicons:calendar" class="icone-fase-atual" id="incompleto"/>
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <!-- Fase - Agendamento - Info: -->
-      <Icon name="heroicons:user" class="icone-fase-atual" id="incompleto"/>
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <!-- Fase - Agendamento - Conclusão: -->      
-      <Icon name="heroicons:check" class="icone-fase-seguinte"/>
-
-      <h1 class="titulo">Informações Adicionais:</h1>
-
-      <!-- Campos do formulário -->
-      <form class="formulario">
-        <div class="campo">
-          <label for="finalidade">Finalidade do Agendamento</label>
-          <input
-            type="text"
-            id="finalidade"
-            v-model="finalidade"
-            placeholder="Digite a finalidade..."
-          />
+      <div class="card-content-grid">
+        <div class="col-resumo">
+          <h3>Resumo da Solicitação</h3>
+          <div v-if="store.recursoSelecionado" class="resumo-item">
+            <span class="label">Recurso:</span>
+            <span class="value">{{ store.recursoSelecionado.nome_recurso }}</span>
+          </div>
+          <div class="resumo-item">
+            <span class="label">Total de Datas:</span>
+            <span class="value">{{ store.agendamentos.length }}</span>
+          </div>
+          <div v-if="store.agendamentos.length > 0" class="resumo-item">
+            <span class="label">Período:</span>
+            <span class="value">{{ resumoPeriodo }}</span>
+          </div>
         </div>
 
-        <div class="campo">
-          <label for="participantes">Número de Participantes</label>
-          <input
-            type="number"
-            id="participantes"
-            v-model="participantes"
-            placeholder="Ex: 20"
-            min="1"
-          />
-        </div>
+        <div class="col-form">
+          <form class="formulario">
+            <div class="campo">
+              <label for="finalidade">Finalidade do Agendamento</label>
+              <input
+                type="text"
+                id="finalidade"
+                v-model="finalidade"
+                placeholder="Ex: Aula da disciplina de Programação I"
+              />
+            </div>
 
-        <div class="campo">
-          <label for="observacoes">Observações</label>
-          <textarea
-            id="observacoes"
-            v-model="observacoes"
-            placeholder="Ex: Notebook, Projetor, etc..."
-          ></textarea>
+            <div class="campo">
+              <label for="participantes">Número de Participantes (Máx: {{ maxParticipantes || 'N/A' }})</label>
+              <input
+                type="number"
+                id="participantes"
+                v-model="participantes"
+                placeholder="Ex: 25"
+                min="1"
+                :max="maxParticipantes"
+              />
+            </div>
+
+            <div class="campo">
+              <label for="observacoes">Observações (Opcional)</label>
+              <textarea
+                id="observacoes"
+                v-model="observacoes"
+                placeholder="Ex: Necessário instalação do software X, projetor, etc."
+              ></textarea>
+            </div>
+          </form>
         </div>
-        <!-- Botões -->
-        <div class="botoes">
-          <button type="button" class="btn-secundario">Solicitar Recurso</button>
-          <button type="button" class="btn-primario" @click="irParaConclusao">Concluir Agendamento</button>
-        </div>
-      </form>
+      </div>
+
+      <div class="card-footer">
+        <button type="button" class="botao-prosseguir" @click="irParaConclusao">Concluir Agendamento</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import '@vuepic/vue-datepicker/dist/main.css'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAgendamentoStore } from '~/stores/agendamento'
 
@@ -72,199 +74,57 @@ const finalidade = ref("");
 const participantes = ref("");
 const observacoes = ref("");
 
-const router = useRouter()
-const store = useAgendamentoStore()
+const router = useRouter();
+const store = useAgendamentoStore();
+
+const maxParticipantes = computed(() => store.recursoSelecionado?.capacidade);
+
+const resumoPeriodo = computed(() => {
+  if (store.agendamentos.length === 0) return '';
+  const primeiraData = new Date(store.agendamentos[0].data);
+  const ultimaData = new Date(store.agendamentos[store.agendamentos.length - 1].data);
+  const formatar = (d) => d.toLocaleDateString('pt-BR');
+  
+  if (store.agendamentos.length === 1) return formatar(primeiraData);
+  return `${formatar(primeiraData)} até ${formatar(ultimaData)}`;
+});
 
 function irParaConclusao() {
   if (!finalidade.value.trim()) {
-    alert('Por favor, informe a finalidade do agendamento')
-    return
+    alert('Por favor, informe a finalidade do agendamento.');
+    return;
+  }
+  
+  if (participantes.value && maxParticipantes.value && parseInt(participantes.value) > maxParticipantes.value) {
+    alert(`O número de participantes (${participantes.value}) excede a capacidade do recurso (${maxParticipantes.value}).`);
+    return;
   }
   
   store.setInfo({
     finalidade: finalidade.value,
     participantes: participantes.value,
     observacoes: observacoes.value
-  })
+  });
 
-  router.push('/agendamentoConclusao')
+  router.push('/agendamentoConclusao');
 }
-
 </script>
 
 <style scoped>
-
-.navbar {
-  width: 100%;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 64px;
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 10;
-}
-
-.navbar-content {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 32px;
-}
-
-.navbar-logo {
-  height: 48px;
-  margin-right: 32px;
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.navbar-icon {
-  font-size: 1.6rem;
-  color: #888;
-  cursor: pointer;
-}
-
-.tela {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  justify-content: center;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-.fundo-centro {
-  background-size: cover;
-  background-position: center;
-  height: 100vh;
-  width: 100%;
-}
-
-.centralizado {
-  justify-content: center;
-  align-items: center;
-}
-
-.caixa {
-  background-color: white;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  position: relative;
-  padding: 1rem;
-  border-radius: 1rem;
-  width: 50em;
-  min-height: 25em; 
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  overflow-y: auto; /* adiciona rolagem*/
-}
-
-
-.icone-fase-atual,
-.icone-fase-seguinte {
-  width: 2rem;
-  height: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.icone-fase-atual {
-  color: #2563eb;
-}
-
-.icone-fase-seguinte {
-  color: hsla(223, 3%, 55%, 0.233);
-}
-
-#incompleto{
-  color: black;
-}
-
-.titulo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.formulario {
-  margin-top: 1.5rem;
-  text-align: left;
-}
-
-.campo {
-  margin-bottom: 1.2rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.campo label {
-  font-weight: 500;
-  margin-bottom: 0.4rem;
-}
-
-.campo input,
-.campo textarea {
-  border: 0.1rem solid #d1d5db;
-  width: 25rem;
-  border-radius: 0.5rem;
-  padding: 0.6rem;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.campo input:focus,
-.campo textarea:focus {
-  border-color: #2563eb;
-}
-
-.campo textarea {
-  min-height: 5rem;
-  width: 25rem;
-  resize: vertical;
-}
-
-.botoes {
-  margin-top: 1.5rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-.btn-primario {
-  background-color: #374151;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primario:hover {
-  background-color: #1f2937;
-}
-
-.btn-secundario {
-  background-color: #ffffff;
-  color: #111827;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-secundario:hover {
-  background-color: #d1d5db;
-}
-
+.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.card { width: 100%; max-width: 900px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+.card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; }
+.title { font-size: 1.75rem; font-weight: 700; margin: 0; }
+.card-content-grid { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; padding: 2rem; }
+.col-resumo { background-color: #f9fafb; padding: 1.5rem; border-radius: 8px; }
+.col-resumo h3 { margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+.resumo-item { margin-bottom: 1rem; }
+.resumo-item .label { display: block; font-size: 0.9rem; color: #6b7280; }
+.resumo-item .value { font-weight: 500; }
+.formulario { display: flex; flex-direction: column; gap: 1.5rem; }
+.campo label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
+.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+.campo textarea { min-height: 100px; resize: vertical; }
+.card-footer { padding: 1rem 2rem; border-top: 1px solid #e5e7eb; text-align: right; }
+.botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
 </style>

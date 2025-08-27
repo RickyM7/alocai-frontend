@@ -1,360 +1,229 @@
 <template>
-  <backgroundImage />
-
-  <TheHeader />
-
-  <div class="tela fundo-centro centralizado">
-    <div class="caixa">
-      <!-- Linha de Progresso -->
-       <!-- Fase - Agendamento - Data: -->
-      <Icon name="heroicons:calendar" class="icone-fase-atual" id="incompleto"/>
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <!-- Fase - Agendamento - Info: -->
-      <Icon name="heroicons:user" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-seguinte" />
-      <!-- Fase- Agendamento - Conclusão -->
-      <Icon name="heroicons:check" class="icone-fase-seguinte" />
-
-      <h1 class="titulo">Agendar para:</h1>
-
-      <div class="opcoes">
-        <label class="circulo">
-          <input
-            type="radio"
-            name="tipo-agendamento"
-            value="Datas Específicas"
-            v-model="tipoAgendamento"
-          />
-          Datas Específicas
-        </label>
-        <label class="circulo">
-          <input
-            type="radio"
-            name="tipo-agendamento"
-            value="Período Recorrente"
-            v-model="tipoAgendamento"
-          />
-          Período Recorrente
-        </label>
-      </div>
-
-      <!-- Caixa com calendário visível apenas se "Data" for selecionado -->
-      <div v-if="tipoAgendamento === 'Datas Específicas'" class="caixa-data">
-        <label>
-          Selecionar datas:
-          <Datepicker
-            v-model="datasSelecionadas"
-            :multi-dates="true"
-            :teleport="true"
-            placeholder="Selecione datas"
-          />
-        </label>
-        <div
-          v-if="datasSelecionadas.length"
-          class="lista-datas-selecionadas"
-        >
-          <h2>Datas selecionadas:</h2>
-          <ul>
-            <li
-              v-for="(data, index) in datasSelecionadas"
-              :key="index"
-            >
-              {{ formatarData(data) }} —
-              Horário:
-              {{ horariosSelecionados[data.toISOString().split('T')[0]] || 'Não definido' }}
-            </li>
-          </ul>
+  <div class="page-container">
+    <div class="card">
+      <div class="card-header">
+        <div class="progress-bar">
+          <Icon name="heroicons:calendar-days-20-solid" class="icon-active"/>
+          <div class="line"></div>
+          <Icon name="heroicons:information-circle" class="icon-inactive"/>
+          <div class="line"></div>
+          <Icon name="heroicons:check-circle" class="icon-inactive"/>
         </div>
-
-        <div
-          v-for="(data, index) in datasSelecionadas"
-          :key="index"
-          class="bloco-horario"
-        >
-          <label>
-            {{ formatarData(data) }}:
-            <input
-              type="time"
-              v-model="horariosSelecionados[data.toISOString().split('T')[0]]"
-            />
+        <h1 class="title">Agendar para:</h1>
+        <div class="opcoes">
+          <label class="radio-label">
+            <input type="radio" value="Data" v-model="tipoAgendamento" />
+            Datas Específicas
+          </label>
+          <label class="radio-label">
+            <input type="radio" value="Período Recorrente" v-model="tipoAgendamento" />
+            Período Recorrente
           </label>
         </div>
       </div>
 
-
-      <!-- Caixa com calendário visível apenas se "Período Recorrente" for selecionado -->
-      <div v-if="tipoAgendamento === 'Período Recorrente'" class="caixa-periodo">
-      <label>
-        Dia da semana:
-        <select v-model="diaDaSemana">
-          <option disabled value="">Selecione</option>
-          <option v-for="(dia, index) in diasSemana" :key="index" :value="dia">
-            {{ dia }}
-          </option>
-        </select>
-      </label>
-
-      <label>
-        Horário:
-        <input type="time" v-model="horarioPeriodo" />
-      </label>
-
-      <label>
-        Início:
-        <input type="date" v-model="dataInicio" />
-      </label>
-
-      <label>
-        Fim:
-        <input type="date" v-model="dataFim" />
-      </label>
-    </div>
-
-      <button class="botao-prosseguir" @click="irParaInfo">Prosseguir</button>
+      <div class="card-content">
+        <div v-if="tipoAgendamento === 'Data'" class="card-content-grid">
+          <div class="col-left">
+            <Datepicker v-model="datasSelecionadas" multi-dates inline auto-apply :enable-time-picker="false" locale="pt-BR" />
+          </div>
+          <div class="col-right">
+            <div class="horario-toggle">
+              <label class="radio-label-sm">
+                <input type="radio" value="mesmo" v-model="horarioMode" />
+                Mesmo horário
+              </label>
+              <label class="radio-label-sm">
+                <input type="radio" value="diferente" v-model="horarioMode" />
+                Horários diferentes
+              </label>
+            </div>
+            <div v-if="horarioMode === 'mesmo' && datasSelecionadas.length" class="horario-fixo">
+              <span>Para todas as datas</span>
+              <div class="time-inputs">
+                <input type="time" v-model="horarioUnico.inicio" />
+                <span>até</span>
+                <input type="time" v-model="horarioUnico.fim" />
+              </div>
+            </div>
+            <h4 v-if="datasSelecionadas.length" class="datas-selecionadas-title">Datas Selecionadas:</h4>
+            <div class="horarios-lista">
+              <div v-for="(data, index) in datasSelecionadas" :key="data.toISOString()" class="horario-item">
+                <span>{{ formatarData(data) }}</span>
+                <div v-if="horarioMode === 'diferente'" class="time-inputs">
+                  <input type="time" v-model="horariosMultiplos[index].inicio" />
+                  <span>até</span>
+                  <input type="time" v-model="horariosMultiplos[index].fim" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="tipoAgendamento === 'Período Recorrente'" class="card-content-grid">
+          <div class="col-left">
+            <div class="campo-recorrente">
+              <label>Selecione os dias da semana:</label>
+              <div class="dias-semana-checkboxes">
+                <label v-for="(dia, index) in diasSemana" :key="index" class="checkbox-label">
+                  <input type="checkbox" :value="index" v-model="diasSemanaSelecionados" />
+                  {{ dia }}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="col-right-recorrente">
+            <div class="campo-recorrente">
+              <label>Data de Início:</label>
+              <input type="date" v-model="dataInicioRecorrente" />
+            </div>
+            <div class="campo-recorrente">
+              <label>Data de Fim:</label>
+              <input type="date" v-model="dataFimRecorrente" />
+            </div>
+            <div class="campo-recorrente">
+              <label>Horário:</label>
+              <div class="time-inputs">
+                <input type="time" v-model="horarioRecorrente.inicio" />
+                <span>até</span>
+                <input type="time" v-model="horarioRecorrente.fim" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-footer">
+        <button class="botao-prosseguir" @click="irParaInfo">Prosseguir</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
-import { useAgendamentoStore } from '~/stores/agendamento'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue';
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+import { useAgendamentoStore } from '~/stores/agendamento';
+import { useRouter } from 'vue-router';
 
-const tipoAgendamento = ref('')
-const datasSelecionadas = ref([])
-const horariosSelecionados = ref({})
-const diaDaSemana = ref('')
-const horarioPeriodo = ref('')
-const dataInicio = ref('')
-const dataFim = ref('')
+// State for both modes
+const tipoAgendamento = ref('Data');
+const router = useRouter();
+const store = useAgendamentoStore();
 
-const store = useAgendamentoStore()
-const router = useRouter()
+// State for "Datas Específicas"
+const horarioMode = ref('mesmo');
+const datasSelecionadas = ref([]);
+const horarioUnico = ref({ inicio: '', fim: '' });
+const horariosMultiplos = ref([]);
 
-const diasSemana = [
-  'Domingo',
-  'Segunda-feira',
-  'Terça-feira',
-  'Quarta-feira',
-  'Quinta-feira',
-  'Sexta-feira',
-  'Sábado'
-]
+// State for "Período Recorrente"
+const dataInicioRecorrente = ref('');
+const dataFimRecorrente = ref('');
+const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const diasSemanaSelecionados = ref([]);
+const horarioRecorrente = ref({ inicio: '', fim: '' });
 
-function formatarData(data){
-  return data.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+// Watchers and Functions
+watch(datasSelecionadas, (novasDatas) => {
+  novasDatas.sort((a, b) => a - b);
+  horariosMultiplos.value = novasDatas.map(data => ({
+    data: data.toISOString().split('T')[0],
+    inicio: '',
+    fim: ''
+  }));
+}, { deep: true });
+
+function formatarData(data) {
+  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function irParaInfo() {
-  // Salva os dados no store antes de navegar
-  store.setAgendamento({
-    tipo: tipoAgendamento.value,
-    datas: datasSelecionadas.value,
-    horarios: horariosSelecionados.value,
-    diaSemana: diaDaSemana.value,
-    horarioPeriodo: horarioPeriodo.value,
-    inicio: dataInicio.value,
-    fim: dataFim.value
-  })
+  const agendamentosParaSalvar = [];
 
-  router.push('/agendamentoInfo')
+  if (tipoAgendamento.value === 'Data') {
+    // Logic for "Datas Específicas"
+    if (horarioMode.value === 'mesmo') {
+      if (!horarioUnico.value.inicio || !horarioUnico.value.fim) {
+        alert('Por favor, defina o horário de início e fim.'); return;
+      }
+      datasSelecionadas.value.forEach(data => {
+        agendamentosParaSalvar.push({
+          data: data.toISOString().split('T')[0],
+          hora_inicio: horarioUnico.value.inicio,
+          hora_fim: horarioUnico.value.fim
+        });
+      });
+    } else { // modo 'diferente'
+      for (const horario of horariosMultiplos.value) {
+        if (!horario.inicio || !horario.fim) {
+          alert(`Por favor, defina o horário de início e fim para a data ${formatarData(new Date(horario.data))}.`); return;
+        }
+        agendamentosParaSalvar.push({
+          data: horario.data,
+          hora_inicio: horario.inicio,
+          hora_fim: horario.fim
+        });
+      }
+    }
+  } else if (tipoAgendamento.value === 'Período Recorrente') {
+    // Logic for "Período Recorrente"
+    if (!dataInicioRecorrente.value || !dataFimRecorrente.value || diasSemanaSelecionados.value.length === 0 || !horarioRecorrente.value.inicio || !horarioRecorrente.value.fim) {
+      alert('Por favor, preencha todos os campos do período recorrente.'); return;
+    }
+
+    let dataAtual = new Date(dataInicioRecorrente.value);
+    const dataFim = new Date(dataFimRecorrente.value);
+
+    while (dataAtual <= dataFim) {
+      if (diasSemanaSelecionados.value.includes(dataAtual.getUTCDay())) {
+        agendamentosParaSalvar.push({
+          data: dataAtual.toISOString().split('T')[0],
+          hora_inicio: horarioRecorrente.value.inicio,
+          hora_fim: horarioRecorrente.value.fim
+        });
+      }
+      dataAtual.setUTCDate(dataAtual.getUTCDate() + 1);
+    }
+  }
+
+  if (agendamentosParaSalvar.length === 0) {
+    alert('Nenhuma data foi selecionada ou gerada. Verifique os filtros.'); return;
+  }
+
+  store.setDatasEHorarios(agendamentosParaSalvar);
+  router.push('/agendamentoInfo');
 }
-
-
 </script>
 
 <style scoped>
-
-.navbar {
-  width: 100%;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 64px;
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 10;
-}
-
-.navbar-content {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 32px;
-}
-
-.navbar-logo {
-  height: 48px;
-  margin-right: 32px;
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.navbar-icon {
-  font-size: 1.6rem;
-  color: #888;
-  cursor: pointer;
-}
-
-.tela {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  justify-content: center;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-.fundo-centro {
-  background-size: cover;
-  background-position: center;
-  height: 100vh;
-  width: 100%;
-}
-
-.centralizado {
-  justify-content: center;
-  align-items: center;
-}
-
-.caixa {
-  background-color: white;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  position: relative;
-  padding: 1rem;
-  border-radius: 1rem;
-  width: 50em;
-  min-height: 25em; 
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  overflow-y: auto; /* adiciona rolagem*/
-}
-
-.icone-fase-atual,
-.icone-fase-seguinte {
-  width: 2rem;
-  height: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.icone-fase-atual {
-  color: #2563eb;
-}
-
-.icone-fase-seguinte {
-  color: hsla(223, 3%, 55%, 0.233);
-}
-
-#incompleto{
-  color: black;
-}
-
-.titulo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.opcoes {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  padding-top: 1.5rem;
-  align-items: center;
-}
-
-.circulo {
-  display: flex;
-  align-items: center;
-  padding-left: 10rem;
-  gap: 0.5rem;
-}
-
-.horario-por-data{
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.caixa-data {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  max-height: 20em;
-  overflow-y: auto;  align-items: flex-start;
-  text-align: left;
-  padding: 1rem;
-  border: 0.1rem solid #ccc;
-  border-radius: 0.5rem;
-}
-
-.dp__main {
-  max-width: 300px;
-  font-size: 14px;
-}
-
-.bloco-horario label {
-  display: flex;
-  flex-direction: column;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.caixa-periodo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  max-height: 20em;
-  overflow-y: auto;
-  align-items: flex-start;
-  text-align: left;
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-}
-.caixa-periodo label {
-  display: flex;
-  flex-direction: column;
-  font-weight: bold;
-}
-
-.botao-prosseguir {
-  margin-top: 1.5rem;
-  background-color: #374151;
-  color: white;
-  padding: 0.5rem 1rem;
-  bottom: 1rem;
-  right: 1rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.3s;
-}
-
-.botao-prosseguir:hover {
-  background-color: #1f2937;
-}
+.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.card { width: 100%; max-width: 950px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; height: 85vh; max-height: 700px; }
+.card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+.progress-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+.icon-active { font-size: 1.5rem; color: #2563eb; }
+.icon-inactive { font-size: 1.5rem; color: #d1d5db; }
+.line { flex-grow: 1; height: 2px; background-color: #e5e7eb; margin: 0 1rem; }
+.title { font-size: 1.75rem; font-weight: 700; text-align: center; margin: 0 0 1rem; }
+.opcoes { display: flex; justify-content: center; gap: 1.5rem; }
+.radio-label, .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; }
+.radio-label-sm { font-size: 0.9rem; }
+.card-content { flex-grow: 1; overflow-y: none; min-height: 0; }
+.card-content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; align-items: flex-start; }
+.col-right { display: flex; flex-direction: column; height: 350px; overflow: hidden; }
+.horario-toggle { flex-shrink: 0; display: flex; gap: 1rem; padding-bottom: 1rem; }
+.horario-fixo { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.datas-selecionadas-title { flex-shrink: 0; margin: 1rem 0 0.5rem; font-weight: bold; }
+.horarios-lista { flex-grow: 1; overflow-y: auto; padding-right: 1rem; border-top: 1px solid #f3f4f6; min-height: 0; position: relative; z-index: 1; }
+.horario-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.time-inputs { display: flex; align-items: center; gap: 0.5rem; }
+input[type="time"] { border: 1px solid #d1d5db; border-radius: 6px; padding: 0.25rem; }
+.col-right-recorrente { display: flex; flex-direction: column; gap: 1.5rem; }
+.campo-recorrente { width: 100%; }
+.campo-recorrente label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.dias-semana-checkboxes { display: flex; flex-direction: column; gap: 0.75rem; }
+input[type="date"], select { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+.card-footer { padding: 1rem 2rem; border-top: 1px solid #e5e7eb; text-align: right; flex-shrink: 0; position: relative; z-index: 10; background-color: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+.botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
 </style>

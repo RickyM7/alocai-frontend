@@ -1,104 +1,97 @@
 <template>
-  <backgroundImage />
-  <TheHeader />
-
-  <div class="tela fundo-centro centralizado">
-    <div class="caixa">
-      <Icon name="heroicons:calendar" class="icone-fase-atual" id="incompleto"/>
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:user" class="icone-fase-atual" id="incompleto"/>
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:chevron-right" class="icone-fase-atual" />
-      <Icon name="heroicons:check" class="icone-fase-atual" :id="agendamentoSalvo ? 'completo' : 'incompleto'"/>
-
-      <div v-if="isLoading" class="loading-container">
-        <Icon name="i-lucide-loader-2" class="spinner" />
-        <h1 class="titulo">Salvando seu agendamento...</h1>
-        <p>Por favor, aguarde.</p>
-      </div>
-
-      <div v-else-if="erro" class="erro-container">
-        <Icon name="i-lucide-x-circle" class="icon-error" />
-        <h1 class="titulo-erro">Erro ao salvar agendamento</h1>
-        <p class="mensagem-erro">{{ erro }}</p>
-        <div class="botoes">
-          <button class="btn-primario" @click="tentarSalvarNovamente">
-            Tentar Novamente
-          </button>
-          <button class="btn-secundario" @click="voltarParaInicio">
-            Voltar ao Início
-          </button>
+  <div class="page-container">
+    <div class="card">
+      <div class="card-header">
+        <div class="progress-bar">
+          <Icon name="heroicons:calendar-days-20-solid" class="icon-complete"/>
+          <div class="line-complete"></div>
+          <Icon name="heroicons:information-circle-20-solid" class="icon-complete"/>
+          <div class="line-complete"></div>
+          <Icon name="heroicons:check-circle-20-solid" class="icon-active"/>
         </div>
       </div>
 
-      <div v-else-if="agendamentoSalvo" class="sucesso-container">
-        <h1 class="titulo">Solicitação concluída com sucesso!</h1>
-        <p class="subtitulo">{{ agendamentosCriados.length }} agendamento(s) criado(s)</p>
+      <div class="card-content">
+        <div v-if="isLoading" class="status-container">
+          <Icon name="i-lucide-loader-2" class="spinner" />
+          <h1 class="titulo">Enviando sua solicitação...</h1>
+          <p>Por favor, aguarde.</p>
+        </div>
 
-        <div class="resumo">
-          <p><strong>Recurso:</strong> {{ store.recursoSelecionado?.nome_recurso || 'Não especificado' }}</p>
-          <p><strong>Tipo:</strong> {{ store.tipoAgendamento }}</p>
+        <div v-else-if="erro" class="status-container">
+          <Icon name="i-lucide-x-circle" class="icon-error" />
+          <h1 class="titulo-erro">Erro ao Salvar</h1>
+          <p class="mensagem-erro">{{ erro }}</p>
+          <div class="botoes">
+            <button class="btn-secundario" @click="voltarParaInicio">Voltar ao Início</button>
+            <button class="btn-primario" @click="tentarSalvarNovamente">Tentar Novamente</button>
+          </div>
+        </div>
 
-          <div v-if="store.tipoAgendamento === 'Datas Específicas' && store.datasSelecionadas.length">
-            <strong>Datas:</strong>
-            <ul>
-              <li v-for="(data, i) in store.datasSelecionadas" :key="i">
-                {{ new Date(data).toLocaleDateString('pt-BR') }}
-                — Horário: {{ store.horariosSelecionados[new Date(data).toISOString().split('T')[0]] || 'Não definido' }}
-              </li>
-            </ul>
+        <div v-else-if="agendamentoSalvo" class="sucesso-container">
+          <h1 class="titulo">Solicitação enviada!</h1>
+          <p class="subtitulo">Sua solicitação está pendente de aprovação.</p>
+
+          <div class="resumo">
+            <div class="resumo-item"><strong>Recurso:</strong><span>{{ agendamentoInfo.recurso }}</span></div>
+            <div class="resumo-item"><strong>Finalidade:</strong><span>{{ agendamentoInfo.finalidade }}</span></div>
+            <div class="resumo-item"><strong>Total de Datas:</strong><span>{{ agendamentoInfo.totalDatas }}</span></div>
+            <div class="resumo-item"><strong>Período:</strong><span>{{ agendamentoInfo.periodo }}</span></div>
           </div>
 
-          <div v-else-if="store.tipoAgendamento === 'Período Recorrente'">
-            <p><strong>Dia da Semana:</strong> {{ store.diaDaSemana }}</p>
-            <p><strong>Horário:</strong> {{ store.horarioPeriodo }}</p>
-            <p><strong>Período:</strong> 
-              {{ store.dataInicio ? new Date(store.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR') : '-' }}
-              até 
-              {{ store.dataFim ? new Date(store.dataFim + 'T00:00:00').toLocaleDateString('pt-BR') : '-' }}
-            </p>
+          <div class="botoes">
+            <button class="btn-secundario" @click="irParaMinhasReservas">Ver Minhas Reservas</button>
+            <button class="btn-primario" @click="novoAgendamento">Novo Agendamento</button>
           </div>
-
-          <p><strong>Finalidade:</strong> {{ store.finalidade }}</p>
-          <p><strong>Participantes:</strong> {{ store.participantes }}</p>
-          <p><strong>Observações:</strong> {{ store.observacoes || 'Nenhuma' }}</p>
         </div>
-
-        <div class="botoes">
-          <button class="btn-secundario" @click="irParaMinhasReservas">
-            Ver Minhas Reservas
-          </button>
-          <button class="btn-primario" @click="novoAgendamento">
-            Novo Agendamento
-          </button>
+        <div v-else class="status-container">
+          <p>Solicitação já enviada ou dados inválidos.</p>
         </div>
       </div>
-      
-      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useAgendamentoStore } from '~/stores/agendamento'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue';
+import { useAgendamentoStore } from '~/stores/agendamento';
+import { useRouter, onBeforeRouteLeave } from 'vue-router';
 
-const store = useAgendamentoStore()
-const router = useRouter()
+const store = useAgendamentoStore();
+const router = useRouter();
 
-// Variáveis de estado locais para controlar a UI
-const isLoading = ref(true)
-const agendamentoSalvo = ref(false)
-const agendamentosCriados = ref([])
-const erro = ref('')
+const isLoading = ref(true);
+const agendamentoSalvo = ref(false);
+const erro = ref('');
+const agendamentoInfo = ref({});
+
+function popularResumo() {
+  if (store.agendamentos.length === 0) return;
+
+  const primeiraData = new Date(store.agendamentos[0].data);
+  const ultimaData = new Date(store.agendamentos[store.agendamentos.length - 1].data);
+  const formatar = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  
+  agendamentoInfo.value = {
+    recurso: store.recursoSelecionado?.nome_recurso,
+    finalidade: store.finalidade,
+    totalDatas: store.agendamentos.length,
+    periodo: store.agendamentos.length === 1 ? formatar(primeiraData) : `${formatar(primeiraData)} a ${formatar(ultimaData)}`,
+  };
+}
 
 async function executarSalvamento() {
+  if (store.agendamentos.length === 0) {
+    isLoading.value = false;
+    agendamentoSalvo.value = false;
+    return;
+  }
+  
+  popularResumo();
+  
   const userDataString = localStorage.getItem('user_data');
   if (!userDataString) {
-    erro.value = 'Dados do usuário não encontrados. Faça login novamente.';
+    erro.value = 'Dados do usuário não encontrados.';
     isLoading.value = false;
     return;
   }
@@ -108,16 +101,10 @@ async function executarSalvamento() {
   try {
     const resultados = await store.salvarAgendamento();
     if (resultados) {
-        agendamentosCriados.value = resultados;
-        agendamentoSalvo.value = true;
+      agendamentoSalvo.value = true;
     }
   } catch (err) {
-    if (err instanceof Error) {
-      erro.value = err.message;
-    } else {
-      erro.value = 'Ocorreu um erro desconhecido.';
-    }
-    console.error('Erro ao salvar:', err);
+    erro.value = err.message || 'Ocorreu um erro desconhecido.';
   } finally {
     isLoading.value = false;
   }
@@ -126,241 +113,45 @@ async function executarSalvamento() {
 function tentarSalvarNovamente() {
   isLoading.value = true;
   erro.value = '';
-  agendamentoSalvo.value = false;
   executarSalvamento();
 }
 
-// Função para voltar ao início
-function voltarParaInicio() {
-  store.limparStore()
-  router.push('/')
-}
+function voltarParaInicio() { router.push('/'); }
+function irParaMinhasReservas() { router.push('/minhasReservas'); }
+function novoAgendamento() { router.push('/agendamentoSelectRecurso'); }
 
-// Função para ir para minhas reservas
-function irParaMinhasReservas() {
-  router.push('/minhasReservas')
-}
-
-// Função para novo agendamento
-function novoAgendamento() {
-  store.limparStore()
-  router.push('/recursos') // ou onde começa o fluxo de agendamento
-}
-
-// Executar automaticamente ao carregar a página
 onMounted(() => {
   executarSalvamento();
-})
+});
+
+onBeforeRouteLeave(() => {
+  store.limparStore();
+});
 </script>
 
 <style scoped>
-.navbar {
-  width: 100%;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 64px;
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 10;
-}
-
-.navbar-content {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 32px;
-}
-
-.navbar-logo {
-  height: 48px;
-  margin-right: 32px;
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.navbar-icon {
-  font-size: 1.6rem;
-  color: #888;
-  cursor: pointer;
-}
-
-.tela {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  justify-content: center;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-.fundo-centro {
-  background-size: cover;
-  background-position: center;
-  height: 100vh;
-  width: 100%;
-}
-
-.centralizado {
-  justify-content: center;
-  align-items: center;
-}
-
-.caixa {
-  background-color: white;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  position: relative;
-  padding: 1rem;
-  border-radius: 1rem;
-  width: 50em;
-  min-height: 25em; 
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  overflow-y: auto;
-}
-
-.icone-fase-atual,
-.icone-fase-seguinte {
-  width: 2rem;
-  height: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.icone-fase-atual {
-  color: #2563eb;
-}
-
-.icone-fase-seguinte {
-  color: hsla(223, 3%, 55%, 0.233);
-}
-
-#incompleto {
-  color: black;
-}
-
-#completo {
-  color: rgb(10, 182, 10);
-}
-
-.titulo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.subtitulo {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
-}
-
-.titulo-erro {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #dc2626;
-}
-
-.mensagem-erro {
-  color: #dc2626;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: #fef2f2;
-  border-radius: 0.5rem;
-  border: 1px solid #fecaca;
-}
-
-.loading-container,
-.erro-container,
-.sucesso-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-}
-
-.spinner {
-  font-size: 3rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.icon-error {
-  font-size: 3rem;
-  color: #dc2626;
-}
-
-.resumo {
-  text-align: left;
-  background-color: #f9fafb;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-  border: 1px solid #e5e7eb;
-}
-
-.resumo p {
-  margin-bottom: 0.5rem;
-}
-
-.resumo ul {
-  margin-left: 1rem;
-  margin-top: 0.5rem;
-}
-
-.resumo li {
-  margin-bottom: 0.25rem;
-}
-
-.botoes {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1.5rem;
-}
-
-.btn-primario {
-  background-color: #374151;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-weight: 500;
-}
-
-.btn-primario:hover {
-  background-color: #1f2937;
-}
-
-.btn-secundario {
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.btn-secundario:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-}
+.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.card { width: 100%; max-width: 700px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+.card-header { padding: 1.5rem 2rem; }
+.progress-bar { display: flex; align-items: center; justify-content: center; }
+.icon-active { font-size: 1.5rem; color: #2563eb; }
+.icon-complete { font-size: 1.5rem; color: #16a34a; }
+.line-complete { flex-grow: 1; height: 2px; margin: 0 1rem; background-color: #16a34a; }
+.card-content { padding: 2rem; text-align: center; }
+.status-container, .sucesso-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.titulo { font-size: 1.75rem; font-weight: bold; }
+.subtitulo { color: #6b7280; }
+.titulo-erro { font-size: 1.75rem; font-weight: bold; color: #dc2626; }
+.mensagem-erro { color: #b91c1c; background-color: #fef2f2; padding: 1rem; border-radius: 8px; }
+.spinner { font-size: 3rem; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-error { font-size: 3rem; color: #dc2626; }
+.resumo { text-align: left; background-color: #f9fafb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border: 1px solid #e5e7eb; }
+/* AJUSTE: Reduzido o padding vertical para aproximar os itens */
+.resumo-item { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 0.25rem 0; border-bottom: 1px solid #e5e7eb; }
+.resumo-item:last-child { border-bottom: none; }
+.resumo-item span { word-break: break-word; }
+.botoes { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+.btn-primario { background-color: #374151; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+.btn-secundario { background-color: #ffffff; color: #374151; border: 1px solid #d1d5db; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
 </style>
