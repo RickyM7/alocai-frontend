@@ -26,20 +26,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import UserProfileList from '~/components/UserProfileList.vue';
+import type { User } from '~/types/user';
 
 const config = useRuntimeConfig();
+const router = useRouter();
 const apiUrl = config.public.apiUrl;
 
 const perfilSelecionado = ref<number | null>(null);
-const user = ref<any>(null);
+const user = ref<User | null>(null);
 const userId = ref<number | null>(null);
 
+// Ao montar o componente, busca os dados do usuário do localStorage
 onMounted(() => {
-  const userJson = localStorage.getItem('user');
-  user.value = userJson ? JSON.parse(userJson) : null;
-  userId.value = user.value ? user.value.id_usuario : null;
+  const userJson = localStorage.getItem('user_data');
+  if (userJson) {
+    user.value = JSON.parse(userJson) as User;
+    userId.value = user.value?.id_usuario || null;
+  } else {
+    // Se não encontrar dados do usuário, redireciona para o login
+    router.push('/login');
+  }
 });
 
 const handleSubmit = async (event: Event) => {
@@ -49,7 +57,14 @@ const handleSubmit = async (event: Event) => {
     return;
   }
 
-  const backendResponse = await fetch(`${apiUrl}/api/user/${userId.value}/`, {
+  if (!userId.value) {
+    alert('Não foi possível identificar o usuário. Por favor, faça login novamente.');
+    router.push('/login');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/api/user/${userId.value}/`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -57,16 +72,24 @@ const handleSubmit = async (event: Event) => {
       },
       body: JSON.stringify({ id_perfil: perfilSelecionado.value }),
     });
-  
 
-  if (backendResponse.ok) {
-    const data = await backendResponse.json();
-    alert('Perfil atualizado com sucesso!');
-    
-    // Adiciona um loading até que o usuário seja redirecionado
-    useRouter().push('/'); // Redireciona para a página inicial após o onboarding
-  } else {
-    console.error('Erro ao atualizar dados do usuário:', backendResponse.statusText);
+    if (response.ok) {
+      alert('Perfil definido com sucesso!');
+
+      if (user.value) {
+        user.value.id_perfil = perfilSelecionado.value;
+        localStorage.setItem('user_data', JSON.stringify(user.value));
+      }
+      
+      router.push('/'); // Redireciona para a página inicial
+    } else {
+      const errorData = await response.json();
+      console.error('Erro ao atualizar o perfil:', errorData);
+      alert(`Erro ao salvar perfil: ${errorData.error || response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Erro de conexão:', error);
+    alert('Erro de conexão ao tentar salvar o perfil.');
   }
 };
 </script>

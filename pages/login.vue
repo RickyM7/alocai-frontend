@@ -72,6 +72,31 @@ const config = useRuntimeConfig()
 // Google Client ID - substitua pelo seu Client ID real
 const googleClientId = config.public.googleClientId
 
+onMounted(() => {
+  const token = localStorage.getItem('access');
+  const userJson = localStorage.getItem('user_data');
+
+  if (token && userJson) {
+    try {
+      const user: User = JSON.parse(userJson);
+      
+      // Verifica se o usuário já tem um perfil definido
+      if (user.id_perfil) {
+        // Se tem perfil, vai para a página inicial
+        useRouter().push('/');
+      } else {
+        // Se não tem perfil, vai para o onboarding
+        useRouter().push('/onboarding');
+      }
+    } catch (e) {
+      // Em caso de erro ao ler os dados, o usuário permanece na tela de login
+      console.error("Não foi possível ler os dados do usuário, limpando armazenamento local.", e);
+      localStorage.removeItem('access');
+      localStorage.removeItem('user_data');
+    }
+  }
+});
+
 // Configuração da página
 definePageMeta({
   layout: false // Desabilita o layout padrão para a página de login
