@@ -12,19 +12,15 @@ onMounted(() => {
 <template>
   <BackgroundImage />
 
-  <div class="navbar">
-    <div class="navbar-content">
-      <img src="/img/logo.png" alt="Logo UFAPE" class="navbar-logo" />
-      <div class="navbar-actions">
-        <Icon name="i-lucide-bell" class="navbar-icon" />
-        <Icon name="i-lucide-user-circle" class="navbar-icon" />
-      </div>
-    </div>
-  </div>
+  <TheHeader />
 
   <div>
-    <UButton icon="i-lucide-rocket" size="md" color="primary" variant="solid">Nova Reserva</UButton>
-    <UButton icon="i-lucide-calendar" size="md" color="secondary" variant="outline">Minhas Reservas</UButton>
+    <NuxtLink to="/agendamentoSelectRecurso">
+      <UButton icon="i-lucide-rocket" size="md" color="primary" variant="solid">Nova Reserva</UButton>
+    </NuxtLink>
+    <NuxtLink to="/minhasReservas">
+      <UButton icon="i-lucide-calendar" size="md" color="secondary" variant="outline">Minhas Reservas</UButton>
+    </NuxtLink>
   </div>
 
   <!-- Área de conteúdo após login -->

@@ -12,8 +12,14 @@ export default ({
     '@pinia/nuxt',
   ],
 
+  icon: {
+    provider: 'iconify',
+    collections: ['heroicons', 'lucide'],
+  },
+
   ui: {
-    icons: ['heroicons', 'lucide']
+    icons: ['heroicons', 'lucide'],
+    global: true
   },
 
   typescript: {

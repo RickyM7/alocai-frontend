@@ -1,17 +1,9 @@
 <template>
   <backgroundImage />
 
-  <div class="navbar">
-    <div class="navbar-content">
-      <img src="/img/logo.png" alt="Logo UFAPE" class="navbar-logo" />
-      <div class="navbar-actions">
-        <Icon name="i-lucide-bell" class="navbar-icon" />
-        <Icon name="i-lucide-user-circle" class="navbar-icon" />
-      </div>
-    </div>
-  </div>
+  <TheHeader />
 
-  <div class="tela fundo-centro centralizado" :style="{ backgroundImage: `url(${backgroundImage})` }">
+  <div class="tela fundo-centro centralizado">
     <div class="caixa">
       <!-- Linha de Progresso -->
       <!-- Fase - Agendamento - Data: -->
@@ -84,6 +76,11 @@ const router = useRouter()
 const store = useAgendamentoStore()
 
 function irParaConclusao() {
+  if (!finalidade.value.trim()) {
+    alert('Por favor, informe a finalidade do agendamento')
+    return
+  }
+  
   store.setInfo({
     finalidade: finalidade.value,
     participantes: participantes.value,
