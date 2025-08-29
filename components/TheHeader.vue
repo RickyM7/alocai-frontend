@@ -8,13 +8,19 @@
         <Icon name="i-lucide-bell" class="navbar-icon" />
         
         <div class="dropdown-container" ref="dropdownRef">
-          <img 
-            v-if="isLoggedIn && userProfilePicture"
-            :src="userProfilePicture"
-            alt="Foto do perfil"
-            class="profile-picture"
-            @click="toggleDropdown"
-          />
+          <template v-if="isLoggedIn">
+            <img 
+              v-if="userProfilePicture && !imageLoadError"
+              :src="userProfilePicture"
+              alt="Foto do perfil"
+              class="profile-picture"
+              @click="toggleDropdown"
+              crossorigin="anonymous"
+              @error="handleImageError" />
+            <div v-else class="profile-picture-placeholder logged-in-placeholder" @click="toggleDropdown">
+              <Icon name="i-lucide-user" /> 
+            </div>
+          </template>
           <Icon 
             v-else
             name="i-lucide-user-circle" 
@@ -50,6 +56,7 @@ const isLoggedIn = ref(false);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const userProfilePicture = ref<string | null>(null);
+const imageLoadError = ref(false);
 
 onMounted(() => {
   isLoggedIn.value = !!localStorage.getItem('access');
@@ -59,6 +66,7 @@ onMounted(() => {
     try {
       const user = JSON.parse(userData);
       userProfilePicture.value = user.foto_perfil || null;
+      imageLoadError.value = false; 
     } catch (error) {
       console.warn('Erro ao parsear dados do usuário:', error);
     }
@@ -86,11 +94,17 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
+const handleImageError = () => {
+  imageLoadError.value = true;
+  console.warn('Falha ao carregar a foto do perfil no cabeçalho.');
+};
+
 const logout = () => {
   localStorage.removeItem('access');
   localStorage.removeItem('user_data');
   isLoggedIn.value = false;
   userProfilePicture.value = null;
+  imageLoadError.value = false;
   closeDropdown();
   window.location.href = '/';
 };
@@ -174,6 +188,11 @@ const menuItems = computed(() => {
   color: #374151;
 }
 
+.user-icon {
+  font-size: 2.2rem;
+  color: #9ca3af;
+}
+
 .user-icon:hover {
   color: #2563eb;
 }
@@ -192,6 +211,27 @@ const menuItems = computed(() => {
   border-color: #2563eb;
   transform: scale(1.05);
 }
+
+.profile-picture-placeholder.logged-in-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #4338ca;
+  border: 2px solid #a5b4fc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-picture-placeholder.logged-in-placeholder:hover {
+  border-color: #2563eb;
+  transform: scale(1.05);
+}
+
 
 .dropdown-container {
   position: relative;

@@ -8,15 +8,14 @@
         <p>Escolha o tipo de conta que melhor descreve sua função para que possamos personalizar sua experiência:</p>
       </div>
 
-        <form class="onboarding-form">
-            <UserProfileList
-                v-model:perfilSelecionado="perfilSelecionado"
-                :onSuccess="(data) => { console.log('Perfis de usuário:', data); }"
-                :onError="(error) => { console.error('Erro ao buscar perfis de usuário:', error); }"
-            />
-            <!-- submit -->
-            <button type="submit" class="onboarding-button" @click="handleSubmit">Concluir</button>
-        </form>
+      <form class="onboarding-form" @submit.prevent="handleSubmit">
+          <UserProfileList
+              v-model:perfilSelecionado="perfilSelecionado"
+              :onSuccess="(data) => { perfis = data; }"
+              :onError="(error) => { console.error('Erro ao buscar perfis de usuário:', error); }"
+          />
+          <button type="submit" class="onboarding-button">Concluir</button>
+      </form>
 
     </div>
   </div>
@@ -36,6 +35,7 @@ const apiUrl = config.public.apiUrl;
 const perfilSelecionado = ref<number | null>(null);
 const user = ref<User | null>(null);
 const userId = ref<number | null>(null);
+const perfis = ref<any[]>([]);
 
 // Ao montar o componente, busca os dados do usuário do localStorage
 onMounted(() => {
@@ -76,7 +76,13 @@ const handleSubmit = async (event: Event) => {
       alert('Perfil definido com sucesso!');
 
       if (user.value) {
+        const perfilEscolhido = perfis.value.find(p => p.id_perfil === perfilSelecionado.value);
+        
         user.value.id_perfil = perfilSelecionado.value;
+        if (perfilEscolhido) {
+          user.value.nome_perfil = perfilEscolhido.nome_perfil;
+        }
+        
         localStorage.setItem('user_data', JSON.stringify(user.value));
       }
       
