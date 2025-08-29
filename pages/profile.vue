@@ -15,8 +15,14 @@
 
         <div v-else class="profile-card-content">
           <div class="profile-header">
-            <img v-if="user.foto_perfil" :src="user.foto_perfil" alt="Foto do Perfil" class="profile-picture" />
-            <div v-else class="profile-picture-placeholder">
+            <img 
+              v-if="user.foto_perfil && !imageLoadError" 
+              :src="user.foto_perfil" 
+              alt="Foto do Perfil" 
+              class="profile-picture" 
+              crossorigin="anonymous" 
+              @error="handleImageError" />
+            <div v-else class="profile-picture-placeholder profile-page-placeholder">
               <Icon name="i-lucide-user" />
             </div>
             
@@ -54,6 +60,7 @@ import type { User } from '~/types/user';
 const router = useRouter();
 const user = ref<User | null>(null);
 const isLoading = ref(true);
+const imageLoadError = ref(false);
 
 onMounted(() => {
   const userDataString = localStorage.getItem('user_data');
@@ -63,6 +70,7 @@ onMounted(() => {
   }
   user.value = JSON.parse(userDataString);
   isLoading.value = false;
+  imageLoadError.value = false;
 });
 
 const formatarData = (dataString: string): string => {
@@ -72,6 +80,11 @@ const formatarData = (dataString: string): string => {
   } catch {
     return 'Data inválida';
   }
+};
+
+const handleImageError = () => {
+  imageLoadError.value = true;
+  console.warn('Falha ao carregar a foto do perfil na página de perfil.');
 };
 
 const handleSave = () => {
@@ -117,7 +130,8 @@ const handleSave = () => {
   border: 3px solid #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
-.profile-picture-placeholder {
+
+.profile-picture-placeholder.profile-page-placeholder {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -130,6 +144,7 @@ const handleSave = () => {
   border: 3px solid #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
+
 .user-name { font-size: 1.5rem; font-weight: 600; }
 .user-email { color: #6b7280; }
 .profile-details { display: grid; gap: 1rem; }
