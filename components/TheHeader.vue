@@ -50,8 +50,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import type { User } from '~/types/user';
 
 const router = useRouter();
+const user = ref<User | null>(null);
 const isLoggedIn = ref(false);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
@@ -61,11 +63,11 @@ const imageLoadError = ref(false);
 onMounted(() => {
   isLoggedIn.value = !!localStorage.getItem('access');
   
-  const userData = localStorage.getItem('user_data');
-  if (userData) {
+  const userDataString = localStorage.getItem('user_data');
+  if (userDataString) {
     try {
-      const user = JSON.parse(userData);
-      userProfilePicture.value = user.foto_perfil || null;
+      user.value = JSON.parse(userDataString) as User;
+      userProfilePicture.value = user.value.foto_perfil || null;
       imageLoadError.value = false; 
     } catch (error) {
       console.warn('Erro ao parsear dados do usuário:', error);
@@ -103,6 +105,7 @@ const logout = () => {
   localStorage.removeItem('access');
   localStorage.removeItem('user_data');
   isLoggedIn.value = false;
+  user.value = null;
   userProfilePicture.value = null;
   imageLoadError.value = false;
   closeDropdown();
@@ -119,9 +122,24 @@ const goToLogin = () => {
   router.push('/login');
 };
 
+const goToAdmin = () => {
+  closeDropdown();
+  router.push('/admin');
+};
+
 const menuItems = computed(() => {
+  const items = [];
+
   if (isLoggedIn.value) {
-    return [
+    if (user.value?.nome_perfil === 'Administrador') {
+      items.push({
+        label: 'Painel do Admin',
+        icon: 'i-lucide-shield-check',
+        action: goToAdmin
+      });
+    }
+
+    items.push(
       {
         label: 'Meu Perfil',
         icon: 'i-lucide-user',
@@ -132,16 +150,16 @@ const menuItems = computed(() => {
         icon: 'i-lucide-log-out',
         action: logout
       }
-    ];
+    );
   } else {
-    return [
-      {
-        label: 'Entrar',
-        icon: 'i-lucide-log-in',
-        action: goToLogin
-      }
-    ];
+    items.push({
+      label: 'Entrar',
+      icon: 'i-lucide-log-in',
+      action: goToLogin
+    });
   }
+  
+  return items;
 });
 </script>
 

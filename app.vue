@@ -3,7 +3,9 @@
     <BackgroundImage />
     <TheHeader class="app-header" />
     <main class="main-content">
-      <NuxtPage />
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
     </main>
   </div>
 </template>
