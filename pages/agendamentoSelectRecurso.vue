@@ -113,17 +113,17 @@ onMounted(() => {
   width: 100%;
   max-width: 90vw;
   height: 85vh;
-  max-height: 800px;
+  max-height: 50rem;
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .card-header {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 0.063rem solid #e5e7eb;
   flex-shrink: 0;
 }
 .title { font-size: 1.75rem; font-weight: 700; margin: 0; }
@@ -147,26 +147,26 @@ onMounted(() => {
   padding: 0 2rem;
 }
 .recurso-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 0.063rem solid #e5e7eb;
+  border-radius: 0.75rem;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: 300px;
+  width: 18.75rem;
   flex-shrink: 0;
 }
-.recurso-card:hover { transform: translateY(-5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.recurso-card.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+.recurso-card:hover { transform: translateY(-0.32rem); box-shadow: 0 0.25rem 0.625rem rgba(0,0,0,0.1); }
+.recurso-card.selected { border-color: #2563eb; box-shadow: 0 0 0 0.19rem rgba(37, 99, 235, 0.2); }
 .recurso-nome { font-size: 1.25rem; font-weight: 600; }
-.recurso-descricao { color: #6b7280; margin: 0.5rem 0 1rem; min-height: 40px; }
+.recurso-descricao { color: #6b7280; margin: 0.5rem 0 1rem; min-height: 2.5rem; }
 .recurso-info { font-size: 0.875rem; color: #4b5563; }
-.status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; margin-top: 1rem; }
+.status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 624.94rem; font-size: 0.875rem; margin-top: 1rem; }
 .status-success { background-color: #dcfce7; color: #166534; }
 .status-warning { background-color: #fef3c7; color: #92400e; }
 .status-error { background-color: #fecaca; color: #991b1b; }
 .card-footer {
   padding: 1rem 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 0.063rem solid #e5e7eb;
   text-align: right;
   flex-shrink: 0;
 }

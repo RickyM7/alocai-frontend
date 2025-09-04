@@ -131,27 +131,27 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 700px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+.card { width: 100%; max-width: 43.75rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem  rgba(0,0,0,0.1); }
 .card-header { padding: 1.5rem 2rem; }
 .progress-bar { display: flex; align-items: center; justify-content: center; }
 .icon-active { font-size: 1.5rem; color: #2563eb; }
 .icon-complete { font-size: 1.5rem; color: #16a34a; }
-.line-complete { flex-grow: 1; height: 2px; margin: 0 1rem; background-color: #16a34a; }
+.line-complete { flex-grow: 1; height: 0.125rem; margin: 0 1rem; background-color: #16a34a; }
 .card-content { padding: 2rem; text-align: center; }
 .status-container, .sucesso-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .titulo { font-size: 1.75rem; font-weight: bold; }
 .subtitulo { color: #6b7280; }
 .titulo-erro { font-size: 1.75rem; font-weight: bold; color: #dc2626; }
-.mensagem-erro { color: #b91c1c; background-color: #fef2f2; padding: 1rem; border-radius: 8px; }
+.mensagem-erro { color: #b91c1c; background-color: #fef2f2; padding: 1rem; border-radius:  0.5rem; }
 .spinner { font-size: 3rem; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .icon-error { font-size: 3rem; color: #dc2626; }
-.resumo { text-align: left; background-color: #f9fafb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border: 1px solid #e5e7eb; }
+.resumo { text-align: left; background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin: 1.5rem 0; border: 0.063rem solid #e5e7eb; }
 /* AJUSTE: Reduzido o padding vertical para aproximar os itens */
-.resumo-item { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 0.25rem 0; border-bottom: 1px solid #e5e7eb; }
+.resumo-item { display: grid; grid-template-columns: 9.375rem 1fr; gap: 1rem; padding: 0.25rem 0; border-bottom: 0.063rem solid #e5e7eb; }
 .resumo-item:last-child { border-bottom: none; }
 .resumo-item span { word-break: break-word; }
 .botoes { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
 .btn-primario { background-color: #374151; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
-.btn-secundario { background-color: #ffffff; color: #374151; border: 1px solid #d1d5db; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+.btn-secundario { background-color: #ffffff; color: #374151; border: 0.063rem  solid #d1d5db; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
 </style>
