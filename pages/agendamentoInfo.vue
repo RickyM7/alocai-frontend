@@ -112,19 +112,22 @@ function irParaConclusao() {
 
 <style scoped>
 .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 900px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-.card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; }
+.card { width: 100%; max-width: 56.25rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); }
+.card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem  solid #e5e7eb; }
 .title { font-size: 1.75rem; font-weight: 700; margin: 0; }
-.card-content-grid { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; padding: 2rem; }
-.col-resumo { background-color: #f9fafb; padding: 1.5rem; border-radius: 8px; }
-.col-resumo h3 { margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+.card-content-grid { display: grid; grid-template-columns: 18.75rem 1fr; gap: 2rem; padding: 2rem; }
+.col-resumo { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; }
+.col-resumo h3 { margin-top: 0; border-bottom: 0.063rem  solid #e5e7eb; padding-bottom: 0.5rem; }
 .resumo-item { margin-bottom: 1rem; }
 .resumo-item .label { display: block; font-size: 0.9rem; color: #6b7280; }
 .resumo-item .value { font-weight: 500; }
 .formulario { display: flex; flex-direction: column; gap: 1.5rem; }
 .campo label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
-.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-.campo textarea { min-height: 100px; resize: vertical; }
-.card-footer { padding: 1rem 2rem; border-top: 1px solid #e5e7eb; text-align: right; }
+.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem  solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
+.campo textarea { min-height: 6.25rem; resize: vertical; }
+.card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; }
 .botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
+/* Responsividade */
+@media (max-width: 48rem) { .card-content-grid { grid-template-columns: 1fr;} .col-resumo { order: 2; margin-top: 1.5rem; }  .col-form { order: 1; } }
+@media (max-width: 37.5rem) { .title { font-size: 1.4rem; } .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; } }
 </style>

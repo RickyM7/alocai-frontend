@@ -199,31 +199,44 @@ function irParaInfo() {
 
 <style scoped>
 .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 950px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; height: 85vh; max-height: 700px; }
-.card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+.card { width: 100%; max-width: 60rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; height: 85vh; max-height: 43.75rem; }
+.card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem solid #e5e7eb; flex-shrink: 0; }
 .progress-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
 .icon-active { font-size: 1.5rem; color: #2563eb; }
 .icon-inactive { font-size: 1.5rem; color: #d1d5db; }
-.line { flex-grow: 1; height: 2px; background-color: #e5e7eb; margin: 0 1rem; }
+.line { flex-grow: 1; height: 0.125rem; background-color: #e5e7eb; margin: 0 1rem; }
 .title { font-size: 1.75rem; font-weight: 700; text-align: center; margin: 0 0 1rem; }
 .opcoes { display: flex; justify-content: center; gap: 1.5rem; }
 .radio-label, .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; }
 .radio-label-sm { font-size: 0.9rem; }
 .card-content { flex-grow: 1; overflow-y: none; min-height: 0; }
 .card-content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; align-items: flex-start; }
-.col-right { display: flex; flex-direction: column; height: 350px; overflow: hidden; }
+.col-right { display: flex; flex-direction: column; height: 21.875rem; overflow: hidden; }
 .horario-toggle { flex-shrink: 0; display: flex; gap: 1rem; padding-bottom: 1rem; }
-.horario-fixo { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.horario-fixo { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 0.063rem solid #f3f4f6; }
 .datas-selecionadas-title { flex-shrink: 0; margin: 1rem 0 0.5rem; font-weight: bold; }
-.horarios-lista { flex-grow: 1; overflow-y: auto; padding-right: 1rem; border-top: 1px solid #f3f4f6; min-height: 0; position: relative; z-index: 1; }
-.horario-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.horarios-lista { flex-grow: 1; overflow-y: auto; padding-right: 1rem; border-top: 0.063rem solid #f3f4f6; min-height: 0; position: relative; z-index: 1; }
+.horario-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 0.063rem solid #f3f4f6; }
 .time-inputs { display: flex; align-items: center; gap: 0.5rem; }
-input[type="time"] { border: 1px solid #d1d5db; border-radius: 6px; padding: 0.25rem; }
+input[type="time"] { border: 0.063rem solid #d1d5db; border-radius: 0.375rem; padding: 0.25rem; }
 .col-right-recorrente { display: flex; flex-direction: column; gap: 1.5rem; }
 .campo-recorrente { width: 100%; }
 .campo-recorrente label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
 .dias-semana-checkboxes { display: flex; flex-direction: column; gap: 0.75rem; }
-input[type="date"], select { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-.card-footer { padding: 1rem 2rem; border-top: 1px solid #e5e7eb; text-align: right; flex-shrink: 0; position: relative; z-index: 10; background-color: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+input[type="date"], select { width: 100%; padding: 0.5rem; border: 0.063rem solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
+.card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; flex-shrink: 0; position: relative; z-index: 10; background-color: white; box-shadow: 0 -0.125rem 0.5rem rgba(0,0,0,0.05); }
 .botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
+/* Responsividade */
+@media (max-width: 48rem) {
+  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+  .card { max-height: none; height: auto; margin: 1rem; }
+  .col-right, .col-right-recorrente { height: auto; overflow: visible; }
+  .opcoes { flex-direction: column; gap: 0.75rem; }
+  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
+}
+@media (max-width: 31.25rem) {
+  .title { font-size: 1.25rem; }
+  .progress-bar { flex-direction: column; gap: 0.5rem; }
+  .line { display: none; }
+}
 </style>
