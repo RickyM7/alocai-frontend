@@ -1,45 +1,45 @@
 <template>
-  <div>
+  <div class="page-content-layout">
     <div class="page-header">
-       <h1 class="text-2xl font-bold">{{ viewMode === 'list' ? 'Gerenciamento de Usuários' : `Editando Perfil` }}</h1>
-       <button v-if="viewMode === 'edit'" @click="voltarParaLista" class="btn btn-outline">
-         <Icon name="i-lucide-arrow-left" />
-         <span>Voltar para a Lista</span>
-       </button>
+      <h1 class="page-title">{{ viewMode === 'list' ? 'Gerenciamento de Usuários' : `Editando Perfil` }}</h1>
+      <button v-if="viewMode === 'edit'" @click="voltarParaLista" class="btn btn-outline">
+        <Icon name="i-lucide-arrow-left" />
+        <span>Voltar para a Lista</span>
+      </button>
     </div>
 
-    <div v-if="viewMode === 'edit' && usuarioSelecionado" class="mt-6">
+    <div v-if="viewMode === 'edit' && usuarioSelecionado" class="scrollable-content">
       <div class="w-full max-w-lg mx-auto">
         <div class="card">
-            <div class="card-header">
-                <h3 class="text-lg font-medium">Alterar Perfil de {{ usuarioSelecionado.nome }}</h3>
+          <div class="card-header">
+            <h3 class="text-lg font-medium">Alterar Perfil de {{ usuarioSelecionado.nome }}</h3>
+          </div>
+          <form @submit.prevent="salvarPerfil">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="perfil" class="form-label">Selecione um novo perfil</label>
+                <select id="perfil" v-model="perfilEditadoId" class="form-select">
+                  <option v-for="perfil in perfis" :key="perfil.id_perfil" :value="perfil.id_perfil">
+                    {{ perfil.nome_perfil }}
+                  </option>
+                </select>
+              </div>
+              <p class="text-sm text-gray-500 mt-4">
+                Email: <strong>{{ usuarioSelecionado.email }}</strong>
+              </p>
             </div>
-            <form @submit.prevent="salvarPerfil">
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="perfil" class="form-label">Selecione um novo perfil</label>
-                        <select id="perfil" v-model="perfilEditadoId" class="form-select">
-                            <option v-for="perfil in perfis" :key="perfil.id_perfil" :value="perfil.id_perfil">
-                                {{ perfil.nome_perfil }}
-                            </option>
-                        </select>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-4">
-                        Email: <strong>{{ usuarioSelecionado.email }}</strong>
-                    </p>
-                </div>
-                <div class="card-footer">
-                    <button type="button" class="btn btn-outline" @click="voltarParaLista">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                        {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
-                    </button>
-                </div>
-            </form>
+            <div class="card-footer">
+              <button type="button" class="btn btn-outline" @click="voltarParaLista">Cancelar</button>
+              <button type="submit" class="btn btn-primary" :disabled="isSaving">
+                {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
     
-    <div v-if="viewMode === 'list'" class="card mt-6">
+    <div v-if="viewMode === 'list'" class="card mt-6 scrollable-content">
       <div class="card-content">
         <table class="custom-table">
           <thead>
@@ -72,7 +72,6 @@
 </template>
 
 <script setup>
-// ... (script existente)
 import { ref, onMounted } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 
@@ -87,17 +86,17 @@ const viewMode = ref('list');
 const perfilEditadoId = ref(null);
 
 const fetchUsuarios = async () => {
-    const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/users/`);
-    usuarios.value = await response.json();
+  const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/users/`);
+  usuarios.value = await response.json();
 };
 const fetchPerfis = async () => {
-    const response = await authenticatedFetch(`${config.public.apiUrl}/api/perfil-acesso/`);
-    perfis.value = await response.json();
+  const response = await authenticatedFetch(`${config.public.apiUrl}/api/perfil-acesso/`);
+  perfis.value = await response.json();
 };
 
 const voltarParaLista = () => {
-    viewMode.value = 'list';
-    usuarioSelecionado.value = null;
+  viewMode.value = 'list';
+  usuarioSelecionado.value = null;
 };
 
 const iniciarEdicao = (usuario) => {
@@ -135,7 +134,28 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; }
+.page-content-layout { 
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  overflow: hidden; 
+}
+.page-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  flex-shrink: 0; 
+  padding-bottom: 1rem;
+}
+.page-title {
+  font-size: 1.75rem; 
+  font-weight: 700;
+}
+.scrollable-content { 
+  flex-grow: 1; 
+  overflow-y: auto; 
+  padding-right: 1rem; 
+}
 .card { background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .card-content { padding: 0; overflow-x: auto; }
 .card-header, .card-body, .card-footer { padding: 1.5rem; }
@@ -156,4 +176,11 @@ onMounted(async () => {
 .custom-table th, .custom-table td { padding: 0.75rem 1.5rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
 .custom-table tbody tr:last-child td { border-bottom: none; }
 .profile-badge { background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
+.custom-table thead th { 
+  position: sticky; 
+  top: 0; 
+  background-color: white; 
+  z-index: 1; 
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05);
+}
 </style>
