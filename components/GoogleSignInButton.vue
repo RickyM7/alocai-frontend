@@ -4,24 +4,20 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useRuntimeConfig } from '#app';
 import type { User } from '~/types/user';
 
-// Define as propriedades que o componente pode receber
 interface Props {
-  onSuccess: (userData: any) => void;
+  onSuccess: (response: any) => void;
   onError: (error: string) => void;
 }
 
 const props = defineProps<Props>();
 
-const router = useRouter();
 const config = useRuntimeConfig();
 const googleSignInButton = ref<HTMLElement | null>(null);
 const apiUrl = config.public.apiUrl;
 
-// Assinatura da interface para o objeto retornado pelo Google
 interface GoogleCredentialResponse {
   credential: string;
 }
@@ -31,52 +27,43 @@ interface UserResult {
   user_data: User;
 }
 
-// Função que será chamada quando o Google retornar o token
 const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
-  try {
+  if (window.location.pathname.includes('/login')) {
+    try {
+      const backendResponse = await fetch(`${apiUrl}/api/google-sign-in/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
 
-    // Envia o token para o backend para autenticação
-    const backendResponse = await fetch(`${apiUrl}/api/google-sign-in/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ credential: response.credential }),
-    });
-
-    const data: UserResult = await backendResponse.json();
-
-    if (backendResponse.ok) {
-      if (data.access) {
-        localStorage.setItem('access', data.access);
+      if (backendResponse.ok) {
+        const data: UserResult = await backendResponse.json();
+        if (data.access) {
+          localStorage.setItem('access', data.access);
+        }
+        props.onSuccess(data.user_data);
+      } else {
+        const errorData: { error: string } = await backendResponse.json();
+        props.onError(errorData.error || 'Erro desconhecido no backend.');
       }
-
-      props.onSuccess(data.user_data);
-      // Exemplo: Redirecionar para uma página após o login
-      // router.push('/dashboard');
-    } else {
-      console.error('Erro no login do backend:', data);
-      props.onError('Erro desconhecido no backend.');
+    } catch (error) {
+      props.onError('Erro de conexão ou ao processar o login.');
     }
-  } catch (error) {
-    console.error('Erro ao enviar token para o backend:', error);
-    props.onError('Erro de conexão ou ao processar o login.');
+  } else {
+    props.onSuccess(response);
   }
 };
 
 onMounted(() => {
-  // Verifica se o objeto 'google' está disponível globalmente
   if (window && (window as any).google) {
     (window as any).google.accounts.id.initialize({
-      client_id: config.public.googleClientId, // Substitua pelo seu Client ID do Google
+      client_id: config.public.googleClientId,
       callback: handleCredentialResponse,
     });
-
-    // Renderiza o botão de login do Google dentro do elemento ref
     if (googleSignInButton.value) {
       (window as any).google.accounts.id.renderButton(
         googleSignInButton.value,
-        { theme: 'outline', size: 'large', text: 'signin_with', width: '400' } // Personalize o estilo do botão
+        { theme: 'outline', size: 'large', text: 'signin_with', width: '300' }
       );
     }
   } else {
@@ -84,18 +71,3 @@ onMounted(() => {
   }
 });
 </script>
-
-<style scoped>
-/* Estilos específicos para o botão de login do Google */
-
-.google-sign-in-button {
-  display: inline-block;
-  border-radius: 5px;
-  padding: 5px;
-}
-
-.google-sign-in-button:hover {
-  background-color: #515E54;
-  opacity: 0.5;
-}
-</style>
