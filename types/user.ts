@@ -6,4 +6,5 @@ export interface User {
   data_criacao_conta: string;
   id_perfil: number;
   nome_perfil: string | null;
+  google_id?: string | null;
 }

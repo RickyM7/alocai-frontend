@@ -1,6 +1,5 @@
 <template>
   <div class="login-container">
-
     <div class="login-card">
       <div class="logo-section">
         <img src="/img/logo.png" alt="Logo Instituição" class="logo" />
@@ -9,24 +8,28 @@
         <h2 class="app-title">Agendamento de Recursos Compartilhados</h2>
       </div>
 
-      <!-- Botão Google Sign-In -->
       <GoogleSignInButton
-        :client-id="googleClientId"
         @success="handleLoginSuccess"
         @error="handleLoginError"
         class="google-sign-in-button"
       />
 
-      <!-- Mensagem de sucesso -->
+      <div class="divider">
+        <span>ou</span>
+      </div>
+
+      <div class="admin-login-container">
+        <NuxtLink to="/admin/login" class="admin-login-link">
+          Entrar como Administrador
+        </NuxtLink>
+      </div>
+
       <div v-if="message" class="success-message">
         {{ message }}
       </div>
-
-      <!-- Mensagem de erro -->
       <div v-if="erro" class="error-message">
         {{ erro }}
       </div>
-
     </div>
   </div>
   <NuxtLoadingIndicator />
@@ -34,42 +37,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import GoogleSignInButton from '~/components/GoogleSignInButton.vue'; // Ajuste o caminho se necessário
+import { ref, onMounted } from 'vue';
+import GoogleSignInButton from '~/components/GoogleSignInButton.vue';
 import type { User } from '~/types/user';
+
+definePageMeta({
+  layout: false
+})
 
 const message = ref<string | null>(null);
 const erro = ref<string | null>(null);
+const config = useRuntimeConfig();
+const googleClientId = config.public.googleClientId;
 
-/**
- * @description Função chamada quando o login com Google é bem-sucedido.
- */
 const handleLoginSuccess = (userData: User) => {
   message.value = `Login bem-sucedido! Bem-vindo, ${userData.nome}!`;
   if (userData) {
-    // Armazena os dados do usuário no localStorage
     localStorage.setItem('user_data', JSON.stringify(userData));
   }
-  
-  // Redirecionar para a página principal caso o id_perfil exista
+
   if (userData.id_perfil) {
     window.location.href = '/';
   } else {
-    useRouter().push('/onboarding'); // Redireciona para a página de onboarding se id_perfil não existir
+    useRouter().push('/onboarding');
   }
 };
 
-/**
- * @description Função chamada quando ocorre erro no login com Google.
- */
 const handleLoginError = (error: string) => {
   erro.value = `Erro no login: ${error}`;
   console.error('Erro na autenticação:', error);
 };
-
-const config = useRuntimeConfig()
-// Google Client ID - substitua pelo seu Client ID real
-const googleClientId = config.public.googleClientId
 
 onMounted(() => {
   const token = localStorage.getItem('access');
@@ -78,244 +75,51 @@ onMounted(() => {
   if (token && userJson) {
     try {
       const user: User = JSON.parse(userJson);
-      
-      // Verifica se o usuário já tem um perfil definido
       if (user.id_perfil) {
-        // Se tem perfil, vai para a página inicial
         window.location.href = '/';
       } else {
-        // Se não tem perfil, vai para o onboarding
         useRouter().push('/onboarding');
       }
     } catch (e) {
-      // Em caso de erro ao ler os dados, o usuário permanece na tela de login
       console.error("Não foi possível ler os dados do usuário, limpando armazenamento local.", e);
       localStorage.removeItem('access');
       localStorage.removeItem('user_data');
     }
   }
 });
-
-// Configuração da página
-definePageMeta({
-  layout: false // Desabilita o layout padrão para a página de login
-})
-
 </script>
 
 <style scoped>
-/* Variáveis CSS para cores e fontes, para facilitar a manutenção */
 :root {
-  --primary-color: #4CAF50; /* Um verde semelhante ao do botão */
   --text-color: #333;
   --light-text-color: #666;
   --border-color: #ddd;
   --background-color: #f0f2f5;
-  --card-background: #fff;
-  --link-color: #007bff;
 }
-
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: var(--background-color);
-  font-family: 'Arial', sans-serif; /* Considere usar uma fonte mais adequada, se houver */
-}
-
-.login-card {
-  background-color: #fff;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 100%;
-  max-width: 600px; /* Largura máxima para o cartão de login */
-  box-sizing: border-box;
-  height: 500px;
-}
-
-.logo-section {
-  margin-bottom: 30px;
-}
-
-.logo {
-  max-width: 80px; /* Ajuste o tamanho do logo conforme a imagem */
-  height: auto;
-  margin-bottom: 10px;
-}
-
-.welcome-text {
-  font-size: 1.2em;
-  color: var(--light-text-color);
-  margin-bottom: 5px;
-}
-
-.app-title {
-  font-size: 1.5em;
-  color: var(--text-color);
-  font-weight: bold;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Espaço entre os grupos de formulário */
-}
-
-.form-group {
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: var(--text-color);
-  font-size: 0.9em;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 15px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 1em;
-  box-sizing: border-box; /* Importante para o padding não expandir o input */
-  transition: border-color 0.3s ease;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2); /* Sombra suave ao focar */
-}
-
-/* Estilo específico para o grupo da senha */
-.password-group {
-  position: relative; /* Para posicionar o ícone do olho */
-}
-
-.password-input-wrapper {
-  position: relative;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: var(--light-text-color);
-  font-size: 1.2em; /* Tamanho do ícone/texto */
-}
-
-.forgot-password-link {
-  display: block;
-  text-align: right;
-  margin-top: 10px;
-  color: var(--link-color);
+.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
+.login-card { background-color: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 450px; box-sizing: border-box; }
+.logo-section { margin-bottom: 20px; }
+.logo { max-width: 80px; height: auto; margin-bottom: 10px; }
+.welcome-text { font-size: 1.2em; color: var(--light-text-color); margin-bottom: 5px; }
+.app-title { font-size: 1.5em; color: var(--text-color); font-weight: bold; }
+.google-sign-in-button { display: inline-block; margin-top: 1rem; }
+.divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--light-text-color); }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background-color: var(--border-color); }
+.divider span { padding: 0 15px; font-size: 0.9em; color: var(--light-text-color); }
+.admin-login-container { text-align: center; }
+.admin-login-link {
+  color: #6b7280;
   text-decoration: none;
   font-size: 0.9em;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
 }
-
-.forgot-password-link:hover,
-.create-account-link:hover {
-  text-decoration: underline;
+.admin-login-link:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
 }
-
-.login-button {
-  background-color: #3d5e40; /* Cor mais escura do botão na imagem */
-  color: white;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 5px;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 100%; /* Botão ocupa a largura total */
-  margin-top: 20px;
-}
-
-.login-button:hover {
-  background-color: #2e4a30; /* Um pouco mais escuro no hover */
-}
-
-.login-button:disabled {
-  background-color: #6b7c6f;
-  cursor: not-allowed;
-}
-
-/* Divisor */
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 30px 0;
-  color: var(--light-text-color);
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background-color: var(--border-color);
-}
-
-.divider span {
-  padding: 0 15px;
-  font-size: 0.9em;
-  color: var(--light-text-color);
-}
-
-/* Mensagem de erro */
-.error-message {
-  background-color: #ffebee;
-  border: 1px solid #f44336;
-  color: #c62828;
-  padding: 12px;
-  border-radius: 5px;
-  margin: 20px 0;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-.success-message {
-  background-color: #e8f5e9;
-  border: 1px solid #4caf50;
-  color: #2e7d32;
-  padding: 12px;
-  border-radius: 5px;
-  margin: 20px 0;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-.signup-section {
-  margin-top: 30px;
-  font-size: 0.9em;
-  color: var(--light-text-color);
-}
-
-.create-account-link {
-  color: var(--link-color);
-  text-decoration: none;
-  font-weight: bold;
-}
-
-/* Responsividade básica (opcional, mas bom ter) */
-@media (max-width: 600px) {
-  .login-card {
-    margin: 20px; /* Adiciona um pouco de margem em telas menores */
-    padding: 30px 20px;
-  }
-  .app-title {
-    font-size: 1.3em;
-  }
-  .login-button {
-    padding: 12px 15px;
-    font-size: 1em;
-  }
-}
+.error-message { background-color: #ffebee; border: 1px solid #f44336; color: #c62828; padding: 12px; border-radius: 5px; margin-top: 20px; font-size: 0.9em; text-align: center; }
+.success-message { background-color: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 5px; margin-top: 20px; font-size: 0.9em; text-align: center; }
 </style>

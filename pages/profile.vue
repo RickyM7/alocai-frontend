@@ -43,8 +43,59 @@
             </div>
           </div>
           
-          <div class="profile-actions">
-            <button class="btn-primary" @click="handleSave">Salvar Alterações</button>
+          <div v-if="user.nome_perfil === 'Administrador'" class="admin-section">
+            <h3 class="section-title">Integrações</h3>
+            <div class="detail-item">
+              <div class="detail-label">
+                <strong>Conta Google</strong><br>
+                <small>Vincule sua conta para fazer login com o Google.</small>
+              </div>
+              <div class="action-area">
+                <div v-if="!user.google_id">
+                  <GoogleSignInButton @success="linkGoogleAccount" @error="handleLinkError" />
+                </div>
+                <span v-else class="profile-badge-success">Vinculada</span>
+              </div>
+            </div>
+            <p v-if="linkError" class="text-error">{{ linkError }}</p>
+            
+            <h3 class="section-title" style="margin-top: 1.5rem;">Segurança</h3>
+            <div v-if="!isEditingPassword" class="detail-item">
+              <div class="detail-label">
+                <strong>Senha de Acesso</strong><br>
+                <small>Use para entrar pela tela de login de administrador.</small>
+              </div>
+              <div class="action-area">
+                <button @click="startPasswordEdit" class="btn-secondary">Alterar Senha</button>
+              </div>
+            </div>
+
+            <form v-else @submit.prevent="changePassword" class="password-form">
+              <div class="form-group">
+                <label for="new-password">Nova Senha</label>
+                <div class="password-input-wrapper">
+                  <input 
+                    id="new-password"
+                    :type="showPassword ? 'text' : 'password'" 
+                    v-model="newPassword" 
+                    class="form-input" 
+                    placeholder="Mínimo de 8 caracteres" 
+                    required 
+                    minlength="8" />
+                  <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                    <Icon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" />
+                  </button>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" @click="cancelPasswordEdit" class="btn btn-outline">Cancelar</button>
+                <button type="submit" class="btn btn-primary" :disabled="isSavingPassword">
+                  <Icon v-if="isSavingPassword" name="i-lucide-loader-2" class="animate-spin" />
+                  <span>Salvar Nova Senha</span>
+                </button>
+              </div>
+            </form>
+            <p v-if="passwordError" class="text-error">{{ passwordError }}</p>
           </div>
         </div>
       </div>
@@ -56,11 +107,21 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { User } from '~/types/user';
+import GoogleSignInButton from '~/components/GoogleSignInButton.vue';
+import { authenticatedFetch } from '~/utils/api';
 
 const router = useRouter();
 const user = ref<User | null>(null);
 const isLoading = ref(true);
 const imageLoadError = ref(false);
+const linkError = ref<string | null>(null);
+const config = useRuntimeConfig();
+
+const newPassword = ref('');
+const isSavingPassword = ref(false);
+const passwordError = ref<string | null>(null);
+const isEditingPassword = ref(false);
+const showPassword = ref(false);
 
 onMounted(() => {
   const userDataString = localStorage.getItem('user_data');
@@ -70,97 +131,115 @@ onMounted(() => {
   }
   user.value = JSON.parse(userDataString);
   isLoading.value = false;
-  imageLoadError.value = false;
 });
 
 const formatarData = (dataString: string): string => {
   try {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    return new Date(dataString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   } catch {
     return 'Data inválida';
   }
 };
 
-const handleImageError = () => {
-  imageLoadError.value = true;
-  console.warn('Falha ao carregar a foto do perfil na página de perfil.');
+const handleImageError = () => { imageLoadError.value = true; };
+const handleLinkError = (error: string) => { linkError.value = `Erro: ${error}`; };
+
+const linkGoogleAccount = async (googleResponse: { credential?: string }) => {
+    if (!googleResponse.credential) {
+        linkError.value = "Não foi possível obter a credencial do Google. Tente novamente.";
+        return;
+    }
+    linkError.value = null;
+    try {
+        const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/link-google/`, {
+            method: 'POST',
+            body: JSON.stringify({ credential: googleResponse.credential }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Falha ao vincular a conta.');
+        }
+        localStorage.setItem('user_data', JSON.stringify(data.user_data));
+        user.value = data.user_data;
+        alert('Conta Google vinculada com sucesso!');
+    } catch (err: any) {
+        linkError.value = err.message;
+    }
 };
 
-const handleSave = () => {
-  alert('Funcionalidade de salvar ainda não implementada.');
+const startPasswordEdit = () => {
+  isEditingPassword.value = true;
+  passwordError.value = null;
+  newPassword.value = '';
+  showPassword.value = false;
+};
+
+const cancelPasswordEdit = () => {
+  isEditingPassword.value = false;
+};
+
+const changePassword = async () => {
+  if (!newPassword.value) {
+    passwordError.value = "O campo de senha não pode estar vazio.";
+    return;
+  }
+  isSavingPassword.value = true;
+  passwordError.value = null;
+  try {
+    const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/change-password/`, {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword.value }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Não foi possível alterar a senha.');
+    }
+    alert(data.detail);
+    cancelPasswordEdit();
+  } catch (err: any) {
+    passwordError.value = err.message;
+  } finally {
+    isSavingPassword.value = false;
+  }
 };
 </script>
 
 <style scoped>
-.page-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.card {
-  width: 100%;
-  max-width: 700px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-}
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-  color: #1f2937;
-}
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.profile-picture {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.profile-picture-placeholder.profile-page-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: #9ca3af;
-  border: 3px solid #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
+.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.card { width: 100%; max-width: 700px; background-color: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 2rem; }
+.title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: #1f2937; }
+.profile-header { display: flex; align-items: center; gap: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+.profile-picture { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+.profile-picture-placeholder.profile-page-placeholder { width: 80px; height: 80px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #9ca3af; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 .user-name { font-size: 1.5rem; font-weight: 600; }
 .user-email { color: #6b7280; }
 .profile-details { display: grid; gap: 1rem; }
 .detail-item { display: flex; justify-content: space-between; align-items: center; }
 .detail-label { font-weight: 500; color: #4b5563; }
-.profile-badge {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.profile-actions { margin-top: 2rem; text-align: right; }
-.btn-primary { background-color: #374151; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+.detail-value { font-weight: normal; }
+.profile-badge { background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
 .status-container { text-align: center; padding: 2rem; color: #6b7280; }
 .spinner { font-size: 2.5rem; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.admin-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
+.section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #1f2937; }
+.detail-label small { color: #6b7280; font-weight: 400; font-size: 0.8em; display: block; margin-top: 4px; }
+.action-area { min-width: 220px; text-align: right; }
+.profile-badge-success { background-color: #dcfce7; color: #166534; padding: 0.35rem 0.8rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
+.text-error { color: #b91c1c; font-size: 0.9em; margin-top: 0.5rem; text-align: right; }
+
+/* Estilos para o formulário de senha */
+.password-form { background-color: #f9fafb; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+.form-group { width: 100%; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9em; color: #374151; }
+.password-input-wrapper { position: relative; display: flex; align-items: center; }
+.form-input { flex-grow: 1; padding: 0.6rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; }
+.password-toggle-btn { position: absolute; right: 0.5rem; background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1.25rem; padding: 0.25rem; }
+.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 600; }
+.btn-primary { background-color: #4f46e5; color: white; }
+.btn-secondary { background-color: #fff; color: #4b5563; border-color: #d1d5db; border: 1px solid #d1d5db; }
+.btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; border: 1px solid #d1d5db; }
+.btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.animate-spin { animation: spin 1s linear infinite; }
 </style>

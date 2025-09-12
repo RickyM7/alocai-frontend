@@ -47,7 +47,7 @@
               <th>Nome</th>
               <th>Email</th>
               <th>Perfil</th>
-              <th>Ações</th>
+              <th class="text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -57,10 +57,17 @@
               <td>
                 <span class="profile-badge">{{ usuario.nome_perfil || 'Não definido' }}</span>
               </td>
-              <td>
+              <td class="actions-cell">
                 <button @click="iniciarEdicao(usuario)" class="btn btn-ghost">
                   <Icon name="i-lucide-user-cog" />
                   <span>Alterar Perfil</span>
+                </button>
+                <button 
+                  @click="confirmarDelecao(usuario)" 
+                  class="btn btn-ghost btn-danger"
+                  :disabled="usuario.id_usuario === loggedInUser?.id_usuario"
+                  title="Remover usuário">
+                  <Icon name="i-lucide-trash-2" />
                 </button>
               </td>
             </tr>
@@ -84,6 +91,7 @@ const isSaving = ref(false);
 const usuarioSelecionado = ref(null);
 const viewMode = ref('list');
 const perfilEditadoId = ref(null);
+const loggedInUser = ref(null);
 
 const fetchUsuarios = async () => {
   const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/users/`);
@@ -97,6 +105,7 @@ const fetchPerfis = async () => {
 const voltarParaLista = () => {
   viewMode.value = 'list';
   usuarioSelecionado.value = null;
+  perfilEditadoId.value = null;
 };
 
 const iniciarEdicao = (usuario) => {
@@ -119,6 +128,7 @@ const salvarPerfil = async () => {
         throw new Error(errorData.error || 'Falha ao atualizar o perfil.');
     }
 
+    alert('Perfil atualizado com sucesso!');
     voltarParaLista();
     await fetchUsuarios();
   } catch (error) {
@@ -128,34 +138,40 @@ const salvarPerfil = async () => {
   }
 };
 
+const confirmarDelecao = async (usuario) => {
+  if (confirm(`Tem certeza que deseja remover o usuário "${usuario.nome}"? Esta ação não pode ser desfeita.`)) {
+    try {
+      const response = await authenticatedFetch(`${config.public.apiUrl}/api/user/${usuario.id_usuario}/`, {
+        method: 'DELETE',
+      });
+
+      if (response.status !== 204) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao remover o usuário.');
+      }
+
+      alert('Usuário removido com sucesso.');
+      await fetchUsuarios();
+    } catch (error) {
+      alert(`Erro: ${error.message}`);
+    }
+  }
+};
+
 onMounted(async () => {
+  const userDataString = localStorage.getItem('user_data');
+  if (userDataString) {
+    loggedInUser.value = JSON.parse(userDataString);
+  }
   await Promise.all([fetchUsuarios(), fetchPerfis()]);
 });
 </script>
 
 <style scoped>
-.page-content-layout { 
-  display: flex; 
-  flex-direction: column; 
-  height: 100%; 
-  overflow: hidden; 
-}
-.page-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  flex-shrink: 0; 
-  padding-bottom: 1rem;
-}
-.page-title {
-  font-size: 1.75rem; 
-  font-weight: 700;
-}
-.scrollable-content { 
-  flex-grow: 1; 
-  overflow-y: auto; 
-  padding-right: 1rem; 
-}
+.page-content-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.page-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; padding-bottom: 1rem; }
+.page-title { font-size: 1.75rem; font-weight: 700; }
+.scrollable-content { flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
 .card { background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .card-content { padding: 0; overflow-x: auto; }
 .card-header, .card-body, .card-footer { padding: 1.5rem; }
@@ -174,13 +190,12 @@ onMounted(async () => {
 .form-select:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3); }
 .custom-table { width: 100%; border-collapse: collapse; }
 .custom-table th, .custom-table td { padding: 0.75rem 1.5rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.custom-table th.text-right { text-align: right; }
 .custom-table tbody tr:last-child td { border-bottom: none; }
 .profile-badge { background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
-.custom-table thead th { 
-  position: sticky; 
-  top: 0; 
-  background-color: white; 
-  z-index: 1; 
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05);
-}
+.actions-cell { text-align: right; display: flex; justify-content: flex-end; gap: 0.25rem; }
+.btn-danger { color: #ef4444; }
+.btn-danger:hover:not(:disabled) { background-color: #fee2e2; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.custom-table thead th { position: sticky; top: 0; background-color: white; z-index: 1; box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05); }
 </style>
