@@ -110,12 +110,29 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref('em_andamento');
 
+const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
+    const statuses = new Set(reservas.map(r => r.status_agendamento));
+
+    if (statuses.has('pendente')) {
+        return statuses.has('aprovado') || statuses.has('negado') ? 'Parcialmente Aprovado' : 'Pendente';
+    }
+    if (statuses.has('aprovado')) {
+        return (statuses.has('negado') || statuses.has('concluido')) ? 'Parcialmente Aprovado' : 'Aprovado';
+    }
+    if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
+    if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
+    
+    if (statuses.has('concluido') || statuses.has('negado')) return 'Finalizado';
+
+    return 'Indefinido';
+};
+
 const filteredReservas = computed(() => {
-  const finalStatuses = ['Concluído', 'Negado'];
-  if (activeTab.value === 'historico') {
-    return reservasAgrupadas.value.filter(grupo => finalStatuses.includes(grupo.status_geral));
+  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado'];
+  if (activeTab.value === 'em_andamento') {
+    return reservasAgrupadas.value.filter(grupo => inProgressStatuses.includes(grupo.status_geral));
   }
-  return reservasAgrupadas.value.filter(grupo => !finalStatuses.includes(grupo.status_geral));
+  return reservasAgrupadas.value.filter(grupo => !inProgressStatuses.includes(grupo.status_geral));
 });
 
 const toggleGroup = (id: number) => {
@@ -143,18 +160,8 @@ const getStatusClass = (status: string): string => {
   if (s.includes('aprovado')) return 'status-success';
   if (s.includes('pendente')) return 'status-warning';
   if (s.includes('negado')) return 'status-error';
-  if (s.includes('concluido') || s.includes('concluído')) return 'status-info';
+  if (s.includes('concluido') || s.includes('finalizado')) return 'status-info';
   return 'status-default';
-};
-
-const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
-  const statuses = new Set(reservas.map(r => r.status_agendamento));
-  if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
-  if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
-  if (statuses.has('pendente')) return 'Pendente';
-  if (statuses.has('aprovado') && !statuses.has('negado') && !statuses.has('pendente')) return 'Aprovado';
-  if (statuses.has('aprovado')) return 'Parcialmente Aprovado';
-  return Array.from(statuses)[0] || 'Indefinido';
 };
 
 const fetchReservas = async () => {
