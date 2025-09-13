@@ -94,6 +94,11 @@ const isLoading = ref(true);
 const error = ref(null);
 const expandedSolicitacoes = ref([]);
 
+const parseDateAsLocal = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const calcularStatusGeral = (reservas) => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
     if (statuses.has('pendente')) return 'Pendente';
@@ -102,6 +107,44 @@ const calcularStatusGeral = (reservas) => {
     if (statuses.has('negado') && !statuses.has('aprovado') && !statuses.has('pendente')) return 'Negado';
     if (statuses.has('aprovado')) return 'Parcialmente Aprovado';
     return Array.from(statuses)[0] || 'Indefinido';
+};
+
+const verificarConflitosHorario = (agendamentoAprovado) => {
+  const conflitos = [];
+  
+  solicitacoes.value.forEach(solicitacao => {
+    solicitacao.agendamentos_filhos.forEach(agendamento => {
+      // Só verifica conflitos com agendamentos pendentes de outros pais
+      if (agendamento.status_agendamento === 'pendente' && 
+          agendamento.id_agendamento !== agendamentoAprovado.id_agendamento &&
+          agendamento.id_recurso === agendamentoAprovado.id_recurso &&
+          agendamento.data_inicio === agendamentoAprovado.data_inicio) {
+        
+        // Verifica sobreposição de horários
+        const inicioA = agendamentoAprovado.hora_inicio;
+        const fimA = agendamentoAprovado.hora_fim;
+        const inicioB = agendamento.hora_inicio;
+        const fimB = agendamento.hora_fim;
+        
+        if (inicioA < fimB && inicioB < fimA) {
+          conflitos.push(agendamento.id_agendamento);
+        }
+      }
+    });
+  });
+  
+  return conflitos;
+};
+
+const rejeitarConflitos = async (idsConflitantes) => {
+  const promises = idsConflitantes.map(id => 
+    authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/${id}/status/`, {
+      method: 'PUT',
+      body: JSON.stringify({ status_agendamento: 'negado' }),
+    })
+  );
+  
+  await Promise.all(promises);
 };
 
 const fetchSolicitacoes = async () => {
@@ -141,7 +184,23 @@ const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    await fetchSolicitacoes(); // Recarrega os dados para atualizar a interface
+    // Se aprovando todas, verificar conflitos para cada agendamento filho
+    if (novoStatus === 'aprovado') {
+      const todosConflitos = new Set();
+      
+      solicitacaoPai.agendamentos_filhos.forEach(agendamento => {
+        if (agendamento.status_agendamento === 'pendente') {
+          const conflitos = verificarConflitosHorario(agendamento);
+          conflitos.forEach(id => todosConflitos.add(id));
+        }
+      });
+      
+      if (todosConflitos.size > 0) {
+        await rejeitarConflitos(Array.from(todosConflitos));
+      }
+    }
+    
+    await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
   }
@@ -155,7 +214,15 @@ const atualizarStatusFilho = async (solicitacaoPai, agendamentoFilho, novoStatus
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    await fetchSolicitacoes(); // Recarrega os dados para atualizar a interface
+    // Se aprovado, rejeitar agendamentos conflitantes
+    if (novoStatus === 'aprovado') {
+      const conflitos = verificarConflitosHorario(agendamentoFilho);
+      if (conflitos.length > 0) {
+        await rejeitarConflitos(conflitos);
+      }
+    }
+    
+    await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
   }
@@ -165,7 +232,19 @@ const editarSolicitacao = (solicitacao) => {
   alert(`Funcionalidade "Editar Solicitação ${solicitacao.id_agendamento_pai}" ainda não implementada.`);
 };
 
-const formatarData = (dataString) => new Date(dataString).toLocaleDateString('pt-BR');
+const formatarData = (dataString) => {
+  if (!dataString) return 'Data inválida';
+  
+  const dateOnly = dataString.includes('T') ? dataString.split('T')[0] : dataString;
+  
+  try {
+    const date = parseDateAsLocal(dateOnly);
+    return date.toLocaleDateString('pt-BR');
+  } catch (error) {
+    return 'Data inválida';
+  }
+};
+
 const getStatusClass = (status) => {
   if (!status) return 'status-default';
   const s = status.toLowerCase();
@@ -180,18 +259,18 @@ onMounted(fetchSolicitacoes);
 
 <style scoped>
 .page-content-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-.page-title { font-size: 1.75rem; font-weight: 700; padding-bottom: 1rem; flex-shrink: 0; background-color: transparent;  position: sticky; top: -2rem; padding-top: 2rem; z-index: 10; }
+.page-title { font-size: 1.75rem; font-weight: 700; padding-bottom: 1rem; flex-shrink: 0; background-color: transparent; position: sticky; top: -2rem; padding-top: 2rem; z-index: 10; }
 .scrollable-list { flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
 .solicitacoes-container { display: flex; flex-direction: column; gap: 1rem; }
 .card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
-.card-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #e5e7eb; }
+.card-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; border-bottom: 1px solid #e5e7eb; }
 .card-header:hover { background-color: #f9fafb; }
-.header-info { display: flex; align-items: center; gap: 1rem; }
-.expand-icon { font-size: 1.25rem; color: #9ca3af; }
-.recurso-nome { font-size: 1.25rem; font-weight: 600; }
-.solicitante-info { font-size: 0.875rem; color: #6b7280; }
-.header-actions { display: flex; align-items: center; gap: 0.75rem; }
-.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+.header-info { display: flex; align-items: flex-start; gap: 1rem; flex: 1; }
+.expand-icon { font-size: 1.25rem; color: #9ca3af; margin-top: 0.125rem; }
+.recurso-nome { font-size: 1.25rem; font-weight: 600; margin: 0; }
+.solicitante-info { font-size: 0.875rem; color: #6b7280; margin: 0; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
 .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
 .btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; }
 .btn-outline:hover { background-color: #f9fafb; }
@@ -211,13 +290,42 @@ onMounted(fetchSolicitacoes);
 .status-container { text-align: center; padding: 2rem; color: #6b7280; }
 .spinner { font-size: 2rem; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.actions-cell { display: flex; gap: 0.5rem; }
-.child-table-wrapper { max-height: 200px; overflow-y: auto; }
+.actions-cell { display: flex; gap: 0.5rem; justify-content: center; }
+.child-table-wrapper { max-height: 200px; overflow-y: auto; overflow-x: auto; }
 .child-table-wrapper .custom-table th { position: sticky; top: 0; background-color: #f9fafb; z-index: 1; }
-.btn-approve, .btn-deny { width: 24px; height: 24px; border: none; border-radius: 50%; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; }
+.btn-approve, .btn-deny { width: 24px; height: 24px; border: none; border-radius: 50%; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .btn-approve::after, .btn-deny::after { content: ''; color: white; font-weight: bold; }
 .btn-approve { background-color: #22c55e; }
 .btn-approve::after { content: '✓'; }
 .btn-deny { background-color: #ef4444; }
 .btn-deny::after { content: '✕'; font-size: 0.9rem; }
+@media (max-width: 48rem) {
+  .scrollable-list { padding-right: 0; }
+  .page-title { font-size: 1.5rem; }
+  .card-header { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
+  .header-info { align-items: flex-start; }
+  .header-actions { justify-content: flex-start; margin-top: 0.5rem; }
+  .recurso-nome { font-size: 1.125rem; }
+  .btn-sm { padding: 0.5rem; font-size: 0.8rem; }
+  .btn-sm span { display: none; }
+  .custom-table { font-size: 0.875rem; }
+  .custom-table th, .custom-table td { padding: 0.5rem; }
+  .child-table-wrapper { max-height: 300px; }
+  .card-content { padding: 1rem; }
+}
+@media (max-width: 31.25rem) {
+  .page-title { font-size: 1.25rem; }
+  .card-header { padding: 0.75rem; }
+  .header-info { gap: 0.5rem; }
+  .recurso-nome { font-size: 1rem; }
+  .solicitante-info { font-size: 0.8rem; }
+  .header-actions { gap: 0.5rem; }
+  .btn-sm { padding: 0.375rem 0.5rem; font-size: 0.75rem; }
+  .status-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+  .custom-table { font-size: 0.8rem; }
+  .custom-table th, .custom-table td { padding: 0.375rem 0.5rem; }
+  .btn-approve, .btn-deny { width: 20px; height: 20px; }
+  .card-content { padding: 0.75rem; }
+  .details-grid { font-size: 0.8rem; }
+}
 </style>
