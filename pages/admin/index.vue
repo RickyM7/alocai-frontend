@@ -45,6 +45,9 @@
                 <button class="btn btn-success btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'aprovado')">Aprovar Todas</button>
                 <button class="btn btn-danger btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'negado')">Negar Todas</button>
               </template>
+              <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger" title="Excluir solicitação">
+                <Icon name="i-lucide-trash-2" />
+              </button>
             </div>
           </div>
 
@@ -131,26 +134,22 @@ const calcularStatusGeral = (reservas) => {
 
 const verificarConflitosHorario = (agendamentoAprovado) => {
   const conflitos = [];
-  
   solicitacoes.value.forEach(solicitacao => {
     solicitacao.agendamentos_filhos.forEach(agendamento => {
       if (agendamento.status_agendamento === 'pendente' && 
           agendamento.id_agendamento !== agendamentoAprovado.id_agendamento &&
           agendamento.id_recurso === agendamentoAprovado.id_recurso &&
           agendamento.data_inicio === agendamentoAprovado.data_inicio) {
-        
         const inicioA = agendamentoAprovado.hora_inicio;
         const fimA = agendamentoAprovado.hora_fim;
         const inicioB = agendamento.hora_inicio;
         const fimB = agendamento.hora_fim;
-        
         if (inicioA < fimB && inicioB < fimA) {
           conflitos.push(agendamento.id_agendamento);
         }
       }
     });
   });
-  
   return conflitos;
 };
 
@@ -161,7 +160,6 @@ const rejeitarConflitos = async (idsConflitantes) => {
       body: JSON.stringify({ status_agendamento: 'negado' }),
     })
   );
-  
   await Promise.all(promises);
 };
 
@@ -196,7 +194,7 @@ const isExpanded = (id) => expandedSolicitacoes.value.includes(id);
 
 const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
   try {
-    const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${solicitacaoPai.id_agendamento_pai}/status/`, {
+    const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${solicitacaoPai.id_agendamento_pai}/`, {
       method: 'PUT',
       body: JSON.stringify({ status_agendamento: novoStatus }),
     });
@@ -204,19 +202,16 @@ const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
     
     if (novoStatus === 'aprovado') {
       const todosConflitos = new Set();
-      
       solicitacaoPai.agendamentos_filhos.forEach(agendamento => {
         if (agendamento.status_agendamento === 'pendente') {
           const conflitos = verificarConflitosHorario(agendamento);
           conflitos.forEach(id => todosConflitos.add(id));
         }
       });
-      
       if (todosConflitos.size > 0) {
         await rejeitarConflitos(Array.from(todosConflitos));
       }
     }
-    
     await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
@@ -237,7 +232,6 @@ const atualizarStatusFilho = async (solicitacaoPai, agendamentoFilho, novoStatus
         await rejeitarConflitos(conflitos);
       }
     }
-    
     await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
@@ -248,11 +242,27 @@ const editarSolicitacao = (solicitacao) => {
   alert(`Funcionalidade "Editar Solicitação ${solicitacao.id_agendamento_pai}" ainda não implementada.`);
 };
 
+const confirmarDelecao = async (solicitacao) => {
+  if (confirm(`Tem certeza que deseja excluir permanentemente a solicitação para "${solicitacao.recurso}" de "${solicitacao.solicitante}"?`)) {
+    try {
+      const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${solicitacao.id_agendamento_pai}/`, {
+        method: 'DELETE',
+      });
+      if (response.status !== 204) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Falha ao excluir a solicitação.');
+      }
+      alert('Solicitação excluída com sucesso.');
+      await fetchSolicitacoes();
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
+  }
+};
+
 const formatarData = (dataString) => {
   if (!dataString) return 'Data inválida';
-  
   const dateOnly = dataString.includes('T') ? dataString.split('T')[0] : dataString;
-  
   try {
     const date = parseDateAsLocal(dateOnly);
     return date.toLocaleDateString('pt-BR');
@@ -320,6 +330,8 @@ onMounted(fetchSolicitacoes);
 .btn-approve::after { content: '✓'; }
 .btn-deny { background-color: #ef4444; }
 .btn-deny::after { content: '✕'; font-size: 0.9rem; }
+.btn-icon-danger { background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: #ef4444; display: flex; align-items: center; transition: background-color 0.2s; }
+.btn-icon-danger:hover { background-color: #fee2e2; }
 @media (max-width: 48rem) {
   .scrollable-list { padding-right: 0; }
   .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
