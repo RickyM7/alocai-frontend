@@ -146,21 +146,43 @@ onMounted(() => {
 .col-resumo h3 { margin-top: 0; border-bottom: 0.063rem solid #e5e7eb; padding-bottom: 0.5rem; }
 .resumo-item { margin-bottom: 1rem; }
 .resumo-item .label { display: block; font-size: 0.9rem; color: #6b7280; }
-.resumo-item .value { font-weight: 500; }
+.resumo-item .value { font-weight: 500; word-break: break-word; }
 .formulario { display: flex; flex-direction: column; gap: 1.5rem; }
 .campo label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
 .campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
 .campo textarea { min-height: 6.25rem; resize: vertical; }
 .card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; flex-shrink: 0; background-color: white; box-shadow: 0 -0.125rem 0.5rem rgba(0,0,0,0.05); }
 .botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
-@media (max-width: 48rem) {
-  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
-  .card { max-height: none; height: auto; margin: 1rem; }
-  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
+
+@media (max-width: 64rem) {
+  .card-content-grid { grid-template-columns: 16rem 1fr; gap: 1.5rem; padding: 1.5rem; }
+  .col-resumo { padding: 1rem; }
 }
+
+@media (max-width: 48rem) {
+  .card { max-height: none; height: auto; margin: 1rem; }
+  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
+  .card-header { padding: 1rem 1.25rem; }
+  .title { font-size: 1.5rem; }
+}
+
 @media (max-width: 31.25rem) {
-  .title { font-size: 1.25rem; }
-  .progress-bar { flex-direction: column; gap: 0.5rem; }
+  .page-container { align-items: stretch; justify-content: flex-start; }
+  .card { border-radius: 0; margin: 0; min-height: 100vh; max-height: none; }
+  .card-header { padding: 1rem; }
+  .card-content-grid { padding: 1rem; gap: 1rem; }
+  .progress-bar { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
   .line { display: none; }
+  .title { font-size: 1.25rem; }
+  .col-resumo { padding: 1rem; border-radius: 0.5rem; }
+  .campo input, .campo textarea { padding: 0.75rem; font-size: 1rem; }
+  .card-footer { padding: 1rem; }
+}
+
+@media (max-width: 20rem) {
+  .card-content-grid { padding: 0.75rem; gap: 0.75rem; }
+  .card-header { padding: 0.75rem; }
+  .title { font-size: 1.125rem; }
 }
 </style>

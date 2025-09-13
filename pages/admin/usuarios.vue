@@ -39,40 +39,43 @@
       </div>
     </div>
     
-    <div v-if="viewMode === 'list'" class="card mt-6 scrollable-content">
-      <div class="card-content">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Email</th>
-              <th>Perfil</th>
-              <th class="text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="usuario in usuarios" :key="usuario.id_usuario">
-              <td>{{ usuario.nome }}</td>
-              <td>{{ usuario.email }}</td>
-              <td>
-                <span class="profile-badge">{{ usuario.nome_perfil || 'Não definido' }}</span>
-              </td>
-              <td class="actions-cell">
-                <button @click="iniciarEdicao(usuario)" class="btn btn-ghost">
-                  <Icon name="i-lucide-user-cog" />
-                  <span>Alterar Perfil</span>
-                </button>
-                <button 
-                  @click="confirmarDelecao(usuario)" 
-                  class="btn btn-ghost btn-danger"
-                  :disabled="usuario.id_usuario === loggedInUser?.id_usuario"
-                  title="Remover usuário">
-                  <Icon name="i-lucide-trash-2" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="viewMode === 'list'" class="scrollable-content">
+      <div class="usuarios-grid">
+        <div v-for="usuario in usuarios" :key="usuario.id_usuario" class="usuario-card">
+          <div class="usuario-header">
+            <div class="usuario-info">
+              <div class="usuario-avatar">
+                <Icon name="i-lucide-user" class="avatar-icon" />
+              </div>
+              <div class="usuario-details">
+                <h3 class="usuario-nome">{{ usuario.nome }}</h3>
+                <p class="usuario-email">{{ usuario.email }}</p>
+              </div>
+            </div>
+            <div class="usuario-actions">
+              <button @click="iniciarEdicao(usuario)" class="btn-action btn-primary" title="Alterar Perfil">
+                <Icon name="i-lucide-user-cog" />
+              </button>
+              <button 
+                @click="confirmarDelecao(usuario)" 
+                class="btn-action btn-danger"
+                :disabled="usuario.id_usuario === loggedInUser?.id_usuario"
+                title="Remover usuário">
+                <Icon name="i-lucide-trash-2" />
+              </button>
+            </div>
+          </div>
+          
+          <div class="usuario-content">
+            <div class="usuario-detail">
+              <div class="detail-label">
+                <Icon name="i-lucide-shield-check" class="detail-icon" />
+                <span>Perfil de Acesso</span>
+              </div>
+              <span class="profile-badge">{{ usuario.nome_perfil || 'Não definido' }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -168,34 +171,89 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-content-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-.page-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; padding-bottom: 1rem; }
-.page-title { font-size: 1.75rem; font-weight: 700; }
-.scrollable-content { flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
-.card { background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.card-content { padding: 0; overflow-x: auto; }
-.card-header, .card-body, .card-footer { padding: 1.5rem; }
-.card-header { border-bottom: 1px solid #e5e7eb; }
-.card-footer { border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.75rem; }
-.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-.btn-primary { background-color: #4f46e5; color: white; border-color: #4f46e5; }
-.btn-primary:hover { background-color: #4338ca; }
-.btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; }
-.btn-outline:hover { background-color: #f9fafb; }
-.btn-ghost { background-color: transparent; border-color: transparent; color: #6b7280; }
-.btn-ghost:hover { background-color: #f3f4f6; }
-.btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.form-label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
-.form-select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; transition: border-color 0.2s, box-shadow 0.2s; }
-.form-select:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3); }
-.custom-table { width: 100%; border-collapse: collapse; }
-.custom-table th, .custom-table td { padding: 0.75rem 1.5rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-.custom-table th.text-right { text-align: right; }
-.custom-table tbody tr:last-child td { border-bottom: none; }
-.profile-badge { background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
-.actions-cell { text-align: right; display: flex; justify-content: flex-end; gap: 0.25rem; }
-.btn-danger { color: #ef4444; }
-.btn-danger:hover:not(:disabled) { background-color: #fee2e2; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.custom-table thead th { position: sticky; top: 0; background-color: white; z-index: 1; box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05); }
+.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.page-header{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;padding-bottom:1rem}
+.page-title{font-size:1.75rem;font-weight:700;color:#111827}
+.scrollable-content{flex-grow:1;overflow-y:auto;padding:0rem}
+.card{background-color:white;border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);overflow:hidden}
+.card-header,.card-body,.card-footer{padding:1.5rem}
+.card-header{border-bottom:1px solid #e5e7eb;background-color:#f9fafb}
+.card-footer{border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.75rem;background-color:#f9fafb}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;color:#374151}
+.form-select{width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:.375rem;background-color:white;transition:border-color .2s,box-shadow .2s}
+.form-select:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 2px rgba(79,70,229,0.3)}
+.usuarios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;padding:1rem}
+.usuario-card{background-color:white;border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);overflow:hidden;transition:all .2s;border:1px solid #e5e7eb}
+.usuario-card:hover{box-shadow:0 4px 6px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.06);border-color:#d1d5db}
+.usuario-header{display:flex;justify-content:space-between;align-items:flex-start;padding:1.25rem 1.25rem 1rem;border-bottom:1px solid #f3f4f6}
+.usuario-info{display:flex;align-items:center;gap:1rem;flex:1;min-width:0}
+.usuario-avatar{width:48px;height:48px;border-radius:50%;background-color:#e5e7eb;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar-icon{font-size:1.5rem;color:#6b7280}
+.usuario-details{flex:1;min-width:0}
+.usuario-nome{font-size:1.125rem;font-weight:600;color:#111827;margin:0 0 .25rem 0;line-height:1.4}
+.usuario-email{font-size:.875rem;color:#6b7280;margin:0;word-break:break-all}
+.usuario-actions{display:flex;gap:.375rem;flex-shrink:0}
+.usuario-content{padding:1.25rem}
+.usuario-detail{display:flex;flex-direction:column;gap:.5rem}
+.detail-label{display:flex;align-items:center;gap:.5rem;font-size:.8125rem;color:#6b7280;font-weight:500;text-transform:uppercase;letter-spacing:.025em}
+.detail-icon{font-size:.875rem}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:.375rem;border:1px solid transparent;cursor:pointer;font-weight:500;transition:all .2s;font-size:.875rem}
+.btn-primary{background-color:#4f46e5;color:white;border-color:#4f46e5}
+.btn-primary:hover{background-color:#4338ca}
+.btn-outline{background-color:transparent;color:#4b5563;border-color:#d1d5db}
+.btn-outline:hover{background-color:#f9fafb}
+.btn:disabled{opacity:.7;cursor:not-allowed}
+.btn-action{width:36px;height:36px;border:none;border-radius:.375rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:1rem}
+.btn-action.btn-primary{background-color:#4f46e5;color:white}
+.btn-action.btn-primary:hover{background-color:#4338ca}
+.btn-action.btn-danger{background-color:#ef4444;color:white}
+.btn-action.btn-danger:hover:not(:disabled){background-color:#dc2626}
+.btn-action:disabled{opacity:.5;cursor:not-allowed}
+.profile-badge{background-color:#e0e7ff;color:#4338ca;padding:.375rem .875rem;border-radius:9999px;font-size:.8125rem;font-weight:600;display:inline-block}
+.text-sm{font-size:.875rem}
+.text-gray-500{color:#6b7280}
+.text-lg{font-size:1.125rem}
+.font-medium{font-weight:500}
+.mt-4{margin-top:1rem}
+.w-full{width:100%}
+.max-w-lg{max-width:32rem}
+.mx-auto{margin-left:auto;margin-right:auto}
+
+@media (max-width:1024px){
+.usuarios-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.usuario-header{padding:1rem 1rem .875rem}
+.usuario-content{padding:1rem}
+.usuario-nome{font-size:1.0625rem}
+}
+
+@media (max-width:768px){
+.page-header{flex-direction:column;align-items:flex-start;gap:1rem}
+.page-title{font-size:1.5rem}
+.scrollable-content{padding-right:.5rem}
+.usuarios-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.875rem}
+.usuario-header{padding:.875rem .875rem .75rem}
+.usuario-content{padding:.875rem}
+.usuario-info{gap:.75rem}
+.usuario-avatar{width:40px;height:40px}
+.avatar-icon{font-size:1.25rem}
+.usuario-nome{font-size:1rem}
+.usuario-email{font-size:.8125rem}
+.btn-action{width:32px;height:32px;font-size:.875rem}
+}
+
+@media (max-width:480px){
+.page-title{font-size:1.25rem}
+.scrollable-content{padding-right:0}
+.usuarios-grid{grid-template-columns:1fr;gap:.75rem}
+.usuario-header{padding:.75rem .75rem .625rem}
+.usuario-content{padding:.75rem}
+.usuario-info{gap:.625rem}
+.usuario-avatar{width:36px;height:36px}
+.avatar-icon{font-size:1.125rem}
+.usuario-nome{font-size:.9375rem}
+.usuario-email{font-size:.75rem}
+.btn-action{width:28px;height:28px;font-size:.8125rem}
+.profile-badge{font-size:.75rem;padding:.25rem .625rem}
+}
 </style>
