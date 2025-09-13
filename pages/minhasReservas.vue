@@ -3,6 +3,14 @@
     <div class="card-main">
       <div class="card-header">
         <h1 class="title">Minhas Reservas</h1>
+        <div class="tabs">
+          <button :class="{ active: activeTab === 'em_andamento' }" @click="activeTab = 'em_andamento'">
+            Em Andamento
+          </button>
+          <button :class="{ active: activeTab === 'historico' }" @click="activeTab = 'historico'">
+            Histórico
+          </button>
+        </div>
       </div>
 
       <div class="card-content">
@@ -14,13 +22,13 @@
           <Icon name="i-lucide-x-circle" class="icon-error" />
           <p class="text-error">{{ error }}</p>
         </div>
-        <div v-else-if="!reservasAgrupadas.length" class="status-container">
+        <div v-else-if="!filteredReservas.length" class="status-container">
           <Icon name="i-lucide-calendar-off" class="icon-empty" />
-          <p>Você ainda não possui nenhuma reserva.</p>
+          <p>Você ainda não possui nenhuma reserva aqui.</p>
         </div>
         
         <div v-else class="reservas-container">
-          <div v-for="grupo in reservasAgrupadas" :key="grupo.id_agendamento_pai" class="card-item">
+          <div v-for="grupo in filteredReservas" :key="grupo.id_agendamento_pai" class="card-item">
             <div class="card-item-header" @click="toggleGroup(grupo.id_agendamento_pai)">
               <div class="header-info">
                 <Icon :name="isGroupExpanded(grupo.id_agendamento_pai) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="expand-icon" />
@@ -75,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 
 interface ReservaFilho {
@@ -100,6 +108,15 @@ const reservasAgrupadas = ref<GrupoDeReserva[]>([]);
 const expandedGroups = ref<number[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const activeTab = ref('em_andamento');
+
+const filteredReservas = computed(() => {
+  const finalStatuses = ['Concluído', 'Negado'];
+  if (activeTab.value === 'historico') {
+    return reservasAgrupadas.value.filter(grupo => finalStatuses.includes(grupo.status_geral));
+  }
+  return reservasAgrupadas.value.filter(grupo => !finalStatuses.includes(grupo.status_geral));
+});
 
 const toggleGroup = (id: number) => {
   const index = expandedGroups.value.indexOf(id);
@@ -132,10 +149,10 @@ const getStatusClass = (status: string): string => {
 
 const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
   const statuses = new Set(reservas.map(r => r.status_agendamento));
-  if (statuses.has('pendente')) return 'Pendente';
   if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
+  if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
+  if (statuses.has('pendente')) return 'Pendente';
   if (statuses.has('aprovado') && !statuses.has('negado') && !statuses.has('pendente')) return 'Aprovado';
-  if (statuses.has('negado') && !statuses.has('aprovado') && !statuses.has('pendente')) return 'Negado';
   if (statuses.has('aprovado')) return 'Parcialmente Aprovado';
   return Array.from(statuses)[0] || 'Indefinido';
 };
@@ -149,7 +166,6 @@ const fetchReservas = async () => {
     const data: GrupoDeReserva[] = await response.json();
     
     data.forEach(grupo => {
-      // Calcula o status geral para cada grupo de reserva
       grupo.status_geral = calcularStatusGeral(grupo.agendamentos_filhos);
     });
 
@@ -169,7 +185,7 @@ const marcarGrupoComoConcluido = async (grupo: GrupoDeReserva) => {
       body: JSON.stringify({ status_agendamento: 'concluido' }),
     });
     if (!response.ok) throw new Error('Falha ao atualizar o status.');
-    await fetchReservas(); // Recarrega os dados para refletir a mudança
+    await fetchReservas();
   } catch (err: any) {
     alert(`Erro: ${err.message}`);
   }
@@ -182,7 +198,7 @@ const marcarHorarioComoConcluido = async (reserva: ReservaFilho) => {
       body: JSON.stringify({ status_agendamento: 'concluido' }),
     });
     if (!response.ok) throw new Error('Falha ao atualizar o status do horário.');
-    await fetchReservas(); // Recarrega tudo para atualizar o status geral e individual
+    await fetchReservas();
   } catch (err: any) {
     alert(`Erro: ${err.message}`);
   }
@@ -196,7 +212,10 @@ onMounted(fetchReservas);
 .card-main { width: 100%; max-width: 1200px; height: 85vh; max-height: 800px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
 .card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; }
 .title { font-size: 1.75rem; font-weight: 700; margin: 0; }
-.card-content { flex-grow: 1; overflow-y: auto; padding: 1.5rem; } /* Rolagem aqui */
+.tabs { margin-top: 1rem; display: flex; border-bottom: 2px solid #e5e7eb; }
+.tabs button { background: none; border: none; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem; font-weight: 600; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.tabs button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+.card-content { flex-grow: 1; overflow-y: auto; padding: 1.5rem; }
 .status-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; color: #6b7280; }
 .spinner { font-size: 2.5rem; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
 .reservas-container { display: flex; flex-direction: column; gap: 1rem; }

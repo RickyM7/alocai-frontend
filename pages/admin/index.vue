@@ -1,6 +1,16 @@
 <template>
   <div class="page-content-layout">
-    <h1 class="page-title">Solicitações de Agendamento</h1>
+    <div class="page-header">
+      <h1 class="page-title">Solicitações de Agendamento</h1>
+      <div class="tabs">
+        <button :class="{ active: activeTab === 'em_andamento' }" @click="activeTab = 'em_andamento'">
+          Em Andamento
+        </button>
+        <button :class="{ active: activeTab === 'historico' }" @click="activeTab = 'historico'">
+          Histórico
+        </button>
+      </div>
+    </div>
     
     <div class="scrollable-list">
       <div v-if="isLoading" class="status-container">
@@ -11,12 +21,12 @@
           <Icon name="i-lucide-x-circle" class="icon-error" />
           <p>{{ error }}</p>
       </div>
-      <div v-else-if="solicitacoes.length === 0" class="status-container">
-          <p>Nenhuma solicitação de agendamento encontrada.</p>
+      <div v-else-if="filteredSolicitacoes.length === 0" class="status-container">
+          <p>Nenhuma solicitação encontrada nesta categoria.</p>
       </div>
 
       <div v-else class="solicitacoes-container">
-        <div v-for="solicitacao in solicitacoes" :key="solicitacao.id_agendamento_pai" class="card">
+        <div v-for="solicitacao in filteredSolicitacoes" :key="solicitacao.id_agendamento_pai" class="card">
           <div class="card-header" @click="toggleSolicitacao(solicitacao.id_agendamento_pai)">
             <div class="header-info">
               <Icon :name="isExpanded(solicitacao.id_agendamento_pai) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="expand-icon" />
@@ -83,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' });
@@ -93,6 +103,15 @@ const solicitacoes = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const expandedSolicitacoes = ref([]);
+const activeTab = ref('em_andamento');
+
+const filteredSolicitacoes = computed(() => {
+  const finalStatuses = ['Concluído', 'Negado'];
+  if (activeTab.value === 'historico') {
+    return solicitacoes.value.filter(s => finalStatuses.includes(s.status_geral));
+  }
+  return solicitacoes.value.filter(s => !finalStatuses.includes(s.status_geral));
+});
 
 const parseDateAsLocal = (dateStr) => {
   const [year, month, day] = dateStr.split('-').map(Number);
@@ -101,8 +120,9 @@ const parseDateAsLocal = (dateStr) => {
 
 const calcularStatusGeral = (reservas) => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
-    if (statuses.has('pendente')) return 'Pendente';
     if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
+    if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
+    if (statuses.has('pendente')) return 'Pendente';
     if (statuses.has('aprovado') && !statuses.has('negado') && !statuses.has('pendente')) return 'Aprovado';
     if (statuses.has('negado') && !statuses.has('aprovado') && !statuses.has('pendente')) return 'Negado';
     if (statuses.has('aprovado')) return 'Parcialmente Aprovado';
@@ -114,13 +134,11 @@ const verificarConflitosHorario = (agendamentoAprovado) => {
   
   solicitacoes.value.forEach(solicitacao => {
     solicitacao.agendamentos_filhos.forEach(agendamento => {
-      // Só verifica conflitos com agendamentos pendentes de outros pais
       if (agendamento.status_agendamento === 'pendente' && 
           agendamento.id_agendamento !== agendamentoAprovado.id_agendamento &&
           agendamento.id_recurso === agendamentoAprovado.id_recurso &&
           agendamento.data_inicio === agendamentoAprovado.data_inicio) {
         
-        // Verifica sobreposição de horários
         const inicioA = agendamentoAprovado.hora_inicio;
         const fimA = agendamentoAprovado.hora_fim;
         const inicioB = agendamento.hora_inicio;
@@ -184,7 +202,6 @@ const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    // Se aprovando todas, verificar conflitos para cada agendamento filho
     if (novoStatus === 'aprovado') {
       const todosConflitos = new Set();
       
@@ -214,7 +231,6 @@ const atualizarStatusFilho = async (solicitacaoPai, agendamentoFilho, novoStatus
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    // Se aprovado, rejeitar agendamentos conflitantes
     if (novoStatus === 'aprovado') {
       const conflitos = verificarConflitosHorario(agendamentoFilho);
       if (conflitos.length > 0) {
@@ -251,6 +267,7 @@ const getStatusClass = (status) => {
   if (s.includes('aprovado')) return 'status-success';
   if (s.includes('pendente')) return 'status-warning';
   if (s.includes('negado')) return 'status-error';
+  if (s.includes('concluído')) return 'status-info';
   return 'status-default';
 };
 
@@ -259,8 +276,12 @@ onMounted(fetchSolicitacoes);
 
 <style scoped>
 .page-content-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-.page-title { font-size: 1.75rem; font-weight: 700; padding-bottom: 1rem; flex-shrink: 0; background-color: transparent; position: sticky; top: -2rem; padding-top: 2rem; z-index: 10; }
-.scrollable-list { flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
+.page-header { flex-shrink: 0; padding-bottom: 1rem; background-color: #f8fafc; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
+.page-title { font-size: 1.75rem; font-weight: 700; }
+.tabs { display: flex; border-bottom: 2px solid transparent; }
+.tabs button { background: none; border: none; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem; font-weight: 600; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.tabs button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+.scrollable-list { flex-grow: 1; overflow-y: auto; padding: 1.5rem 1rem 1.5rem 0; }
 .solicitacoes-container { display: flex; flex-direction: column; gap: 1rem; }
 .card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
 .card-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; border-bottom: 1px solid #e5e7eb; }
@@ -301,6 +322,7 @@ onMounted(fetchSolicitacoes);
 .btn-deny::after { content: '✕'; font-size: 0.9rem; }
 @media (max-width: 48rem) {
   .scrollable-list { padding-right: 0; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .page-title { font-size: 1.5rem; }
   .card-header { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
   .header-info { align-items: flex-start; }
