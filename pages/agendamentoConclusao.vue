@@ -3,49 +3,62 @@
     <div class="card">
       <div class="card-header">
         <div class="progress-bar">
-          <Icon name="heroicons:calendar-days-20-solid" class="icon-complete"/>
-          <div class="line-complete"></div>
-          <Icon name="heroicons:information-circle-20-solid" class="icon-complete"/>
-          <div class="line-complete"></div>
-          <Icon name="heroicons:check-circle-20-solid" class="icon-active"/>
+          <Icon name="heroicons:calendar-days-20-solid" class="icon-inactive"/>
+          <div class="line"></div>
+          <Icon name="heroicons:information-circle" class="icon-inactive"/>
+          <div class="line"></div>
+          <Icon name="heroicons:check-circle" class="icon-active"/>
         </div>
       </div>
 
       <div class="card-content">
         <div v-if="isLoading" class="status-container">
           <Icon name="i-lucide-loader-2" class="spinner" />
-          <h1 class="titulo">Enviando sua solicitação...</h1>
+          <h1 class="title">Enviando sua solicitação...</h1>
           <p>Por favor, aguarde.</p>
         </div>
 
         <div v-else-if="erro" class="status-container">
           <Icon name="i-lucide-x-circle" class="icon-error" />
-          <h1 class="titulo-erro">Erro ao Salvar</h1>
-          <p class="mensagem-erro">{{ erro }}</p>
-          <div class="botoes">
-            <button class="btn-secundario" @click="voltarParaInicio">Voltar ao Início</button>
-            <button class="btn-primario" @click="tentarSalvarNovamente">Tentar Novamente</button>
+          <h1 class="title-error">Erro ao Salvar</h1>
+          <p class="error-message">{{ erro }}</p>
+          <div class="card-footer">
+            <button class="botao-secundario" @click="voltarParaInicio">Voltar ao Início</button>
+            <button class="botao-prosseguir" @click="tentarSalvarNovamente">Tentar Novamente</button>
           </div>
         </div>
 
         <div v-else-if="agendamentoSalvo" class="sucesso-container">
-          <h1 class="titulo">Solicitação enviada!</h1>
-          <p class="subtitulo">Sua solicitação está pendente de aprovação.</p>
+          <h1 class="title">Solicitação enviada!</h1>
+          <p class="subtitle">Sua solicitação está pendente de aprovação.</p>
 
-          <div class="resumo">
-            <div class="resumo-item"><strong>Recurso:</strong><span>{{ agendamentoInfo.recurso }}</span></div>
-            <div class="resumo-item"><strong>Finalidade:</strong><span>{{ agendamentoInfo.finalidade }}</span></div>
-            <div class="resumo-item"><strong>Total de Datas:</strong><span>{{ agendamentoInfo.totalDatas }}</span></div>
-            <div class="resumo-item"><strong>Período:</strong><span>{{ agendamentoInfo.periodo }}</span></div>
+          <div class="resumo-section">
+            <div class="resumo-item">
+              <span class="label">Recurso:</span>
+              <span class="value">{{ agendamentoInfo.recurso }}</span>
+            </div>
+            <div class="resumo-item">
+              <span class="label">Finalidade:</span>
+              <span class="value">{{ agendamentoInfo.finalidade }}</span>
+            </div>
+            <div class="resumo-item">
+              <span class="label">Total de Datas:</span>
+              <span class="value">{{ agendamentoInfo.totalDatas }}</span>
+            </div>
+            <div class="resumo-item">
+              <span class="label">Período:</span>
+              <span class="value">{{ agendamentoInfo.periodo }}</span>
+            </div>
           </div>
 
-          <div class="botoes">
-            <button class="btn-secundario" @click="irParaMinhasReservas">Ver Minhas Reservas</button>
-            <button class="btn-primario" @click="novoAgendamento">Novo Agendamento</button>
+          <div class="card-footer">
+            <button class="botao-secundario" @click="irParaMinhasReservas">Ver Minhas Reservas</button>
+            <button class="botao-prosseguir" @click="novoAgendamento">Novo Agendamento</button>
           </div>
         </div>
+
         <div v-else class="status-container">
-          <p>Solicitação já enviada ou dados inválidos.</p>
+          <p>Dados incompletos. Redirecionando...</p>
         </div>
       </div>
     </div>
@@ -65,11 +78,13 @@ const agendamentoSalvo = ref(false);
 const erro = ref('');
 const agendamentoInfo = ref({});
 
+const parseDateAsLocal = (dateStr) => new Date(dateStr + 'T00:00:00');
+
 function popularResumo() {
   if (store.agendamentos.length === 0) return;
 
-  const primeiraData = new Date(store.agendamentos[0].data);
-  const ultimaData = new Date(store.agendamentos[store.agendamentos.length - 1].data);
+  const primeiraData = parseDateAsLocal(store.agendamentos[0].data);
+  const ultimaData = parseDateAsLocal(store.agendamentos[store.agendamentos.length - 1].data);
   const formatar = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   
   agendamentoInfo.value = {
@@ -131,27 +146,40 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 43.75rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem  rgba(0,0,0,0.1); }
-.card-header { padding: 1.5rem 2rem; }
-.progress-bar { display: flex; align-items: center; justify-content: center; }
+.card { width: 100%; max-width: 60rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; height: 85vh; max-height: 43.75rem; }
+.card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem solid #e5e7eb; flex-shrink: 0; }
+.progress-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
 .icon-active { font-size: 1.5rem; color: #2563eb; }
-.icon-complete { font-size: 1.5rem; color: #16a34a; }
-.line-complete { flex-grow: 1; height: 0.125rem; margin: 0 1rem; background-color: #16a34a; }
-.card-content { padding: 2rem; text-align: center; }
-.status-container, .sucesso-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.titulo { font-size: 1.75rem; font-weight: bold; }
-.subtitulo { color: #6b7280; }
-.titulo-erro { font-size: 1.75rem; font-weight: bold; color: #dc2626; }
-.mensagem-erro { color: #b91c1c; background-color: #fef2f2; padding: 1rem; border-radius:  0.5rem; }
+.icon-inactive { font-size: 1.5rem; color: #16a34a; }
+.line { flex-grow: 1; height: 0.125rem; background-color: #16a34a; margin: 0 1rem; }
+.card-content { padding: 2rem; flex-grow: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+.status-container, .sucesso-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; }
+.title { font-size: 1.75rem; font-weight: 700; margin: 0; }
+.subtitle { color: #6b7280; margin: 0; }
+.title-error { font-size: 1.75rem; font-weight: 700; color: #dc2626; margin: 0; }
+.error-message { color: #b91c1c; background-color: #fef2f2; padding: 1rem; border-radius: 0.5rem; border: 0.063rem solid #fecaca; }
 .spinner { font-size: 3rem; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .icon-error { font-size: 3rem; color: #dc2626; }
-.resumo { text-align: left; background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin: 1.5rem 0; border: 0.063rem solid #e5e7eb; }
-/* AJUSTE: Reduzido o padding vertical para aproximar os itens */
-.resumo-item { display: grid; grid-template-columns: 9.375rem 1fr; gap: 1rem; padding: 0.25rem 0; border-bottom: 0.063rem solid #e5e7eb; }
-.resumo-item:last-child { border-bottom: none; }
-.resumo-item span { word-break: break-word; }
-.botoes { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
-.btn-primario { background-color: #374151; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
-.btn-secundario { background-color: #ffffff; color: #374151; border: 0.063rem  solid #d1d5db; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+.resumo-section { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin: 1.5rem 0; width: 100%; max-width: 25rem; }
+.resumo-item { margin-bottom: 1rem; }
+.resumo-item:last-child { margin-bottom: 0; }
+.resumo-item .label { display: block; font-size: 0.9rem; color: #6b7280; }
+.resumo-item .value { font-weight: 500; word-break: break-word; }
+.card-footer { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; flex-wrap: wrap; }
+.botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 1rem; }
+.botao-secundario { background-color: #ffffff; color: #374151; border: 0.063rem solid #d1d5db; padding: 0.75rem 2rem; border-radius: 0.5rem; cursor: pointer; font-size: 1rem; }
+.botao-prosseguir:hover { background-color: #1f2937; }
+.botao-secundario:hover { background-color: #f9fafb; }
+@media (max-width: 48rem) {
+  .card { max-height: none; height: auto; margin: 1rem; }
+  .card-footer { flex-direction: column; }
+  .botao-prosseguir, .botao-secundario { width: 100%; padding: 0.75rem; }
+  .resumo-section { max-width: none; }
+}
+@media (max-width: 31.25rem) {
+  .title, .title-error { font-size: 1.25rem; }
+  .progress-bar { flex-direction: column; gap: 0.5rem; }
+  .line { display: none; }
+}
 </style>

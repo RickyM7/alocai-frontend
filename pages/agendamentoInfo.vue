@@ -2,6 +2,13 @@
   <div class="page-container">
     <div class="card">
       <div class="card-header">
+        <div class="progress-bar">
+          <Icon name="heroicons:calendar-days-20-solid" class="icon-inactive"/>
+          <div class="line"></div>
+          <Icon name="heroicons:information-circle" class="icon-active"/>
+          <div class="line"></div>
+          <Icon name="heroicons:check-circle" class="icon-inactive"/>
+        </div>
         <h1 class="title">Informações Adicionais</h1>
       </div>
 
@@ -66,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAgendamentoStore } from '~/stores/agendamento'
 
@@ -77,12 +84,19 @@ const observacoes = ref("");
 const router = useRouter();
 const store = useAgendamentoStore();
 
+const parseDateAsLocal = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const maxParticipantes = computed(() => store.recursoSelecionado?.capacidade);
 
 const resumoPeriodo = computed(() => {
   if (store.agendamentos.length === 0) return '';
-  const primeiraData = new Date(store.agendamentos[0].data);
-  const ultimaData = new Date(store.agendamentos[store.agendamentos.length - 1].data);
+  
+  const datasOrdenadas = [...store.agendamentos].sort((a, b) => a.data.localeCompare(b.data));
+  const primeiraData = parseDateAsLocal(datasOrdenadas[0].data);
+  const ultimaData = parseDateAsLocal(datasOrdenadas[datasOrdenadas.length - 1].data);
   const formatar = (d) => d.toLocaleDateString('pt-BR');
   
   if (store.agendamentos.length === 1) return formatar(primeiraData);
@@ -108,26 +122,45 @@ function irParaConclusao() {
 
   router.push('/agendamentoConclusao');
 }
+
+onMounted(() => {
+  if (!store.recursoSelecionado || store.agendamentos.length === 0) {
+    alert("Dados incompletos. Redirecionando...");
+    router.push('/agendamentoSelectRecurso');
+    return;
+  }
+});
 </script>
 
 <style scoped>
 .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 56.25rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); }
-.card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem  solid #e5e7eb; }
-.title { font-size: 1.75rem; font-weight: 700; margin: 0; }
-.card-content-grid { display: grid; grid-template-columns: 18.75rem 1fr; gap: 2rem; padding: 2rem; }
-.col-resumo { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; }
-.col-resumo h3 { margin-top: 0; border-bottom: 0.063rem  solid #e5e7eb; padding-bottom: 0.5rem; }
+.card { width: 100%; max-width: 60rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; height: 85vh; max-height: 43.75rem; }
+.card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem solid #e5e7eb; flex-shrink: 0; }
+.progress-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+.icon-active { font-size: 1.5rem; color: #2563eb; }
+.icon-inactive { font-size: 1.5rem; color: #d1d5db; }
+.line { flex-grow: 1; height: 0.125rem; background-color: #e5e7eb; margin: 0 1rem; }
+.title { font-size: 1.75rem; font-weight: 700; text-align: center; margin: 0; }
+.card-content-grid { display: grid; grid-template-columns: 18.75rem 1fr; gap: 2rem; padding: 2rem; flex-grow: 1; overflow-y: auto; min-height: 0; }
+.col-resumo { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; height: fit-content; }
+.col-resumo h3 { margin-top: 0; border-bottom: 0.063rem solid #e5e7eb; padding-bottom: 0.5rem; }
 .resumo-item { margin-bottom: 1rem; }
 .resumo-item .label { display: block; font-size: 0.9rem; color: #6b7280; }
 .resumo-item .value { font-weight: 500; }
 .formulario { display: flex; flex-direction: column; gap: 1.5rem; }
 .campo label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
-.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem  solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
+.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
 .campo textarea { min-height: 6.25rem; resize: vertical; }
-.card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; }
+.card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; flex-shrink: 0; background-color: white; box-shadow: 0 -0.125rem 0.5rem rgba(0,0,0,0.05); }
 .botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
-/* Responsividade */
-@media (max-width: 48rem) { .card-content-grid { grid-template-columns: 1fr;} .col-resumo { order: 2; margin-top: 1.5rem; }  .col-form { order: 1; } }
-@media (max-width: 37.5rem) { .title { font-size: 1.4rem; } .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; } }
+@media (max-width: 48rem) {
+  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+  .card { max-height: none; height: auto; margin: 1rem; }
+  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
+}
+@media (max-width: 31.25rem) {
+  .title { font-size: 1.25rem; }
+  .progress-bar { flex-direction: column; gap: 0.5rem; }
+  .line { display: none; }
+}
 </style>

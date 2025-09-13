@@ -12,6 +12,10 @@ export default ({
     '@pinia/nuxt',
   ],
 
+  pinia: {
+    storesDirs: ['./stores/**'],
+  },
+
   icon: {
     provider: 'iconify',
     collections: ['heroicons', 'lucide'],
