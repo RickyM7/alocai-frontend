@@ -55,21 +55,23 @@
             <div class="header-actions">
               <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ solicitacao.status_geral }}</span>
               <div class="action-buttons">
-                <template v-if="solicitacao.status_geral === 'Pendente' || solicitacao.status_geral === 'Parcialmente Aprovado'">
-                  <button class="btn btn-outline btn-sm" @click.stop="editarSolicitacao(solicitacao)" title="Editar">
+                <template v-if="solicitacao.status_geral === 'Pendente'">
+                  <button class="btn btn-outline btn-sm" @click.stop="editarSolicitacao(solicitacao)" :disabled="processingId === solicitacao.id_agendamento_pai" title="Editar">
                     <Icon name="i-lucide-pencil" />
                     <span class="btn-text">Editar</span>
                   </button>
-                  <button class="btn btn-success btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'aprovado')" title="Aprovar Todas">
-                    <Icon name="i-lucide-check-circle" class="btn-icon-mobile" />
+                  <button class="btn btn-success btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'aprovado')" :disabled="processingId === solicitacao.id_agendamento_pai" title="Aprovar Todas">
+                    <Icon v-if="processingId === solicitacao.id_agendamento_pai" name="i-lucide-loader-2" class="animate-spin" />
+                    <Icon v-else name="i-lucide-check-circle" class="btn-icon-mobile" />
                     <span class="btn-text">Aprovar Todas</span>
                   </button>
-                  <button class="btn btn-danger btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'negado')" title="Negar Todas">
-                    <Icon name="i-lucide-x-circle" class="btn-icon-mobile" />
+                  <button class="btn btn-danger btn-sm" @click.stop="atualizarStatusPai(solicitacao, 'negado')" :disabled="processingId === solicitacao.id_agendamento_pai" title="Negar Todas">
+                    <Icon v-if="processingId === solicitacao.id_agendamento_pai" name="i-lucide-loader-2" class="animate-spin" />
+                    <Icon v-else name="i-lucide-x-circle" class="btn-icon-mobile" />
                     <span class="btn-text">Negar Todas</span>
                   </button>
                 </template>
-                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger" title="Excluir solicitação">
+                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger" :disabled="processingId === solicitacao.id_agendamento_pai" title="Excluir solicitação">
                   <Icon name="i-lucide-trash-2" />
                 </button>
               </div>
@@ -135,27 +137,33 @@ const error = ref(null);
 const expandedSolicitacoes = ref([]);
 const activeTab = ref('em_andamento');
 const router = useRouter();
+const processingId = ref(null);
 
 const calcularStatusGeral = (reservas) => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
 
     if (statuses.has('pendente')) {
-        return statuses.has('aprovado') || statuses.has('negado') ? 'Parcialmente Aprovado' : 'Pendente';
+        return 'Pendente';
     }
-    if (statuses.has('aprovado')) {
-        return (statuses.has('negado') || statuses.has('concluido')) ? 'Parcialmente Aprovado' : 'Aprovado';
-    }
-    if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
-    if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
     
-    // Se chegou aqui, só pode ter uma mistura de concluído e negado
-    if (statuses.has('concluido') || statuses.has('negado')) return 'Finalizado';
+    if (statuses.has('aprovado') || statuses.has('concluido')) {
+        return 'Aprovado';
+    }
+
+    if (statuses.size >= 1 && statuses.has('negado')) {
+        return 'Negado';
+    }
+    
+    if (statuses.has('concluido') || statuses.has('negado')) {
+        return 'Finalizado';
+    }
 
     return 'Indefinido';
 };
 
+
 const filteredSolicitacoes = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado'];
+  const inProgressStatuses = ['Pendente', 'Aprovado'];
   
   if (activeTab.value === 'em_andamento') {
     return solicitacoes.value.filter(s => inProgressStatuses.includes(s.status_geral));
@@ -230,6 +238,7 @@ const toggleSolicitacao = (id) => {
 const isExpanded = (id) => expandedSolicitacoes.value.includes(id);
 
 const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
+  processingId.value = solicitacaoPai.id_agendamento_pai;
   try {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${solicitacaoPai.id_agendamento_pai}/`, {
       method: 'PUT',
@@ -237,25 +246,16 @@ const atualizarStatusPai = async (solicitacaoPai, novoStatus) => {
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    if (novoStatus === 'aprovado') {
-      const todosConflitos = new Set();
-      solicitacaoPai.agendamentos_filhos.forEach(agendamento => {
-        if (agendamento.status_agendamento === 'pendente') {
-          const conflitos = verificarConflitosHorario(agendamento);
-          conflitos.forEach(id => todosConflitos.add(id));
-        }
-      });
-      if (todosConflitos.size > 0) {
-        await rejeitarConflitos(Array.from(todosConflitos));
-      }
-    }
     await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
+  } finally {
+    processingId.value = null;
   }
 };
 
 const atualizarStatusFilho = async (solicitacaoPai, agendamentoFilho, novoStatus) => {
+  processingId.value = solicitacaoPai.id_agendamento_pai;
   try {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/${agendamentoFilho.id_agendamento}/status/`, {
       method: 'PUT',
@@ -263,15 +263,11 @@ const atualizarStatusFilho = async (solicitacaoPai, agendamentoFilho, novoStatus
     });
     if (!response.ok) throw new Error('Falha ao atualizar status.');
     
-    if (novoStatus === 'aprovado') {
-      const conflitos = verificarConflitosHorario(agendamentoFilho);
-      if (conflitos.length > 0) {
-        await rejeitarConflitos(conflitos);
-      }
-    }
     await fetchSolicitacoes();
   } catch (err) {
     alert(`Erro: ${err.message}`);
+  } finally {
+    processingId.value = null;
   }
 };
 

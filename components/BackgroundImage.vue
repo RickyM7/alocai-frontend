@@ -4,7 +4,7 @@
 
 <style scoped>
 .background-image {
-  background-image: url('/img/background.jpeg');
+  background-image: url('/img/background.webp');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -14,5 +14,11 @@
   width: 100%;
   height: 100%;
   z-index: -1;
+}
+
+@media (max-width: 768px) {
+  .background-image {
+    background-image: url('/img/bg_tela_pequena.webp');
+  }
 }
 </style>

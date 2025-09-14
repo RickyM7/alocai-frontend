@@ -2,7 +2,12 @@
   <div>
     <div class="page-container">
       <div class="card">
-        <h1 class="title">Meu Perfil</h1>
+        <div class="card-header">
+          <button @click="$router.push('/')" class="back-button">
+            <Icon name="i-lucide-arrow-left" />
+          </button>
+          <h1 class="title">Meu Perfil</h1>
+        </div>
 
         <div v-if="isLoading" class="status-container">
           <Icon name="i-lucide-loader-2" class="spinner" />
@@ -44,7 +49,7 @@
           </div>
           
           <div v-if="user.nome_perfil === 'Administrador'" class="admin-section">
-            <h3 class="section-title">Integrações</h3>
+            <h3 class="section-title">Integrações e Segurança</h3>
             <div class="detail-item">
               <div class="detail-label">
                 <strong>Conta Google</strong><br>
@@ -59,14 +64,13 @@
             </div>
             <p v-if="linkError" class="text-error">{{ linkError }}</p>
             
-            <h3 class="section-title" style="margin-top: 1.5rem;">Segurança</h3>
             <div v-if="!isEditingPassword" class="detail-item">
               <div class="detail-label">
                 <strong>Senha de Acesso</strong><br>
                 <small>Use para entrar pela tela de login de administrador.</small>
               </div>
               <div class="action-area">
-                <button @click="startPasswordEdit" class="btn-secondary">Alterar Senha</button>
+                <button @click="startPasswordEdit" class="btn btn-secondary">Alterar Senha</button>
               </div>
             </div>
 
@@ -205,41 +209,309 @@ const changePassword = async () => {
 </script>
 
 <style scoped>
-.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.card { width: 100%; max-width: 700px; background-color: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 2rem; }
-.title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: #1f2937; }
-.profile-header { display: flex; align-items: center; gap: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
-.profile-picture { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-.profile-picture-placeholder.profile-page-placeholder { width: 80px; height: 80px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #9ca3af; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-.user-name { font-size: 1.5rem; font-weight: 600; }
-.user-email { color: #6b7280; }
-.profile-details { display: grid; gap: 1rem; }
-.detail-item { display: flex; justify-content: space-between; align-items: center; }
-.detail-label { font-weight: 500; color: #4b5563; }
-.detail-value { font-weight: normal; }
-.profile-badge { background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
-.status-container { text-align: center; padding: 2rem; color: #6b7280; }
-.spinner { font-size: 2.5rem; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.admin-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
-.section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #1f2937; }
-.detail-label small { color: #6b7280; font-weight: 400; font-size: 0.8em; display: block; margin-top: 4px; }
-.action-area { min-width: 220px; text-align: right; }
-.profile-badge-success { background-color: #dcfce7; color: #166534; padding: 0.35rem 0.8rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
-.text-error { color: #b91c1c; font-size: 0.9em; margin-top: 0.5rem; text-align: right; }
+.page-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
 
-/* Estilos para o formulário de senha */
-.password-form { background-color: #f9fafb; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
-.form-group { width: 100%; }
-.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9em; color: #374151; }
-.password-input-wrapper { position: relative; display: flex; align-items: center; }
-.form-input { flex-grow: 1; padding: 0.6rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; }
-.password-toggle-btn { position: absolute; right: 0.5rem; background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1.25rem; padding: 0.25rem; }
-.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent; cursor: pointer; font-weight: 600; }
-.btn-primary { background-color: #4f46e5; color: white; }
-.btn-secondary { background-color: #fff; color: #4b5563; border-color: #d1d5db; border: 1px solid #d1d5db; }
-.btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; border: 1px solid #d1d5db; }
-.btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.animate-spin { animation: spin 1s linear infinite; }
+.card {
+  width: 100%;
+  max-width: 600px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.back-button {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  transition: all 0.2s;
+  font-size: 1.2rem;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-picture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.profile-picture-placeholder.profile-page-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #9ca3af;
+  border: 3px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.user-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-email {
+  color: #6b7280;
+  margin: 0;
+}
+
+.profile-details {
+  display: grid;
+  gap: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.detail-label small {
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 0.8em;
+  display: block;
+  margin-top: 4px;
+}
+
+.detail-value {
+  font-weight: normal;
+}
+
+.profile-badge {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-container {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.spinner {
+  font-size: 2.5rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.admin-section {
+  margin-top: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.action-area {
+  min-width: 220px;
+  text-align: right;
+}
+
+.profile-badge-success {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.text-error {
+  color: #b91c1c;
+  font-size: 0.9em;
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.password-form {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.form-group {
+  width: 100%;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: #374151;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  flex-grow: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #4b5563;
+  border-color: #d1d5db;
+  border: 1px solid #d1d5db;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #4b5563;
+  border-color: #d1d5db;
+  border: 1px solid #d1d5db;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0rem;
+  }
+
+    .card {
+    padding: 1.5rem;
+    margin: 0.5rem;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .action-area {
+    min-width: unset;
+    text-align: left;
+    width: 100%;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>

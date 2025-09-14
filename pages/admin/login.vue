@@ -2,7 +2,7 @@
   <div class="admin-login-container">
     <div class="login-card">
       <div class="logo-section">
-        <img src="/img/logo.png" alt="Logo Instituição" class="logo" />
+        <img src="/img/logo.webp" alt="Logo Instituição" class="logo" />
         <h1 class="welcome-text">Acesso Administrativo</h1>
         <h2 class="app-title">Alocaí</h2>
       </div>
