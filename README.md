@@ -28,8 +28,8 @@ O frontend se comunica com um backend em Django, disponível [neste repositório
  ### [Nuxt 3](https://nuxt.com/)
 
 ## :construction: Status do Projeto
-Em desenvolvimento  
-Entrega parcial referente à 2ª VA (Gerência de Configuração)
+Finalizado.  
+Entrega Final referente à 2ª VA.
 
 ## 📂 Organização
 
