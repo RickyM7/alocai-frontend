@@ -11,12 +11,10 @@ onMounted(() => {
   }
 });
 
-// Computed property para verificar se o usuário pode fazer reservas
 const canMakeReservations = computed(() => {
   if (!user.value || !user.value.nome_perfil) {
     return false;
   }
-  // Verifica se o perfil do usuário é um dos permitidos
   return ['Administrador', 'Servidor'].includes(user.value.nome_perfil);
 });
 </script>
@@ -49,55 +47,34 @@ const canMakeReservations = computed(() => {
 </template>
 
 <style scoped>
-.navbar {
-  width: 100%;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 64px;
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 10;
-}
-
-.navbar-content {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 32px;
-}
-
-.navbar-logo {
-  height: 48px;
-  margin-right: 32px;
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.navbar-icon {
-  font-size: 1.6rem;
-  color: #888;
-  cursor: pointer;
-}
-
 .page-container {
   min-height: 90vh;
   display: flex;
   flex-direction: column;
+  padding: 0 16px;
+}
+
+.welcome-message {
+  text-align: left;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: top;
+  padding: 2rem 0;
+}
+
+.welcome-message h1 {
+  margin-bottom: 0.5rem;
 }
 
 .actions-container {
   display: flex;
   gap: 1.5rem;
   justify-content: center;
-  margin-top: auto;
+  align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 2rem;
+  padding: 0 16px;
 }
 
 :deep(.botoes) {
@@ -105,15 +82,17 @@ const canMakeReservations = computed(() => {
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 14px 28px;
-  font-size: 1.1em;
+  padding: 12px 20px;
+  font-size: 1rem;
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.7em;
+  gap: 0.6em;
+  min-width: 150px;
+  justify-content: center;
 }
 
 :deep(.botoes:hover) {
@@ -128,7 +107,59 @@ const canMakeReservations = computed(() => {
 }
 
 :deep(.botoes .u-icon) {
-  font-size: 1.3em;
-  margin-right: 0.5em;
+  font-size: 1.2em;
+}
+
+@media (max-width: 768px) {
+  .actions-container {
+    gap: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 280px;
+    margin: 0 auto 2rem auto;
+  }
+
+  :deep(.botoes) {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .welcome-message h1 {
+    font-size: 1.5rem;
+  }
+
+  .welcome-message p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 0 12px;
+  }
+
+  .actions-container {
+    max-width: 240px;
+  }
+
+  :deep(.botoes) {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    gap: 0.5em;
+  }
+
+  :deep(.botoes .u-icon) {
+    font-size: 1.1em;
+  }
+
+  .welcome-message h1 {
+    font-size: 1.3rem;
+  }
+
+  .welcome-message p {
+    font-size: 0.85rem;
+  }
 }
 </style>

@@ -262,6 +262,7 @@ onMounted(fetchListData);
 .modal-no-events p{margin:0;font-style:italic}
 
 @media(max-width:48rem){
+  .page-content-layout{padding: 1rem}
   .page-header{position:static;top:auto;padding-top:1rem}
   .scrollable-list{padding-right:0}
   .calendar-content :deep(.calendar-container){width:98%;margin:0 auto}

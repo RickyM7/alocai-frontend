@@ -3,7 +3,7 @@
 
     <div class="onboarding-card">
       <div class="logo-section">
-        <img src="/img/logo.png" alt="Logo Instituição" class="logo" />
+        <img src="/img/logo.webp" alt="Logo Instituição" class="logo" />
         <h2 class="app-title">Tipo de Conta</h2>
         <p>Escolha o tipo de conta que melhor descreve sua função para que possamos personalizar sua experiência:</p>
       </div>

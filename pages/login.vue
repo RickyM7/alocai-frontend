@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-card">
       <div class="logo-section">
-        <img src="/img/logo.png" alt="Logo Instituição" class="logo" />
+        <img src="/img/logo.webp" alt="Logo Instituição" class="logo" />
         <h1 class="welcome-text">Bem Vindo</h1>
         <h1>Alocaí</h1>
         <h2 class="app-title">Agendamento de Recursos Compartilhados</h2>
@@ -96,7 +96,7 @@ onMounted(() => {
   --border-color: #ddd;
   --background-color: #f0f2f5;
 }
-.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
+.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
 .login-card { background-color: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 450px; box-sizing: border-box; }
 .logo-section { margin-bottom: 20px; }
 .logo { max-width: 80px; height: auto; margin-bottom: 10px; }

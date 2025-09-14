@@ -39,7 +39,7 @@
               </div>
               <div class="header-actions">
                 <span :class="getStatusClass(grupo.status_geral)" class="status-badge">{{ grupo.status_geral }}</span>
-                <button v-if="grupo.status_geral === 'Aprovado'" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn btn-outline btn-sm" title="Concluir Todos os Horários">
+                <button v-if="grupo.status_geral === 'Aprovado' || grupo.status_geral === 'Parcialmente Aprovado'" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn btn-outline btn-sm" title="Concluir Todos os Horários">
                   <Icon name="i-lucide-check-check" />
                 </button>
               </div>
@@ -112,23 +112,35 @@ const activeTab = ref('em_andamento');
 
 const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
+    const hasPendente = statuses.has('pendente');
+    const hasAprovado = statuses.has('aprovado');
+    const hasNegado = statuses.has('negado');
+    const hasConcluido = statuses.has('concluido');
 
-    if (statuses.has('pendente')) {
-        return statuses.has('aprovado') || statuses.has('negado') ? 'Parcialmente Aprovado' : 'Pendente';
+    if (hasAprovado) {
+        if (hasPendente || hasNegado) {
+            return 'Parcialmente Aprovado';
+        }
+        return 'Aprovado';
     }
-    if (statuses.has('aprovado')) {
-        return (statuses.has('negado') || statuses.has('concluido')) ? 'Parcialmente Aprovado' : 'Aprovado';
+
+    if (hasPendente) {
+        if (hasNegado) {
+            return 'Parcialmente Negado';
+        }
+        return 'Pendente';
     }
-    if (statuses.size === 1 && statuses.has('concluido')) return 'Concluído';
-    if (statuses.size === 1 && statuses.has('negado')) return 'Negado';
+
+    if (statuses.size === 1 && hasConcluido) return 'Concluído';
+    if (statuses.size === 1 && hasNegado) return 'Negado';
     
-    if (statuses.has('concluido') || statuses.has('negado')) return 'Finalizado';
+    if (hasConcluido && hasNegado) return 'Finalizado';
 
     return 'Indefinido';
 };
 
 const filteredReservas = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado'];
+  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado', 'Parcialmente Negado'];
   if (activeTab.value === 'em_andamento') {
     return reservasAgrupadas.value.filter(grupo => inProgressStatuses.includes(grupo.status_geral));
   }
@@ -157,10 +169,13 @@ const formatarData = (dataString: string): string => {
 const getStatusClass = (status: string): string => {
   if (!status) return 'status-default';
   const s = status.toLowerCase();
+  
+  if (s === 'parcialmente negado') return 'status-error';
   if (s.includes('aprovado')) return 'status-success';
   if (s.includes('pendente')) return 'status-warning';
   if (s.includes('negado')) return 'status-error';
   if (s.includes('concluido') || s.includes('finalizado')) return 'status-info';
+  
   return 'status-default';
 };
 
