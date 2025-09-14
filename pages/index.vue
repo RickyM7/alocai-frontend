@@ -34,15 +34,15 @@ const canMakeReservations = computed(() => {
     <div class="actions-container">
       <template v-if="canMakeReservations">
         <NuxtLink to="/agendamentoSelectRecurso">
-          <UButton icon="i-lucide-rocket" size="lg" color="primary" variant="solid">Nova Reserva</UButton>
+          <UButton class="botoes" icon="i-lucide-rocket">Nova Reserva</UButton>
         </NuxtLink>
         <NuxtLink to="/minhasReservas">
-          <UButton icon="i-lucide-calendar" size="lg" color="secondary" variant="outline">Minhas Reservas</UButton>
+          <UButton class="botoes" icon="i-lucide-calendar">Minhas Reservas</UButton>
         </NuxtLink>
       </template>
       
       <NuxtLink to="/dashboard">
-        <UButton icon="i-lucide-layout-dashboard" size="lg" color="secondary" variant="outline">Dashboard</UButton>
+        <UButton class="botoes" icon="i-lucide-layout-dashboard">Dashboard</UButton>
       </NuxtLink>
     </div>
   </div>
@@ -84,5 +84,51 @@ const canMakeReservations = computed(() => {
   font-size: 1.6rem;
   color: #888;
   cursor: pointer;
+}
+
+.page-container {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.actions-container {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: 2rem;
+}
+
+:deep(.botoes) {
+  background-color: #515E54;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-size: 1.1em;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+
+:deep(.botoes:hover) {
+  background-color: #3d473f;
+  box-shadow: 0 4px 16px rgba(81,94,84,0.12);
+  transform: translateY(-2px) scale(1.03);
+}
+
+:deep(.botoes:active) {
+  background-color: #6b7c6f;
+  transform: scale(0.98);
+}
+
+:deep(.botoes .u-icon) {
+  font-size: 1.3em;
+  margin-right: 0.5em;
 }
 </style>
