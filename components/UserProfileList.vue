@@ -17,8 +17,7 @@
         tabindex="-1"
       />
       <div class="profile-card-content">
-        <span></span>
-        <div>
+        <div class="profile-info">
           <label :for="'perfil-' + perfil.id_perfil" class="profile-label">
             {{ perfil.nome_perfil }}
           </label>
@@ -26,9 +25,9 @@
             {{ perfil.descricao }}
           </p>
         </div>
-        <span class="profile-radio-custom">
-          <span :class="{ checked: perfilSelecionado === perfil.id_perfil }"></span>
-        </span>
+        <div class="profile-radio-custom">
+          <div class="radio-dot" :class="{ active: perfilSelecionado === perfil.id_perfil }"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -101,30 +100,49 @@ watch(perfilSelecionado, (novo) => {
 
 <style scoped>
 .user-profile-list {
-  display: flex;
+  display: grid;
   gap: 1.5rem;
-  justify-content: center;
-  margin: 2rem 0;
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .user-profile-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .user-profile-list {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .user-profile-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
 }
 
 .user-profile-card {
-  position: relative;
-  background: #fff;
-  border: 1.5px solid #bbb;
+  background-color: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.5rem 2rem 1.5rem 1.5rem;
-  min-width: 260px;
-  max-width: 320px;
+  padding: 20px;
   cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.user-profile-card:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .user-profile-card.selected {
-  border-color: #3d4e43;
-  box-shadow: 0 4px 16px 0 rgba(61,78,67,0.08);
+  border-color: #515E54;
+  box-shadow: 0 4px 12px rgba(81, 94, 84, 0.2);
+  background-color: #ffffff;
 }
 
 .profile-radio-input {
@@ -134,62 +152,83 @@ watch(perfilSelecionado, (novo) => {
 .profile-card-content {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.profile-info {
   flex: 1;
 }
 
-.profile-icon {
-  font-size: 2rem;
-  margin-top: 0.2rem;
-  color: #3d4e43;
-  min-width: 2.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .profile-label {
-  font-weight: bold;
-  font-size: 1.15rem;
-  color: #222;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #2d3748;
   cursor: pointer;
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .profile-description {
-  color: #666;
-  font-size: 0.98rem;
-  margin: 0.3rem 0 0 0;
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .profile-radio-custom {
-  position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e0;
   border-radius: 50%;
-  border: 2px solid #bbb;
-  background: #fff;
+  background-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s ease;
 }
 
 .user-profile-card.selected .profile-radio-custom {
-  border-color: #3d4e43;
+  border-color: #515E54;
+  background-color: #515E54;
 }
 
-.profile-radio-custom span {
-  display: block;
-  width: 12px;
-  height: 12px;
+.radio-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: transparent;
-  transition: background 0.2s;
+  background-color: transparent;
+  transition: all 0.2s ease;
 }
 
-.profile-radio-custom span.checked {
-  background: #3d4e43;
+.radio-dot.active {
+  background-color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .user-profile-card {
+    padding: 16px;
+  }
+  
+  .profile-label {
+    font-size: 1rem;
+  }
+  
+  .profile-description {
+    font-size: 0.9rem;
+  }
+  
+  .profile-radio-custom {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .radio-dot {
+    width: 6px;
+    height: 6px;
+  }
 }
 </style>
