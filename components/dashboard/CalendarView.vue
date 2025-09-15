@@ -14,7 +14,7 @@
     </div>
     <div class="calendar-grid">
       <div v-for="(w,i) in weekdays" :key="'w-'+i" class="weekday">{{ w }}</div>
-      <div v-for="cell in monthCells" :key="cell.key" class="day-cell" :class="{ 'other-month': !cell.inCurrentMonth, 'has-events': cell.count>0 }" @click="onDayClick(cell)">
+      <div v-for="cell in monthCells" :key="cell.key" class="day-cell" :class="{ 'other-month': !cell.inCurrentMonth, 'has-events': cell.count>0, 'today': cell.isToday }" @click="onDayClick(cell)">
         <div class="day-content"><span class="day-number">{{ cell.date.getDate() }}</span></div>
         <div v-if="cell.count>0" class="event-indicator" :title="`${cell.count} agendamento(s)`">{{ cell.count }}</div>
       </div>
@@ -39,6 +39,9 @@ const keyFromDate = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.ge
 const weekdays = ['dom.','seg.','ter.','qua.','qui.','sex.','sáb.']
 const monthTitle = computed(() => visibleMonth.value.toLocaleDateString('pt-BR',{ month:'long', year:'numeric' }))
 
+const today = new Date()
+const todayKey = keyFromDate(today)
+
 const eventsByDate = computed(() => {
   const map = new Map()
   for (const e of calendarEvents.value) {
@@ -61,20 +64,20 @@ const monthCells = computed(() => {
     const d = new Date(y, m-1, prevDays-i)
     const k = keyFromDate(d)
     const ev = eventsByDate.value.get(k) || []
-    cells.push({ date:d, key:k, inCurrentMonth:false, events:ev, count:ev.length })
+    cells.push({ date:d, key:k, inCurrentMonth:false, events:ev, count:ev.length, isToday: k === todayKey })
   }
   for (let day=1;day<=days;day++) {
     const d = new Date(y, m, day)
     const k = keyFromDate(d)
     const ev = eventsByDate.value.get(k) || []
-    cells.push({ date:d, key:k, inCurrentMonth:true, events:ev, count:ev.length })
+    cells.push({ date:d, key:k, inCurrentMonth:true, events:ev, count:ev.length, isToday: k === todayKey })
   }
   const rem = 42 - cells.length
   for (let i=1;i<=rem;i++) {
     const d = new Date(y, m+1, i)
     const k = keyFromDate(d)
     const ev = eventsByDate.value.get(k) || []
-    cells.push({ date:d, key:k, inCurrentMonth:false, events:ev, count:ev.length })
+    cells.push({ date:d, key:k, inCurrentMonth:false, events:ev, count:ev.length, isToday: k === todayKey })
   }
   return cells
 })
@@ -151,6 +154,8 @@ watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 .other-month .day-number{color:#9ca3af}
 .has-events{cursor:pointer}
 .has-events:hover{background:#f9fafb}
+.today{background:#dbeafe;border:2px solid #3b82f6}
+.today .day-number{color:#1d4ed8;font-weight:900}
 .event-indicator{position:absolute;top:6px;right:6px;background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:1;pointer-events:none}
 @media(max-width:48rem){.cal-toolbar{grid-template-columns:1fr auto;grid-template-areas:"title nav";row-gap:.5rem}.cal-title{grid-area:title;font-size:1.25rem;white-space:normal}.cal-toolbar-left{grid-area:nav;justify-self:end}.weekday{font-size:.78rem;padding:.3rem .15rem}.day-number{font-size:.9rem}.event-indicator{width:14px;height:14px;font-size:8px;top:4px;right:4px}.btn-nav{padding:.35rem .45rem;border-radius:7px}.calendar-grid{grid-template-columns:repeat(7,minmax(32px,1fr))}}
 @media(max-width:22.5rem){.cal-title{font-size:1.1rem}.weekday{font-size:.7rem;padding:.25rem .12rem}.day-number{font-size:.85rem}.event-indicator{width:12px;height:12px;font-size:7px;top:3px;right:3px}.btn-nav{padding:.3rem .4rem;border-radius:6px}.calendar-grid{grid-template-columns:repeat(7,minmax(28px,1fr))}}
