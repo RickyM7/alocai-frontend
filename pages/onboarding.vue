@@ -1,22 +1,24 @@
 <template>
   <div class="onboarding-container">
-
     <div class="onboarding-card">
       <div class="logo-section">
         <img src="/img/logo.webp" alt="Logo Instituição" class="logo" />
         <h2 class="app-title">Tipo de Conta</h2>
-        <p>Escolha o tipo de conta que melhor descreve sua função para que possamos personalizar sua experiência:</p>
+        <p class="description">Escolha o tipo de conta que melhor descreve sua função para que possamos personalizar sua experiência:</p>
       </div>
 
       <form class="onboarding-form" @submit.prevent="handleSubmit">
+        <div class="profile-list-container">
           <UserProfileList
-              v-model:perfilSelecionado="perfilSelecionado"
-              :onSuccess="(data) => { perfis = data; }"
-              :onError="(error) => { console.error('Erro ao buscar perfis de usuário:', error); }"
+            v-model:perfilSelecionado="perfilSelecionado"
+            :onSuccess="(data) => { perfis = data; }"
+            :onError="(error) => { console.error('Erro ao buscar perfis de usuário:', error); }"
           />
+        </div>
+        <div class="button-container">
           <button type="submit" class="onboarding-button">Concluir</button>
+        </div>
       </form>
-
     </div>
   </div>
   <NuxtLoadingIndicator />
@@ -100,50 +102,49 @@ const handleSubmit = async (event: Event) => {
 </script>
 
 <style scoped>
-/* Variáveis CSS para cores e fontes, para facilitar a manutenção */
-:root {
-  --primary-color: #4CAF50; /* Um verde semelhante ao do botão */
-  --text-color: #333;
-  --light-text-color: #666;
-  --border-color: #ddd;
-  --background-color: #f0f2f5;
-  --card-background: #fff;
-  --link-color: #007bff;
-}
-
 .onboarding-container {
+  background-color: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background-color: var(--background-color);
-  font-family: 'Arial', sans-serif; /* Considere usar uma fonte mais adequada, se houver */
+  padding: 2rem;
+  font-family: 'Arial', sans-serif;
 }
 
 .onboarding-card {
-  background-color: #fff;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  box-sizing: border-box;
-  height: 500px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo-section {
-  margin-bottom: 30px;
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .logo {
-  max-width: 80px; /* Ajuste o tamanho do logo conforme a imagem */
+  max-width: 80px;
   height: auto;
-  margin-bottom: 10px;
+  margin-bottom: 1rem;
 }
 
 .app-title {
-  font-size: 1.5em;
-  color: var(--text-color);
+  font-size: 1.75rem;
+  color: #333;
   font-weight: bold;
+  margin: 0 0 0.75rem 0;
+}
+
+.description {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .onboarding-form {
@@ -151,22 +152,33 @@ const handleSubmit = async (event: Event) => {
   flex-direction: column;
 }
 
+.profile-list-container {
+  padding: 2rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.button-container {
+  padding: 1.5rem 2rem 2rem 2rem;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+}
+
 .onboarding-button {
   background-color: #515E54;
   color: white;
-  padding: 14px 20px;
+  padding: 14px 32px;
   border: none;
-  border-radius: 5px;
-  font-size: 1.1em;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  width: 150px;
-  /* Centraliza o botão */
-  margin: 0 auto;
+  min-width: 150px;
 }
 
 .onboarding-button:hover {
-  background-color: #3d473f; /* Um pouco mais escuro no hover */
+  background-color: #3d473f;
 }
 
 .onboarding-button:disabled {
@@ -174,40 +186,68 @@ const handleSubmit = async (event: Event) => {
   cursor: not-allowed;
 }
 
-/* Mensagem de erro */
-.error-message {
-  background-color: #ffebee;
-  border: 1px solid #f44336;
-  color: #c62828;
-  padding: 12px;
-  border-radius: 5px;
-  margin: 20px 0;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-.success-message {
-  background-color: #e8f5e9;
-  border: 1px solid #4caf50;
-  color: #2e7d32;
-  padding: 12px;
-  border-radius: 5px;
-  margin: 20px 0;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-@media (max-width: 600px) {
-  .onboarding-card {
-    margin: 20px; /* Adiciona um pouco de margem em telas menores */
-    padding: 30px 20px;
+@media (max-width: 768px) {
+  .onboarding-container {
+    padding: 1.5rem;
   }
+  
+  .logo-section {
+    padding: 1.5rem;
+  }
+  
   .app-title {
-    font-size: 1.3em;
+    font-size: 1.5rem;
   }
+  
+  .description {
+    font-size: 0.9rem;
+  }
+  
+  .profile-list-container {
+    padding: 1.5rem;
+    max-height: 300px;
+  }
+  
+  .button-container {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+  }
+  
   .onboarding-button {
-    padding: 12px 15px;
-    font-size: 1em;
+    padding: 12px 24px;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding-container {
+    padding: 1rem;
+  }
+  
+  .onboarding-card {
+    max-width: 100%;
+  }
+  
+  .logo-section {
+    padding: 1.25rem;
+  }
+  
+  .app-title {
+    font-size: 1.3rem;
+  }
+  
+  .description {
+    font-size: 0.85rem;
+  }
+  
+  .profile-list-container {
+    padding: 1.25rem;
+    max-height: 250px;
+  }
+  
+  .button-container {
+    padding: 1rem 1.25rem;
   }
 }
 </style>
