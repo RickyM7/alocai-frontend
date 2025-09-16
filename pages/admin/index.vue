@@ -141,23 +141,32 @@ const processingId = ref(null);
 
 const calcularStatusGeral = (reservas) => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
+    const total = reservas.length;
 
     if (statuses.has('pendente')) {
         return 'Pendente';
     }
-    
-    if (statuses.has('aprovado') || statuses.has('concluido')) {
+
+    if (statuses.has('aprovado')) {
         return 'Aprovado';
     }
 
-    if (statuses.size >= 1 && statuses.has('negado')) {
-        return 'Negado';
-    }
-    
-    if (statuses.has('concluido') || statuses.has('negado')) {
+    const concluidos = reservas.filter(r => r.status_agendamento === 'concluido').length;
+    const negados = reservas.filter(r => r.status_agendamento === 'negado').length;
+
+    if (concluidos > 0 && negados > 0) {
         return 'Finalizado';
     }
-
+    if (concluidos > 0 && concluidos === total) {
+        return 'Concluído';
+    }
+    if (negados === total) {
+        return 'Negado';
+    }
+    if (concluidos > 0) {
+        return 'Finalizado';
+    }
+    
     return 'Indefinido';
 };
 
