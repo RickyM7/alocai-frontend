@@ -53,7 +53,7 @@
               </div>
             </div>
             <div class="header-actions">
-              <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ solicitacao.status_geral }}</span>
+              <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ formatarStatus(solicitacao.status_geral) }}</span>
               <div class="action-buttons">
                 <template v-if="solicitacao.status_geral === 'Pendente'">
                   <button class="btn btn-outline btn-sm" @click.stop="editarSolicitacao(solicitacao)" :disabled="processingId === solicitacao.id_agendamento_pai" title="Editar">
@@ -100,7 +100,7 @@
                     <span class="horario-time">{{ agendamento.hora_inicio.substring(0, 5) }} - {{ agendamento.hora_fim.substring(0, 5) }}</span>
                   </div>
                   <span :class="getStatusClass(agendamento.status_agendamento)" class="status-badge status-small">
-                    {{ agendamento.status_agendamento }}
+                    {{ formatarStatus(agendamento.status_agendamento) }}
                   </span>
                 </div>
                 <div class="horario-actions">
@@ -127,6 +127,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import { useRouter } from 'vue-router';
+import { getStatusClass, formatarData, formatarDataHora, formatarStatus } from '~/utils/formatters';
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' });
 
@@ -144,32 +145,31 @@ const calcularStatusGeral = (reservas) => {
     const total = reservas.length;
 
     if (statuses.has('pendente')) {
-        return 'Pendente';
+        return 'pendente';
     }
 
     if (statuses.has('aprovado')) {
-        return 'Aprovado';
+        return 'aprovado';
     }
 
     const concluidos = reservas.filter(r => r.status_agendamento === 'concluido').length;
     const negados = reservas.filter(r => r.status_agendamento === 'negado').length;
 
     if (concluidos > 0 && negados > 0) {
-        return 'Finalizado';
+        return 'finalizado';
     }
     if (concluidos > 0 && concluidos === total) {
-        return 'Concluído';
+        return 'concluido';
     }
     if (negados === total) {
-        return 'Negado';
+        return 'negado';
     }
     if (concluidos > 0) {
-        return 'Finalizado';
+        return 'finalizado';
     }
     
-    return 'Indefinido';
+    return 'indefinido';
 };
-
 
 const filteredSolicitacoes = computed(() => {
   const inProgressStatuses = ['Pendente', 'Aprovado'];
@@ -300,37 +300,6 @@ const confirmarDelecao = async (solicitacao) => {
       alert(`Erro: ${err.message}`);
     }
   }
-};
-
-const formatarData = (dataString) => {
-  if (!dataString) return 'Data inválida';
-  const dateOnly = dataString.split('T')[0];
-  try {
-    const date = new Date(dateOnly + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
-  } catch (error) {
-    return 'Data inválida';
-  }
-};
-
-const formatarDataHora = (dataString) => {
-    if (!dataString) return '';
-    try {
-        const data = new Date(dataString);
-        return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch {
-        return dataString;
-    }
-};
-
-const getStatusClass = (status) => {
-  if (!status) return 'status-default';
-  const s = status.toLowerCase();
-  if (s.includes('aprovado')) return 'status-success';
-  if (s.includes('pendente')) return 'status-warning';
-  if (s.includes('negado')) return 'status-error';
-  if (s.includes('concluído') || s.includes('finalizado')) return 'status-info';
-  return 'status-default';
 };
 
 onMounted(fetchSolicitacoes);

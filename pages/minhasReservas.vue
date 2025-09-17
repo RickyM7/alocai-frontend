@@ -38,7 +38,7 @@
                 </div>
               </div>
               <div class="header-actions">
-                <span :class="getStatusClass(grupo.status_geral)" class="status-badge">{{ grupo.status_geral }}</span>
+                <span :class="getStatusClass(grupo.status_geral)" class="status-badge">{{ formatarStatus(grupo.status_geral) }}</span>
                 <button v-if="grupo.status_geral === 'Aprovado' || grupo.status_geral === 'Parcialmente Aprovado'" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn btn-outline btn-sm" title="Concluir Todos os Horários">
                   <Icon name="i-lucide-check-check" />
                 </button>
@@ -62,7 +62,7 @@
                       <td>{{ reserva.hora_inicio?.substring(0, 5) }} - {{ reserva.hora_fim?.substring(0, 5) }}</td>
                       <td>
                         <span :class="getStatusClass(reserva.status_agendamento)" class="status-badge-sm">
-                          {{ reserva.status_agendamento }}
+                          {{ formatarStatus(reserva.status_agendamento) }}
                         </span>
                       </td>
                       <td class="actions-cell">
@@ -85,6 +85,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
+import { getStatusClass, formatarData, formatarStatus } from '~/utils/formatters';
 
 interface ReservaFilho {
   id_agendamento: number;
@@ -157,27 +158,6 @@ const toggleGroup = (id: number) => {
 };
 
 const isGroupExpanded = (id: number) => expandedGroups.value.includes(id);
-
-const formatarData = (dataString: string): string => {
-  try {
-    return new Date(`${dataString}T00:00:00`).toLocaleDateString('pt-BR');
-  } catch {
-    return dataString;
-  }
-};
-
-const getStatusClass = (status: string): string => {
-  if (!status) return 'status-default';
-  const s = status.toLowerCase();
-  
-  if (s === 'parcialmente negado') return 'status-error';
-  if (s.includes('aprovado')) return 'status-success';
-  if (s.includes('pendente')) return 'status-warning';
-  if (s.includes('negado')) return 'status-error';
-  if (s.includes('concluido') || s.includes('finalizado')) return 'status-info';
-  
-  return 'status-default';
-};
 
 const fetchReservas = async () => {
   isLoading.value = true;

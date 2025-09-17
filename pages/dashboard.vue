@@ -47,7 +47,7 @@
                 </div>
               </div>
               <div class="header-actions">
-                <span :class="getStatusClass(recurso.status_recurso)" class="status-badge">{{ recurso.status_recurso.replace('_', ' ') }}</span>
+                <span :class="getStatusClass(recurso.status_recurso)" class="status-badge">{{ formatarStatus(recurso.status_recurso) }}</span>
                 <span class="badge">{{ recurso.agendamentos.length }} agendamento(s)</span>
                 <button class="btn btn-outline btn-sm" @click.stop="showResourceCalendar(recurso)" title="Ver Calendário">
                   <Icon name="i-lucide-calendar-days" />
@@ -119,6 +119,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import DashboardCalendarView from '~/components/dashboard/CalendarView.vue';
+import { getStatusClass, formatarData, formatarStatus } from '~/utils/formatters';
 
 definePageMeta({ layout: 'dashboard'});
 
@@ -150,29 +151,8 @@ const fetchListData = async () => {
   }
 };
 
-const formatarData = (dataString: string): string => {
-  if (!dataString) return 'Data inválida';
-  const dateOnly = dataString.includes('T') ? dataString.split('T')[0] : dataString;
-  try {
-    const [year, month, day] = dateOnly.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('pt-BR');
-  } catch {
-    return 'Data inválida';
-  }
-};
-
 const formatarHora = (dateString: string): string => {
   return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-};
-
-const getStatusClass = (status: string) => {
-  const s = (status || '').toLowerCase();
-  if (s.includes('disponivel')) return 'status-success';
-  if (s.includes('manutencao')) return 'status-warning';
-  if (s.includes('reservado')) return 'status-info';
-  if (s.includes('indisponivel')) return 'status-error';
-  return 'status-default';
 };
 
 const handleDateClick = (data: { date: Date; events: any[] }) => {
@@ -230,11 +210,6 @@ onMounted(fetchListData);
 .btn-outline:hover{background:#f9fafb}
 .badge{background:#e5e7eb;color:#374151;padding:.25rem .75rem;border-radius:9999px;font-weight:500;font-size:.8rem}
 .status-badge{display:inline-block;padding:.25rem .75rem;border-radius:9999px;font-size:.875rem;font-weight:500;text-transform:capitalize}
-.status-success{background:#dcfce7;color:#166534}
-.status-warning{background:#fef3c7;color:#92400e}
-.status-error{background:#fecaca;color:#991b1b}
-.status-info{background:#dbeafe;color:#1e40af}
-.status-default{background:#e5e7eb;color:#374151}
 .child-table-wrapper{max-height:200px;overflow-y:auto;overflow-x:auto}
 .child-table-wrapper .custom-table th{position:sticky;top:0;background:#f9fafb;z-index:1}
 .custom-table{width:100%;border-collapse:collapse}

@@ -3,6 +3,8 @@ export default ({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
+  css: ['~/assets/css/main.css'],
+
   modules: [
     '@nuxt/test-utils',
     '@nuxt/icon',

@@ -16,14 +16,10 @@
       <div class="filters-container">
         <button
           v-for="status in statusDisponiveis" :key="status"
-          :class="['btn', filtroStatus === status ? 'btn-primary' : 'btn-outline']"
+          :class="['btn', 'btn-filter', getStatusClass(status), { 'active': filtroStatus === status }]"
           @click="aplicarFiltro(status)"
         >
-          {{ status.replace('_', ' ') }}
-        </button>
-        <button v-if="filtroStatus" @click="aplicarFiltro(null)" class="btn btn-ghost">
-          <Icon name="i-lucide-x" />
-          <span>Limpar</span>
+          {{ formatarStatus(status) }}
         </button>
       </div>
 
@@ -34,7 +30,7 @@
             <div class="recurso-info">
               <h3 class="recurso-nome">{{ recurso.nome_recurso }}</h3>
               <span :class="getStatusClass(recurso.status_recurso)" class="status-badge">
-                {{ recurso.status_recurso.replace('_', ' ') }}
+                {{ formatarStatus(recurso.status_recurso) }}
               </span>
             </div>
             <div class="recurso-actions">
@@ -74,6 +70,7 @@
 import { ref, onMounted } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import RecursoForm from '~/components/admin/RecursoForm.vue';
+import { getStatusClass, formatarStatus } from '~/utils/formatters';
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' });
 
@@ -112,9 +109,10 @@ const fetchStatusDisponiveis = async () => {
 };
 
 const aplicarFiltro = (status) => {
-    filtroStatus.value = status;
-    fetchRecursos();
+  filtroStatus.value = filtroStatus.value === status ? null : status;
+  fetchRecursos();
 };
+
 
 const toggleViewMode = () => {
   if (viewMode.value === 'list') {
@@ -154,15 +152,6 @@ const confirmarDelecao = async (recurso) => {
     }
 };
 
-const getStatusClass = (status) => {
-  const s = (status || '').toLowerCase();
-  if (s.includes('disponivel')) return 'status-success';
-  if (s.includes('manutencao')) return 'status-warning';
-  if (s.includes('reservado')) return 'status-info';
-  if (s.includes('indisponivel')) return 'status-error';
-  return 'status-default';
-};
-
 onMounted(() => {
     fetchRecursos();
     fetchStatusDisponiveis();
@@ -170,13 +159,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden; padding: 1rem;}
 .page-header{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;padding-bottom:1rem}
 .page-title{font-size:1.75rem;font-weight:700;color:#111827}
 .scrollable-content{flex-grow:1;overflow-y:auto;padding:0rem}
 .filters-container{display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
 .filters-container .btn{text-transform:capitalize}
-.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border-radius:6px;border:1px solid transparent;cursor:pointer;font-weight:500;transition:all 0.2s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.2s;white-space:nowrap}
 .btn-primary{background-color:#4f46e5;color:white;border-color:#4f46e5}
 .btn-primary:hover{background-color:#4338ca}
 .btn-outline{background-color:transparent;color:#4b5563;border-color:#d1d5db}
@@ -204,11 +193,6 @@ onMounted(() => {
 .detail-value{font-size:.9375rem;color:#374151;font-weight:500;padding-left:1.375rem}
 
 .status-badge{display:inline-block;padding:.375rem .875rem;border-radius:9999px;font-size:.8125rem;font-weight:600;text-transform:capitalize;letter-spacing:.025em}
-.status-success{background-color:#dcfce7;color:#14532d}
-.status-warning{background-color:#fef3c7;color:#713f12}
-.status-error{background-color:#fee2e2;color:#7f1d1d}
-.status-info{background-color:#dbeafe;color:#1e3a8a}
-.status-default{background-color:#f3f4f6;color:#374151}
 
 .status-container{text-align:center;padding:3rem;color:#6b7280;font-size:1.125rem}
 

@@ -12,21 +12,21 @@
         <h1 class="title">Agendar para:</h1>
         <div class="opcoes">
           <label class="radio-label">
-            <input type="radio" value="Data" v-model="tipoAgendamento" />
+            <input type="radio" value="Data" v-model="store.tipoAgendamento" />
             Datas Específicas
           </label>
           <label class="radio-label">
-            <input type="radio" value="Período Recorrente" v-model="tipoAgendamento" />
+            <input type="radio" value="Período Recorrente" v-model="store.tipoAgendamento" />
             Período Recorrente
           </label>
         </div>
       </div>
 
       <div class="card-content">
-        <div v-if="tipoAgendamento === 'Data'" class="content-grid">
+        <div v-if="store.tipoAgendamento === 'Data'" class="content-grid">
           <div class="col-calendar">
             <Datepicker 
-              v-model="datasSelecionadas" 
+              v-model="store.datasSelecionadas" 
               multi-dates 
               inline 
               auto-apply 
@@ -38,24 +38,19 @@
             />
           </div>
 
-          <div class="col-dates" v-if="datasSelecionadas.length">
+          <div class="col-dates" v-if="store.datasSelecionadas.length">
             <h4 class="section-title">Datas Selecionadas</h4>
             <div class="dates-list">
-              <div v-for="(data, index) in datasSelecionadas" :key="data.toISOString()" class="date-item">
-                <span class="date-label">{{ formatarData(data) }}</span>
-                <div v-if="horarioMode === 'diferente'" class="slots-container">
-                  <div v-for="(slot, sIdx) in (horariosMultiplos[index]?.slots || [])" :key="slot.id" class="time-inputs">
-                    <input type="time" v-model="slot.inicio" :min="minInicio(data)" @input="handleMultiploSlotStartChange(index, sIdx)" class="time-field"/>
+              <div v-for="(data, index) in store.horariosMultiplos" :key="data.data" class="date-item">
+                <span class="date-label">{{ formatarData(new Date(data.data + 'T00:00:00')) }}</span>
+                <div v-if="store.horarioMode === 'diferente'" class="slots-container">
+                  <div v-for="(slot, sIdx) in data.slots" :key="slot.id" class="time-inputs">
+                    <input type="time" v-model="slot.inicio" :min="minInicio(data.data)" @input="handleStartTimeChange(slot)" class="time-field"/>
                     <span class="time-separator">até</span>
-                    <input type="time" v-model="slot.fim" :min="slot.minFim" :ref="el => setMultiploFimInputRef(el, index, sIdx)" @input="handleMultiploSlotFimChange(index, sIdx)" class="time-field"/>
-                    <button type="button" class="btn-remove" @click="removerSlot(index, sIdx)">×</button>
+                    <input type="time" v-model="slot.fim" :min="slot.minFim" class="time-field"/>
+                    <button type="button" class="btn-remove" @click="store.removerSlot(index, sIdx)">×</button>
                   </div>
-                  <button type="button" class="btn-add" @click="adicionarSlot(index)">+ Horário</button>
-                </div>
-                <div v-if="horarioMode === 'diferente' && (horariosMultiplos[index]?.slots || []).length" class="time-preview">
-                  <div v-for="(slot, sIdx) in horariosMultiplos[index].slots" :key="slot.id + '-prev'">
-                    <span v-if="slot.inicio && slot.fim">{{ slot.inicio }} - {{ slot.fim }}</span>
-                  </div>
+                  <button type="button" class="btn-add" @click="store.adicionarSlot(index)">+ Horário</button>
                 </div>
               </div>
             </div>
@@ -64,38 +59,37 @@
           <div class="col-times">
             <div class="time-mode">
               <label class="radio-label-sm">
-                <input type="radio" value="mesmo" v-model="horarioMode" />
+                <input type="radio" value="mesmo" v-model="store.horarioMode" />
                 Mesmo horário
               </label>
               <label class="radio-label-sm">
-                <input type="radio" value="diferente" v-model="horarioMode" />
+                <input type="radio" value="diferente" v-model="store.horarioMode" />
                 Horários diferentes
               </label>
             </div>
 
-            <div v-if="horarioMode === 'mesmo' && datasSelecionadas.length" class="same-time-section">
+            <div v-if="store.horarioMode === 'mesmo' && store.datasSelecionadas.length" class="same-time-section">
               <h4 class="section-title">Horário Único</h4>
               <div class="time-inputs">
-                <input type="time" v-model="horarioUnico.inicio" :min="minInicioParaMesmo" @input="handleUnicoStartTimeChange" class="time-field"/>
+                <input type="time" v-model="store.horarioUnico.inicio" :min="minInicioParaMesmo" @input="handleStartTimeChange(store.horarioUnico)" class="time-field"/>
                 <span class="time-separator">até</span>
-                <input type="time" v-model="horarioUnico.fim" :min="horarioUnico.minFim" @input="handleUnicoFimChange" ref="horarioUnicoFimInput" class="time-field"/>
+                <input type="time" v-model="store.horarioUnico.fim" :min="store.horarioUnico.minFim" class="time-field"/>
               </div>
-              <div v-if="horarioUnico.inicio && horarioUnico.fim" class="time-preview">{{ horarioUnico.inicio }} - {{ horarioUnico.fim }}</div>
             </div>
           </div>
         </div>
         
-        <div v-if="tipoAgendamento === 'Período Recorrente'" class="content-grid">
+        <div v-if="store.tipoAgendamento === 'Período Recorrente'" class="content-grid">
           <div class="col-calendar">
             <div class="recurrent-config">
               <div class="date-period">
                 <div class="field-group">
                   <label>Data de Início</label>
-                  <input type="date" v-model="dataInicioRecorrente" :min="formatDateToLocal(new Date())"/>
+                  <input type="date" v-model="store.dataInicioRecorrente" :min="formatDateToLocal(new Date())"/>
                 </div>
                 <div class="field-group">
                   <label>Data de Fim</label>
-                  <input type="date" v-model="dataFimRecorrente" :min="dataInicioRecorrente"/>
+                  <input type="date" v-model="store.dataFimRecorrente" :min="store.dataInicioRecorrente"/>
                 </div>
               </div>
 
@@ -103,7 +97,7 @@
                 <label class="section-label">Dias da Semana</label>
                 <div class="weekdays-grid">
                   <label v-for="(dia, index) in diasSemana" :key="index" class="weekday-item">
-                    <input type="checkbox" :value="index" v-model="diasSemanaSelecionados"/>
+                    <input type="checkbox" :value="index" v-model="store.diasSemanaSelecionados"/>
                     <span>{{ dia.substring(0, 3) }}</span>
                   </label>
                 </div>
@@ -111,10 +105,10 @@
             </div>
           </div>
 
-          <div class="col-dates" v-if="datasRecorrentes.length">
-            <h4 class="section-title">Ocorrências ({{ datasRecorrentes.length }})</h4>
+          <div class="col-dates" v-if="store.datasRecorrentes.length">
+            <h4 class="section-title">Ocorrências ({{ store.datasRecorrentes.length }})</h4>
             <div class="dates-list">
-              <div v-for="d in datasRecorrentes" :key="d.toISOString()" class="date-item-simple">
+              <div v-for="d in store.datasRecorrentes" :key="d.toISOString()" class="date-item-simple">
                 {{ formatarData(d) }}
               </div>
             </div>
@@ -123,40 +117,34 @@
           <div class="col-times">
             <div class="time-mode">
               <label class="radio-label-sm">
-                <input type="radio" value="mesmo" v-model="horarioModeRecorrente"/>
+                <input type="radio" value="mesmo" v-model="store.horarioModeRecorrente"/>
                 Mesmo horário
               </label>
               <label class="radio-label-sm">
-                <input type="radio" value="diferente" v-model="horarioModeRecorrente"/>
+                <input type="radio" value="diferente" v-model="store.horarioModeRecorrente"/>
                 Horários diferentes
               </label>
             </div>
 
-            <div v-if="horarioModeRecorrente === 'mesmo'" class="same-time-section">
+            <div v-if="store.horarioModeRecorrente === 'mesmo'" class="same-time-section">
               <h4 class="section-title">Horário Único</h4>
               <div class="time-inputs">
-                <input type="time" v-model="horarioRecorrente.inicio" :min="minInicioRecorrente" @input="handleRecorrenteStartTimeChange" class="time-field"/>
+                <input type="time" v-model="store.horarioRecorrente.inicio" :min="minInicioRecorrente" @input="handleStartTimeChange(store.horarioRecorrente)" class="time-field"/>
                 <span class="time-separator">até</span>
-                <input type="time" v-model="horarioRecorrente.fim" :min="horarioRecorrente.minFim" @input="handleRecorrenteFimChange" ref="horarioRecorrenteFimInput" class="time-field"/>
+                <input type="time" v-model="store.horarioRecorrente.fim" :min="store.horarioRecorrente.minFim" class="time-field"/>
               </div>
-              <div v-if="horarioRecorrente.inicio && horarioRecorrente.fim" class="time-preview">{{ horarioRecorrente.inicio }} - {{ horarioRecorrente.fim }}</div>
             </div>
 
-            <div v-if="horarioModeRecorrente === 'diferente'" class="different-times-section">
+            <div v-if="store.horarioModeRecorrente === 'diferente'" class="different-times-section">
               <h4 class="section-title">Horários</h4>
               <div class="slots-container">
-                <div v-for="(slot, idx) in recorrenteSlots" :key="slot.id" class="time-inputs">
-                  <input type="time" v-model="slot.inicio" :min="minInicioRecorrente" @input="handleRecorrenteSlotStartChange(idx)" class="time-field"/>
+                <div v-for="(slot, idx) in store.recorrenteSlots" :key="slot.id" class="time-inputs">
+                  <input type="time" v-model="slot.inicio" :min="minInicioRecorrente" @input="handleStartTimeChange(slot)" class="time-field"/>
                   <span class="time-separator">até</span>
-                  <input type="time" v-model="slot.fim" :min="slot.minFim" @input="handleRecorrenteSlotFimChange(idx)" class="time-field"/>
-                  <button type="button" class="btn-remove" @click="removerRecorrenteSlot(idx)">×</button>
+                  <input type="time" v-model="slot.fim" :min="slot.minFim" class="time-field"/>
+                  <button type="button" class="btn-remove" @click="store.removerRecorrenteSlot(idx)">×</button>
                 </div>
-                <button type="button" class="btn-add" @click="adicionarRecorrenteSlot">+ Horário</button>
-              </div>
-              <div v-if="recorrenteSlots.length" class="time-preview">
-                <div v-for="(slot, idx) in recorrenteSlots" :key="slot.id + '-prev'">
-                  <span v-if="slot.inicio && slot.fim">{{ slot.inicio }} - {{ slot.fim }}</span>
-                </div>
+                <button type="button" class="btn-add" @click="store.adicionarRecorrenteSlot">+ Horário</button>
               </div>
             </div>
           </div>
@@ -171,44 +159,22 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { useAgendamentoStore } from '~/stores/agendamento';
 import { useRouter } from 'vue-router';
-import { authenticatedFetch } from '~/utils/api';
 
 const router = useRouter();
 const store = useAgendamentoStore();
-const config = useRuntimeConfig();
 
-const horarioUnicoFimInput = ref(null);
-const horariosMultiplosFimInputs = ref([]);
-const horarioRecorrenteFimInput = ref(null);
-const tipoAgendamento = ref('Data');
-const horarioMode = ref('mesmo');
-const datasSelecionadas = ref([]);
-const horarioUnico = ref({ inicio: '', fim: '', minFim: '' });
-const horariosMultiplos = ref([]);
-const dataInicioRecorrente = ref('');
-const dataFimRecorrente = ref('');
 const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-const diasSemanaSelecionados = ref([]);
-const horarioModeRecorrente = ref('mesmo');
-const horarioRecorrente = ref({ inicio: '', fim: '', minFim: '' });
-const recorrenteSlots = ref([{ inicio: '', fim: '', minFim: '', id: gerarId() }]);
-const horariosOcupados = ref({});
 
 const formatDateToLocal = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-const parseDateAsLocal = (dateStr) => {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
 };
 
 const horaAgora = () => {
@@ -218,16 +184,44 @@ const horaAgora = () => {
   return `${hh}:${mm}`;
 };
 
-const hojeStr = () => formatDateToLocal(new Date());
+const hojeStr = formatDateToLocal(new Date());
+
+const minInicioParaMesmo = computed(() => {
+  const hasToday = store.datasSelecionadas.some(d => formatDateToLocal(d) === hojeStr);
+  return hasToday ? horaAgora() : '';
+});
+
+const incluiHojeNaRecorrencia = computed(() => {
+  if (!store.dataInicioRecorrente || !store.dataFimRecorrente || store.diasSemanaSelecionados.length === 0) return false;
+  const hoje = new Date();
+  const inicio = new Date(store.dataInicioRecorrente + 'T00:00:00');
+  const fim = new Date(store.dataFimRecorrente + 'T00:00:00');
+  if (hoje < inicio || hoje > fim) return false;
+  return store.diasSemanaSelecionados.includes(hoje.getDay());
+});
+
+const minInicioRecorrente = computed(() => incluiHojeNaRecorrencia.value ? horaAgora() : '');
+
+const minInicio = (dateStr) => {
+  return dateStr === hojeStr ? horaAgora() : '';
+};
+
+watch(() => store.datasSelecionadas, () => {
+  store.syncHorariosMultiplos();
+}, { deep: true });
+
+watch([() => store.dataInicioRecorrente, () => store.dataFimRecorrente, () => store.diasSemanaSelecionados], () => {
+  if (store.recorrenteSlots.length === 0) store.adicionarRecorrenteSlot();
+});
 
 const dateMarkers = computed(() => {
   const markers = [];
-  for (const dateStr in horariosOcupados.value) {
-    const times = horariosOcupados.value[dateStr];
+  for (const dateStr in store.horariosOcupados) {
+    const times = store.horariosOcupados[dateStr];
     if (times && times.length > 0) {
       const formattedTimes = times.map(t => `${t.start} - ${t.end}`).join('\n');
       markers.push({
-        date: parseDateAsLocal(dateStr),
+        date: new Date(dateStr + 'T00:00:00'),
         type: 'dot',
         color: '#ef4444',
         tooltip: [{ text: `Ocupado:\n${formattedTimes}` }]
@@ -237,53 +231,9 @@ const dateMarkers = computed(() => {
   return markers;
 });
 
-const minInicioParaMesmo = computed(() => {
-  const tStr = hojeStr();
-  const hasToday = datasSelecionadas.value.some(d => formatDateToLocal(d) === tStr);
-  return hasToday ? horaAgora() : '';
-});
-
-const incluiHojeNaRecorrencia = computed(() => {
-  if (!dataInicioRecorrente.value || !dataFimRecorrente.value || diasSemanaSelecionados.value.length === 0) return false;
-  const hoje = new Date();
-  const inicio = parseDateAsLocal(dataInicioRecorrente.value);
-  const fim = parseDateAsLocal(dataFimRecorrente.value);
-  if (hoje < inicio || hoje > fim) return false;
-  return diasSemanaSelecionados.value.includes(hoje.getDay());
-});
-
-const minInicioRecorrente = computed(() => incluiHojeNaRecorrencia.value ? horaAgora() : '');
-
-const minInicio = (dateObj) => {
-  const isToday = formatDateToLocal(dateObj) === hojeStr();
-  return isToday ? horaAgora() : '';
+const handleMonthChange = (payload) => {
+  store.fetchDisponibilidade(payload.year, payload.month + 1);
 };
-
-function gerarId() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-const criarSlot = () => ({ inicio: '', fim: '', minFim: '', id: gerarId() });
-
-const setMultiploFimInputRef = (el, index, slotIndex) => {
-  if (!horariosMultiplosFimInputs.value[index]) horariosMultiplosFimInputs.value[index] = [];
-  horariosMultiplosFimInputs.value[index][slotIndex] = el || null;
-};
-
-watch(datasSelecionadas, (novasDatas) => {
-  novasDatas.sort((a, b) => a - b);
-  const antigasMap = new Map(horariosMultiplos.value.map(item => [item.data, item]));
-  const novas = novasDatas.map(data => {
-    const dStr = formatDateToLocal(data);
-    return antigasMap.get(dStr) || { data: dStr, slots: [criarSlot()] };
-  });
-  horariosMultiplos.value = novas;
-  horariosMultiplosFimInputs.value = [];
-}, { deep: true });
-
-watch([dataInicioRecorrente, dataFimRecorrente, diasSemanaSelecionados], () => {
-  if (!recorrenteSlots.value.length) recorrenteSlots.value = [criarSlot()];
-});
 
 const handleStartTimeChange = (horarioRef) => {
   if (!horarioRef.inicio) {
@@ -302,430 +252,57 @@ const handleStartTimeChange = (horarioRef) => {
   }
 };
 
-const handleUnicoStartTimeChange = async () => {
-  if (horarioUnico.value.inicio) {
-    const hasToday = datasSelecionadas.value.some(d => formatDateToLocal(d) === hojeStr());
-    if (hasToday && horarioUnico.value.inicio < horaAgora()) {
-      horarioUnico.value.inicio = horaAgora();
-    }
-  }
-  handleStartTimeChange(horarioUnico.value);
-  await nextTick();
-  horarioUnicoFimInput.value?.focus();
-  validarUnicoImediato();
-};
-
-const compararHora = (a, b) => a === b ? 0 : (a < b ? -1 : 1);
-const sobrepoe = (aIni, aFim, bIni, bFim) => aIni < bFim && aFim > bIni;
-
-const conflitoComReservas = (dataStr, ini, fim) => {
-  const slots = horariosOcupados.value[dataStr] || [];
-  for (const s of slots) {
-    if (sobrepoe(ini, fim, s.start, s.end)) return true;
-  }
-  return false;
-};
-
-const conflitoEmSlotsLocais = (slots, idxAtual) => {
-  const atual = slots[idxAtual];
-  if (!atual || !atual.inicio || !atual.fim) return false;
-  for (let i = 0; i < slots.length; i++) {
-    if (i === idxAtual) continue;
-    const s = slots[i];
-    if (!s.inicio || !s.fim) continue;
-    if (atual.inicio === s.inicio && atual.fim === s.fim) return 'dup';
-    if (sobrepoe(atual.inicio, atual.fim, s.inicio, s.fim)) return 'overlap';
-  }
-  return false;
-};
-
-const handleMultiploSlotStartChange = async (dateIndex, slotIndex) => {
-  const slot = horariosMultiplos.value[dateIndex].slots[slotIndex];
-  const dataObj = datasSelecionadas.value[dateIndex];
-  const min = minInicio(dataObj);
-  if (slot.inicio && min && slot.inicio < min) {
-    slot.inicio = min;
-  }
-  handleStartTimeChange(slot);
-  await nextTick();
-  const refEl = (horariosMultiplosFimInputs.value[dateIndex] || [])[slotIndex];
-  refEl?.focus();
-  validarSlotImediato(dateIndex, slotIndex);
-};
-
-const handleMultiploSlotFimChange = (dateIndex, slotIndex) => {
-  validarSlotImediato(dateIndex, slotIndex);
-};
-
-const validarSlotImediato = (dateIndex, slotIndex) => {
-  const item = horariosMultiplos.value[dateIndex];
-  if (!item) return;
-  const dataStr = item.data;
-  const slot = item.slots[slotIndex];
-  if (!slot.inicio || !slot.fim) return;
-  if (compararHora(slot.fim, slot.inicio) <= 0) {
-    alert('O horário de término deve ser maior que o de início.');
-    slot.fim = slot.minFim || '';
-    return;
-  }
-  if (dataStr === hojeStr() && slot.inicio < horaAgora()) {
-    alert('Não é possível selecionar horário anterior ao atual para hoje.');
-    slot.inicio = horaAgora();
-    handleStartTimeChange(slot);
-    return;
-  }
-  const conflitoDia = conflitoEmSlotsLocais(item.slots, slotIndex);
-  if (conflitoDia === 'dup') {
-    alert('Você já adicionou este mesmo horário para este dia.');
-    slot.fim = '';
-    return;
-  }
-  if (conflitoDia === 'overlap') {
-    alert('Os horários escolhidos para este dia não podem se sobrepor.');
-    slot.fim = '';
-    return;
-  }
-  if (conflitoComReservas(dataStr, slot.inicio, slot.fim)) {
-    alert('Conflito com um horário já reservado para este recurso.');
-    slot.fim = '';
-    return;
-  }
-};
-
-const adicionarSlot = (dateIndex) => {
-  horariosMultiplos.value[dateIndex].slots.push(criarSlot());
-};
-
-const removerSlot = (dateIndex, slotIndex) => {
-  horariosMultiplos.value[dateIndex].slots.splice(slotIndex, 1);
-  if (horariosMultiplosFimInputs.value[dateIndex]) {
-    horariosMultiplosFimInputs.value[dateIndex].splice(slotIndex, 1);
-  }
-};
-
-const validarUnicoImediato = async () => {
-  if (!horarioUnico.value.inicio || !horarioUnico.value.fim || !datasSelecionadas.value.length) return;
-  if (compararHora(horarioUnico.value.fim, horarioUnico.value.inicio) <= 0) {
-    alert('O horário de término deve ser maior que o de início.');
-    horarioUnico.value.fim = horarioUnico.value.minFim || '';
-    return;
-  }
-  const hasToday = datasSelecionadas.value.some(d => formatDateToLocal(d) === hojeStr());
-  if (hasToday && horarioUnico.value.inicio < horaAgora()) {
-    alert('Para hoje, o horário de início não pode ser anterior ao atual.');
-    horarioUnico.value.inicio = horaAgora();
-    handleStartTimeChange(horarioUnico.value);
-    return;
-  }
-  await ensureDisponibilidadeForDates(datasSelecionadas.value);
-  for (const d of datasSelecionadas.value) {
-    const ds = formatDateToLocal(d);
-    if (conflitoComReservas(ds, horarioUnico.value.inicio, horarioUnico.value.fim)) {
-      alert(`Conflito com reserva existente em ${formatarData(d)}.`);
-      horarioUnico.value.fim = '';
-      return;
-    }
-  }
-};
-
-const handleRecorrenteStartTimeChange = async () => {
-  handleStartTimeChange(horarioRecorrente.value);
-  await nextTick();
-  horarioRecorrenteFimInput.value?.focus();
-  validarRecorrenteUnicoImediato();
-};
-
-const handleRecorrenteFimChange = async () => {
-  validarRecorrenteUnicoImediato();
-};
-
-const validarRecorrenteUnicoImediato = async () => {
-  if (!horarioRecorrente.value.inicio || !horarioRecorrente.value.fim) return;
-  if (compararHora(horarioRecorrente.value.fim, horarioRecorrente.value.inicio) <= 0) {
-    alert('O horário de término deve ser maior que o de início.');
-    horarioRecorrente.value.fim = horarioRecorrente.value.minFim || '';
-    return;
-  }
-  if (incluiHojeNaRecorrencia.value && horarioRecorrente.value.inicio < horaAgora()) {
-    alert('Para hoje, o horário de início não pode ser anterior ao atual.');
-    horarioRecorrente.value.inicio = horaAgora();
-    handleStartTimeChange(horarioRecorrente.value);
-    return;
-  }
-  const datas = getRecurrenceDates();
-  if (!datas.length) return;
-  await ensureDisponibilidadeForDates(datas);
-  for (const d of datas) {
-    const ds = formatDateToLocal(d);
-    if (conflitoComReservas(ds, horarioRecorrente.value.inicio, horarioRecorrente.value.fim)) {
-      alert(`Conflito com reserva existente em ${formatarData(d)}.`);
-      horarioRecorrente.value.fim = '';
-      return;
-    }
-  }
-};
-
-const adicionarRecorrenteSlot = () => {
-  recorrenteSlots.value.push(criarSlot());
-};
-
-const removerRecorrenteSlot = (idx) => {
-  recorrenteSlots.value.splice(idx, 1);
-  if (!recorrenteSlots.value.length) recorrenteSlots.value.push(criarSlot());
-};
-
-const handleRecorrenteSlotStartChange = async (idx) => {
-  const slot = recorrenteSlots.value[idx];
-  if (incluiHojeNaRecorrencia.value && slot.inicio && slot.inicio < horaAgora()) {
-    slot.inicio = horaAgora();
-  }
-  handleStartTimeChange(slot);
-  validarRecorrenteSlotImediato(idx);
-};
-
-const handleRecorrenteSlotFimChange = (idx) => {
-  validarRecorrenteSlotImediato(idx);
-};
-
-const validarRecorrenteSlotImediato = async (idx) => {
-  const slot = recorrenteSlots.value[idx];
-  if (!slot.inicio || !slot.fim) return;
-  if (compararHora(slot.fim, slot.inicio) <= 0) {
-    alert('O horário de término deve ser maior que o de início.');
-    slot.fim = slot.minFim || '';
-    return;
-  }
-  const conflitoLocal = conflitoEmSlotsLocais(recorrenteSlots.value, idx);
-  if (conflitoLocal === 'dup') {
-    alert('Você já adicionou este mesmo horário.');
-    slot.fim = '';
-    return;
-  }
-  if (conflitoLocal === 'overlap') {
-    alert('Os horários escolhidos não podem se sobrepor.');
-    slot.fim = '';
-    return;
-  }
-  const datas = getRecurrenceDates();
-  if (!datas.length) return;
-  await ensureDisponibilidadeForDates(datas);
-  for (const d of datas) {
-    const ds = formatDateToLocal(d);
-    if (conflitoComReservas(ds, slot.inicio, slot.fim)) {
-      alert(`Conflito com reserva existente em ${formatarData(d)}.`);
-      slot.fim = '';
-      return;
-    }
-  }
-};
-
-const fetchDisponibilidade = async (ano, mes, merge = false) => {
-  const recursoId = store.recursoSelecionado?.id_recurso;
-  if (!recursoId) return;
-  try {
-    const response = await authenticatedFetch(`${config.public.apiUrl}/api/recursos/${recursoId}/disponibilidade/?ano=${ano}&mes=${mes}`);
-    if(response.ok) {
-      const data = await response.json();
-      if (merge) {
-        const atual = horariosOcupados.value || {};
-        horariosOcupados.value = { ...atual, ...data };
-      } else {
-        horariosOcupados.value = data;
-      }
-    } else {
-      if (!merge) horariosOcupados.value = {};
-    }
-  } catch {
-    if (!merge) horariosOcupados.value = {};
-  }
-};
-
-const ensureDisponibilidadeForDates = async (dateObjs) => {
-  const setYM = new Set();
-  for (const d of dateObjs) {
-    setYM.add(`${d.getFullYear()}-${d.getMonth()+1}`);
-  }
-  for (const ym of setYM) {
-    const [y, m] = ym.split('-').map(Number);
-    await fetchDisponibilidade(y, m, true);
-  }
-};
-
-const handleMonthChange = (payload) => {
-  fetchDisponibilidade(payload.year, payload.month + 1);
-};
-
-function getRecurrenceDates() {
-  if (!dataInicioRecorrente.value || !dataFimRecorrente.value || diasSemanaSelecionados.value.length === 0) return [];
-  const inicio = parseDateAsLocal(dataInicioRecorrente.value);
-  const fim = parseDateAsLocal(dataFimRecorrente.value);
-  if (fim < inicio) return [];
-  const datas = [];
-  const d = new Date(inicio.getTime());
-  while (d <= fim) {
-    if (diasSemanaSelecionados.value.includes(d.getDay())) {
-      datas.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
-    }
-    d.setDate(d.getDate() + 1);
-  }
-  return datas;
-}
-
-const datasRecorrentes = computed(() => getRecurrenceDates());
-
 function formatarData(data) {
   return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function validarConflitos(agendamentos) {
-  const vistos = new Set();
-  const hoje = hojeStr();
-  for (const agendamento of agendamentos) {
-    const dataStr = agendamento.data;
-    const slotsOcupados = horariosOcupados.value[dataStr] || [];
-    const novoInicio = agendamento.hora_inicio;
-    const novoFim = agendamento.hora_fim;
+function validarCampos() {
+  const sobrepoe = (aIni, aFim, bIni, bFim) => aIni < bFim && aFim > bIni;
 
-    if (novoFim <= novoInicio) {
-      alert(`Na data ${formatarData(parseDateAsLocal(dataStr))}, o horário de término deve ser maior que o de início.`);
-      return true;
+  store.compilarAgendamentosParaSalvar();
+  const agendamentos = store.agendamentos;
+
+  if (agendamentos.length === 0) {
+    alert('Nenhuma data válida foi selecionada ou gerada para o agendamento.');
+    return false;
+  }
+
+  for (let i = 0; i < agendamentos.length; i++) {
+    const ag = agendamentos[i];
+    if (!ag.hora_inicio || !ag.hora_fim) {
+      alert(`Por favor, preencha todos os horários para a data ${formatarData(new Date(ag.data + 'T00:00:00'))}.`);
+      return false;
     }
-
-    if (dataStr === hoje && novoInicio < horaAgora()) {
-      alert(`Na data de hoje (${formatarData(parseDateAsLocal(dataStr))}), não é possível escolher horário anterior ao atual.`);
-      return true;
+    if (ag.hora_fim <= ag.hora_inicio) {
+      alert(`Na data ${formatarData(new Date(ag.data + 'T00:00:00'))}, o horário de término deve ser maior que o de início.`);
+      return false;
     }
-
-    const chave = `${dataStr}|${novoInicio}|${novoFim}`;
-    if (vistos.has(chave)) {
-      alert(`Você adicionou horários duplicados (${novoInicio} - ${novoFim}) em ${formatarData(parseDateAsLocal(dataStr))}.`);
-      return true;
+    if (ag.data === hojeStr && ag.hora_inicio < horaAgora()) {
+      alert(`Na data de hoje, não é possível agendar um horário que já passou.`);
+      return false;
     }
-    vistos.add(chave);
-
+    const slotsOcupados = store.horariosOcupados[ag.data] || [];
     for (const slot of slotsOcupados) {
-      const inicioOcupado = slot.start;
-      const fimOcupado = slot.end;
-      if (novoInicio < fimOcupado && novoFim > inicioOcupado) {
-        const dataFormatada = parseDateAsLocal(dataStr).toLocaleDateString('pt-BR');
-        alert(`Conflito! O horário de ${novoInicio} às ${novoFim} na data ${dataFormatada} sobrepõe uma reserva existente das ${inicioOcupado} às ${fimOcupado}.`);
-        return true;
+      if (sobrepoe(ag.hora_inicio, ag.hora_fim, slot.start, slot.end)) {
+        alert(`Conflito! O horário de ${ag.hora_inicio} às ${ag.hora_fim} no dia ${formatarData(new Date(ag.data + 'T00:00:00'))} sobrepõe uma reserva existente.`);
+        return false;
       }
     }
+    for (let j = i + 1; j < agendamentos.length; j++) {
+        const outroAg = agendamentos[j];
+        if (ag.data === outroAg.data && sobrepoe(ag.hora_inicio, ag.hora_fim, outroAg.hora_inicio, outroAg.hora_fim)) {
+            alert(`Você selecionou horários que se sobrepõem no dia ${formatarData(new Date(ag.data + 'T00:00:00'))}.`);
+            return false;
+        }
+    }
   }
-  return false;
+  return true;
 }
 
-const handleUnicoFimChange = async () => {
-  await validarUnicoImediato();
-};
-
 async function irParaInfo() {
-  const agendamentosParaSalvar = [];
-  if (tipoAgendamento.value === 'Data') {
-    if (horarioMode.value === 'mesmo') {
-      if (!horarioUnico.value.inicio || !horarioUnico.value.fim) {
-        alert('Por favor, defina o horário de início e fim.'); return;
-      }
-      const hasToday = datasSelecionadas.value.some(d => formatDateToLocal(d) === hojeStr());
-      if (hasToday && horarioUnico.value.inicio < horaAgora()) {
-        alert('Para hoje, o horário de início não pode ser anterior ao atual.');
-        return;
-      }
-      datasSelecionadas.value.forEach(data => {
-        agendamentosParaSalvar.push({
-          data: formatDateToLocal(data),
-          hora_inicio: horarioUnico.value.inicio,
-          hora_fim: horarioUnico.value.fim
-        });
-      });
-    } else {
-      if (!horariosMultiplos.value.length) {
-        alert('Selecione ao menos uma data.'); return;
-      }
-      for (let i = 0; i < horariosMultiplos.value.length; i++) {
-        const item = horariosMultiplos.value[i];
-        if (!item.slots.length) {
-          alert(`Adicione ao menos um horário para a data ${formatarData(parseDateAsLocal(item.data))}.`); return;
-        }
-        for (const slot of item.slots) {
-          if (!slot.inicio || !slot.fim) {
-            alert(`Defina o horário completo para a data ${formatarData(parseDateAsLocal(item.data))}.`); return;
-          }
-          agendamentosParaSalvar.push({
-            data: item.data,
-            hora_inicio: slot.inicio,
-            hora_fim: slot.fim
-          });
-        }
-      }
-    }
-  } else if (tipoAgendamento.value === 'Período Recorrente') {
-    if (!dataInicioRecorrente.value || !dataFimRecorrente.value || diasSemanaSelecionados.value.length === 0) {
-      alert('Preencha datas e dias da semana do período recorrente.'); return;
-    }
-    const datas = getRecurrenceDates();
-    if (!datas.length) {
-      alert('Nenhuma data do período recorrente atende aos dias selecionados.'); return;
-    }
-    if (horarioModeRecorrente.value === 'mesmo') {
-      if (!horarioRecorrente.value.inicio || !horarioRecorrente.value.fim) {
-        alert('Defina o horário recorrente.'); return;
-      }
-      for (const d of datas) {
-        agendamentosParaSalvar.push({
-          data: formatDateToLocal(d),
-          hora_inicio: horarioRecorrente.value.inicio,
-          hora_fim: horarioRecorrente.value.fim
-        });
-      }
-    } else {
-      if (!recorrenteSlots.value.length) {
-        alert('Adicione ao menos um horário recorrente.'); return;
-      }
-      for (const d of datas) {
-        for (const s of recorrenteSlots.value) {
-          if (!s.inicio || !s.fim) {
-            alert(`Defina todos os horários para o período recorrente.`); return;
-          }
-          agendamentosParaSalvar.push({
-            data: formatDateToLocal(d),
-            hora_inicio: s.inicio,
-            hora_fim: s.fim
-          });
-        }
-      }
-    }
+  if (validarCampos()) {
+    router.push('/agendamentoInfo');
   }
-
-  if (agendamentosParaSalvar.length === 0) {
-    alert('Nenhuma data foi selecionada ou gerada.'); return;
-  }
-
-  const ymSet = new Set(agendamentosParaSalvar.map(a => {
-    const d = parseDateAsLocal(a.data);
-    return `${d.getFullYear()}-${d.getMonth()+1}`;
-  }));
-  for (const ym of ymSet) {
-    const [y, m] = ym.split('-').map(Number);
-    await fetchDisponibilidade(y, m, true);
-  }
-
-  if (validarConflitos(agendamentosParaSalvar)) {
-    return;
-  }
-
-  for (const ag of agendamentosParaSalvar) {
-    const slots = horariosOcupados.value[ag.data] || [];
-    for (const s of slots) {
-      if (sobrepoe(ag.hora_inicio, ag.hora_fim, s.start, s.end)) {
-        alert(`Conflito com reserva das ${s.start} às ${s.end} em ${formatarData(parseDateAsLocal(ag.data))}.`);
-        return;
-      }
-    }
-  }
-  store.setDatasEHorarios(agendamentosParaSalvar);
-  router.push('/agendamentoInfo');
 }
 
 onMounted(() => {
@@ -735,7 +312,7 @@ onMounted(() => {
     return;
   }
   const hoje = new Date();
-  fetchDisponibilidade(hoje.getFullYear(), hoje.getMonth() + 1);
+  store.fetchDisponibilidade(hoje.getFullYear(), hoje.getMonth() + 1);
 });
 </script>
 

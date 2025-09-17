@@ -32,7 +32,7 @@
               :class="['status-option', getStatusClass(opt), { 'selected': form.status_recurso === opt }]"
               @click="form.status_recurso = opt"
             >
-              {{ opt.replace('_', ' ') }}
+               {{ formatarStatus(opt) }}
             </button>
           </div>
         </div>
@@ -54,6 +54,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
+import { getStatusClass, formatarStatus } from '~/utils/formatters';
 
 const props = defineProps({
   recursoInicial: { type: Object, default: null }
@@ -73,15 +74,6 @@ const initializeForm = () => {
     capacidade: null,
     status_recurso: 'disponivel'
   };
-};
-
-const getStatusClass = (status) => {
-  const s = (status || '').toLowerCase();
-  if (s.includes('disponivel')) return 'status-success';
-  if (s.includes('manutencao')) return 'status-warning';
-  if (s.includes('reservado')) return 'status-info';
-  if (s.includes('indisponivel')) return 'status-error';
-  return 'status-default';
 };
 
 onMounted(initializeForm);
@@ -121,13 +113,6 @@ const salvar = async () => {
 .form-input:focus, .form-textarea:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); background-color: white; }
 .form-textarea { resize: vertical; }
 .status-options-container { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.25rem; }
-.status-option { border: 1px solid transparent; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; text-transform: capitalize; }
-.status-option.selected { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4); transform: scale(1.05); }
-.status-success { background-color: #dcfce7; color: #166534; border-color: #a7f3d0; }
-.status-warning { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
-.status-error { background-color: #fecaca; color: #991b1b; border-color: #fca5a5; }
-.status-info { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-.status-default { background-color: #e5e7eb; color: #374151; }
 .form-footer { padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.75rem; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-weight: 600; transition: all 0.2s; }
 .btn-primary { background-color: #4f46e5; color: white; border-color: #4f46e5; }

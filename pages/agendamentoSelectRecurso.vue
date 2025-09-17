@@ -55,6 +55,7 @@ import { ref, onMounted } from 'vue';
 import { useAgendamentoStore } from '~/stores/agendamento';
 import { useRouter } from 'vue-router';
 import { authenticatedFetch } from '~/utils/api';
+import { getStatusClass } from '~/utils/formatters';
 
 const store = useAgendamentoStore();
 const router = useRouter();
@@ -87,13 +88,6 @@ function irParaData() {
     router.push('/agendamentoData');
   }
 }
-
-const getStatusClass = (status) => {
-  const statusLower = status.toLowerCase();
-  if (statusLower.includes('disponivel')) return 'status-success';
-  if (statusLower.includes('manutencao')) return 'status-warning';
-  return 'status-error';
-};
 
 onMounted(() => {
   store.limparStore();
