@@ -11,23 +11,29 @@ const formatDateToLocal = (date) => {
 const gerarId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const criarSlot = () => ({ inicio: '', fim: '', minFim: '', id: gerarId() });
 
+const horaAgora = () => {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+const sobrepoe = (aIni, aFim, bIni, bFim) => aIni < bFim && aFim > bIni;
+
 export const useAgendamentoStore = defineStore('agendamento', {
   state: () => ({
-    // Estado do agendamento
     recursoSelecionado: null,
-    agendamentos: [], // Formato final: [{ data, hora_inicio, hora_fim }]
+    agendamentos: [],
     finalidade: '',
     observacoes: '',
     responsavel: null,
     
-    // Estado da UI de agendamentoData
-    tipoAgendamento: 'Data', // 'Data' ou 'Período Recorrente'
-    horarioMode: 'mesmo', // 'mesmo' ou 'diferente'
-    datasSelecionadas: [], // Array de objetos Date
+    tipoAgendamento: 'Data',
+    horarioMode: 'mesmo',
+    datasSelecionadas: [],
     horarioUnico: { inicio: '', fim: '', minFim: '' },
-    horariosMultiplos: [], // Formato: [{ data: 'YYYY-MM-DD', slots: [...] }]
+    horariosMultiplos: [],
 
-    // Estado para agendamento recorrente
     dataInicioRecorrente: '',
     dataFimRecorrente: '',
     diasSemanaSelecionados: [],
@@ -35,7 +41,6 @@ export const useAgendamentoStore = defineStore('agendamento', {
     horarioRecorrente: { inicio: '', fim: '', minFim: '' },
     recorrenteSlots: [{ inicio: '', fim: '', minFim: '', id: gerarId() }],
 
-    // Estado de controle
     salvando: false,
     horariosOcupados: {},
   }),
@@ -57,6 +62,19 @@ export const useAgendamentoStore = defineStore('agendamento', {
       }
       return datas;
     },
+
+    hojeStr() {
+      return formatDateToLocal(new Date());
+    },
+
+    incluiHojeNaRecorrencia(state) {
+      if (!state.dataInicioRecorrente || !state.dataFimRecorrente || state.diasSemanaSelecionados.length === 0) return false;
+      const hoje = new Date();
+      const inicio = new Date(state.dataInicioRecorrente + 'T00:00:00');
+      const fim = new Date(state.dataFimRecorrente + 'T00:00:00');
+      if (hoje < inicio || hoje > fim) return false;
+      return state.diasSemanaSelecionados.includes(hoje.getDay());
+    }
   },
 
   actions: {
@@ -71,7 +89,6 @@ export const useAgendamentoStore = defineStore('agendamento', {
       this.responsavel = usuario;
     },
     
-    // Ações para o formulário de data
     adicionarSlot(dateIndex) {
       this.horariosMultiplos[dateIndex].slots.push(criarSlot());
     },
@@ -86,7 +103,6 @@ export const useAgendamentoStore = defineStore('agendamento', {
       if (!this.recorrenteSlots.length) this.recorrenteSlots.push(criarSlot());
     },
     
-    // Sincroniza o array de horários múltiplos com as datas selecionadas
     syncHorariosMultiplos() {
       const novasDatas = this.datasSelecionadas.sort((a, b) => a - b);
       const antigasMap = new Map(this.horariosMultiplos.map(item => [item.data, item]));
@@ -110,6 +126,169 @@ export const useAgendamentoStore = defineStore('agendamento', {
         } catch (e) {
             console.error("Erro ao buscar disponibilidade:", e);
         }
+    },
+
+    validarConflitosComReservas(dataStr, inicio, fim) {
+      const slots = this.horariosOcupados[dataStr] || [];
+      for (const slot of slots) {
+        if (sobrepoe(inicio, fim, slot.start, slot.end)) {
+          return { 
+            conflito: true, 
+            mensagem: `Conflito com reserva existente das ${slot.start} às ${slot.end}` 
+          };
+        }
+      }
+      return { conflito: false };
+    },
+
+    validarConflitosEntreSlots(slots, indiceAtual) {
+      const slotAtual = slots[indiceAtual];
+      if (!slotAtual || !slotAtual.inicio || !slotAtual.fim) return { conflito: false };
+
+      for (let i = 0; i < slots.length; i++) {
+        if (i === indiceAtual) continue;
+        const outroSlot = slots[i];
+        if (!outroSlot.inicio || !outroSlot.fim) continue;
+
+        if (slotAtual.inicio === outroSlot.inicio && slotAtual.fim === outroSlot.fim) {
+          return { 
+            conflito: true, 
+            mensagem: 'Você já adicionou este mesmo horário para este dia' 
+          };
+        }
+        
+        if (sobrepoe(slotAtual.inicio, slotAtual.fim, outroSlot.inicio, outroSlot.fim)) {
+          return { 
+            conflito: true, 
+            mensagem: 'Os horários escolhidos para este dia não podem se sobrepor' 
+          };
+        }
+      }
+      return { conflito: false };
+    },
+
+    validarHorarioMinimo(dataStr, inicio) {
+      if (dataStr === this.hojeStr && inicio < horaAgora()) {
+        return {
+          conflito: true,
+          mensagem: 'Não é possível selecionar horário anterior ao atual para hoje'
+        };
+      }
+      return { conflito: false };
+    },
+
+    validarHorarioBasico(inicio, fim) {
+      if (!inicio || !fim) return { conflito: false };
+      
+      if (fim <= inicio) {
+        return {
+          conflito: true,
+          mensagem: 'O horário de término deve ser maior que o de início'
+        };
+      }
+      return { conflito: false };
+    },
+
+    validarHorarioUnico() {
+      const validacaoBasica = this.validarHorarioBasico(this.horarioUnico.inicio, this.horarioUnico.fim);
+      if (validacaoBasica.conflito) return validacaoBasica;
+
+      const hasToday = this.datasSelecionadas.some(d => formatDateToLocal(d) === this.hojeStr);
+      if (hasToday) {
+        const validacaoMinima = this.validarHorarioMinimo(this.hojeStr, this.horarioUnico.inicio);
+        if (validacaoMinima.conflito) return validacaoMinima;
+      }
+
+      for (const data of this.datasSelecionadas) {
+        const dataStr = formatDateToLocal(data);
+        const validacaoReserva = this.validarConflitosComReservas(
+          dataStr, 
+          this.horarioUnico.inicio, 
+          this.horarioUnico.fim
+        );
+        if (validacaoReserva.conflito) {
+          return {
+            conflito: true,
+            mensagem: `${validacaoReserva.mensagem} na data ${data.toLocaleDateString('pt-BR')}`
+          };
+        }
+      }
+
+      return { conflito: false };
+    },
+
+    validarSlotMultiplo(dateIndex, slotIndex) {
+      const item = this.horariosMultiplos[dateIndex];
+      if (!item) return { conflito: false };
+
+      const slot = item.slots[slotIndex];
+      const validacaoBasica = this.validarHorarioBasico(slot.inicio, slot.fim);
+      if (validacaoBasica.conflito) return validacaoBasica;
+
+      const validacaoMinima = this.validarHorarioMinimo(item.data, slot.inicio);
+      if (validacaoMinima.conflito) return validacaoMinima;
+
+      const validacaoSlots = this.validarConflitosEntreSlots(item.slots, slotIndex);
+      if (validacaoSlots.conflito) return validacaoSlots;
+
+      const validacaoReserva = this.validarConflitosComReservas(item.data, slot.inicio, slot.fim);
+      if (validacaoReserva.conflito) return validacaoReserva;
+
+      return { conflito: false };
+    },
+
+    validarHorarioRecorrente() {
+      const validacaoBasica = this.validarHorarioBasico(this.horarioRecorrente.inicio, this.horarioRecorrente.fim);
+      if (validacaoBasica.conflito) return validacaoBasica;
+
+      if (this.incluiHojeNaRecorrencia) {
+        const validacaoMinima = this.validarHorarioMinimo(this.hojeStr, this.horarioRecorrente.inicio);
+        if (validacaoMinima.conflito) return validacaoMinima;
+      }
+
+      for (const data of this.datasRecorrentes) {
+        const dataStr = formatDateToLocal(data);
+        const validacaoReserva = this.validarConflitosComReservas(
+          dataStr, 
+          this.horarioRecorrente.inicio, 
+          this.horarioRecorrente.fim
+        );
+        if (validacaoReserva.conflito) {
+          return {
+            conflito: true,
+            mensagem: `${validacaoReserva.mensagem} na data ${data.toLocaleDateString('pt-BR')}`
+          };
+        }
+      }
+
+      return { conflito: false };
+    },
+
+    validarSlotRecorrente(slotIndex) {
+      const slot = this.recorrenteSlots[slotIndex];
+      const validacaoBasica = this.validarHorarioBasico(slot.inicio, slot.fim);
+      if (validacaoBasica.conflito) return validacaoBasica;
+
+      if (this.incluiHojeNaRecorrencia) {
+        const validacaoMinima = this.validarHorarioMinimo(this.hojeStr, slot.inicio);
+        if (validacaoMinima.conflito) return validacaoMinima;
+      }
+
+      const validacaoSlots = this.validarConflitosEntreSlots(this.recorrenteSlots, slotIndex);
+      if (validacaoSlots.conflito) return validacaoSlots;
+
+      for (const data of this.datasRecorrentes) {
+        const dataStr = formatDateToLocal(data);
+        const validacaoReserva = this.validarConflitosComReservas(dataStr, slot.inicio, slot.fim);
+        if (validacaoReserva.conflito) {
+          return {
+            conflito: true,
+            mensagem: `${validacaoReserva.mensagem} na data ${data.toLocaleDateString('pt-BR')}`
+          };
+        }
+      }
+
+      return { conflito: false };
     },
 
     compilarAgendamentosParaSalvar() {
@@ -136,7 +315,7 @@ export const useAgendamentoStore = defineStore('agendamento', {
                   });
               });
           }
-      } else { // Período Recorrente
+      } else {
           const datas = this.datasRecorrentes;
           if (this.horarioModeRecorrente === 'mesmo') {
               datas.forEach(d => {

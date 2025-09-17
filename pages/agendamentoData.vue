@@ -79,9 +79,9 @@
                 <span class="date-label">{{ formatarData(new Date(data.data + 'T00:00:00')) }}</span>
                 <div v-if="store.horarioMode === 'diferente'" class="slots-container">
                   <div v-for="(slot, sIdx) in data.slots" :key="slot.id" class="time-inputs">
-                    <input type="time" v-model="slot.inicio" :min="minInicio(data.data)" @input="handleStartTimeChange(slot)" class="time-field"/>
+                    <input type="time" v-model="slot.inicio" :min="minInicio(data.data)" @input="handleSlotStartChange(index, sIdx)" class="time-field"/>
                     <span class="time-separator">até</span>
-                    <input type="time" v-model="slot.fim" :min="slot.minFim" class="time-field"/>
+                    <input type="time" v-model="slot.fim" :min="slot.minFim" @input="handleSlotEndChange(index, sIdx)" class="time-field"/>
                     <button type="button" class="btn-remove" @click="store.removerSlot(index, sIdx)">×</button>
                   </div>
                   <button type="button" class="btn-add" @click="store.adicionarSlot(index)">+ Horário</button>
@@ -105,9 +105,9 @@
             <div v-if="store.horarioMode === 'mesmo' && store.datasSelecionadas.length" class="same-time-section">
               <h4 class="section-title">Horário Único</h4>
               <div class="time-inputs">
-                <input type="time" v-model="store.horarioUnico.inicio" :min="minInicioParaMesmo" @input="handleStartTimeChange(store.horarioUnico)" class="time-field"/>
+                <input type="time" v-model="store.horarioUnico.inicio" :min="minInicioParaMesmo" @input="handleUnicoStartChange" class="time-field"/>
                 <span class="time-separator">até</span>
-                <input type="time" v-model="store.horarioUnico.fim" :min="store.horarioUnico.minFim" class="time-field"/>
+                <input type="time" v-model="store.horarioUnico.fim" :min="store.horarioUnico.minFim" @input="handleUnicoEndChange" class="time-field"/>
               </div>
             </div>
           </div>
@@ -163,9 +163,9 @@
             <div v-if="store.horarioModeRecorrente === 'mesmo'" class="same-time-section">
               <h4 class="section-title">Horário Único</h4>
               <div class="time-inputs">
-                <input type="time" v-model="store.horarioRecorrente.inicio" :min="minInicioRecorrente" @input="handleStartTimeChange(store.horarioRecorrente)" class="time-field"/>
+                <input type="time" v-model="store.horarioRecorrente.inicio" :min="minInicioRecorrente" @input="handleRecorrenteStartChange" class="time-field"/>
                 <span class="time-separator">até</span>
-                <input type="time" v-model="store.horarioRecorrente.fim" :min="store.horarioRecorrente.minFim" class="time-field"/>
+                <input type="time" v-model="store.horarioRecorrente.fim" :min="store.horarioRecorrente.minFim" @input="handleRecorrenteEndChange" class="time-field"/>
               </div>
             </div>
 
@@ -173,9 +173,9 @@
               <h4 class="section-title">Horários</h4>
               <div class="slots-container">
                 <div v-for="(slot, idx) in store.recorrenteSlots" :key="slot.id" class="time-inputs">
-                  <input type="time" v-model="slot.inicio" :min="minInicioRecorrente" @input="handleStartTimeChange(slot)" class="time-field"/>
+                  <input type="time" v-model="slot.inicio" :min="minInicioRecorrente" @input="handleRecorrenteSlotStartChange(idx)" class="time-field"/>
                   <span class="time-separator">até</span>
-                  <input type="time" v-model="slot.fim" :min="slot.minFim" class="time-field"/>
+                  <input type="time" v-model="slot.fim" :min="slot.minFim" @input="handleRecorrenteSlotEndChange(idx)" class="time-field"/>
                   <button type="button" class="btn-remove" @click="store.removerRecorrenteSlot(idx)">×</button>
                 </div>
                 <button type="button" class="btn-add" @click="store.adicionarRecorrenteSlot">+ Horário</button>
@@ -284,6 +284,109 @@ const handleStartTimeChange = (horarioRef) => {
   horarioRef.minFim = minFim;
   if (!horarioRef.fim || horarioRef.fim <= horarioRef.inicio) {
     horarioRef.fim = minFim;
+  }
+};
+
+
+const handleUnicoStartChange = () => {
+  handleStartTimeChange(store.horarioUnico);
+  
+  if (store.horarioUnico.inicio && store.datasSelecionadas.length > 0) {
+    const validacao = store.validarHorarioUnico();
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      store.horarioUnico.inicio = '';
+      store.horarioUnico.fim = '';
+      store.horarioUnico.minFim = '';
+    }
+  }
+};
+
+const handleUnicoEndChange = () => {
+  if (store.horarioUnico.fim && store.datasSelecionadas.length > 0) {
+    const validacao = store.validarHorarioUnico();
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      store.horarioUnico.fim = store.horarioUnico.minFim || '';
+    }
+  }
+};
+
+const handleSlotStartChange = (dateIndex, slotIndex) => {
+  const slot = store.horariosMultiplos[dateIndex].slots[slotIndex];
+  handleStartTimeChange(slot);
+  
+  if (slot.inicio) {
+    const validacao = store.validarSlotMultiplo(dateIndex, slotIndex);
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      slot.inicio = '';
+      slot.fim = '';
+      slot.minFim = '';
+    }
+  }
+};
+
+const handleSlotEndChange = (dateIndex, slotIndex) => {
+  const slot = store.horariosMultiplos[dateIndex].slots[slotIndex];
+  
+  if (slot.fim) {
+    const validacao = store.validarSlotMultiplo(dateIndex, slotIndex);
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      slot.fim = slot.minFim || '';
+    }
+  }
+};
+
+const handleRecorrenteStartChange = () => {
+  handleStartTimeChange(store.horarioRecorrente);
+  
+  if (store.horarioRecorrente.inicio && store.datasRecorrentes.length > 0) {
+    const validacao = store.validarHorarioRecorrente();
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      store.horarioRecorrente.inicio = '';
+      store.horarioRecorrente.fim = '';
+      store.horarioRecorrente.minFim = '';
+    }
+  }
+};
+
+const handleRecorrenteEndChange = () => {
+  if (store.horarioRecorrente.fim && store.datasRecorrentes.length > 0) {
+    const validacao = store.validarHorarioRecorrente();
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      store.horarioRecorrente.fim = store.horarioRecorrente.minFim || '';
+    }
+  }
+};
+
+const handleRecorrenteSlotStartChange = (slotIndex) => {
+  const slot = store.recorrenteSlots[slotIndex];
+  handleStartTimeChange(slot);
+  
+  if (slot.inicio && store.datasRecorrentes.length > 0) {
+    const validacao = store.validarSlotRecorrente(slotIndex);
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      slot.inicio = '';
+      slot.fim = '';
+      slot.minFim = '';
+    }
+  }
+};
+
+const handleRecorrenteSlotEndChange = (slotIndex) => {
+  const slot = store.recorrenteSlots[slotIndex];
+  
+  if (slot.fim && store.datasRecorrentes.length > 0) {
+    const validacao = store.validarSlotRecorrente(slotIndex);
+    if (validacao.conflito) {
+      alert(validacao.mensagem);
+      slot.fim = slot.minFim || '';
+    }
   }
 };
 
