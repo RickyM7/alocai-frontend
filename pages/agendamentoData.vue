@@ -25,17 +25,51 @@
       <div class="card-content">
         <div v-if="store.tipoAgendamento === 'Data'" class="content-grid">
           <div class="col-calendar">
-            <Datepicker 
-              v-model="store.datasSelecionadas" 
-              multi-dates 
-              inline 
-              auto-apply 
-              :enable-time-picker="false" 
-              locale="pt-BR"
-              :min-date="new Date()"
-              @update-month-year="handleMonthChange"
-              :markers="dateMarkers"
-            />
+            <button type="button" class="btn-open-calendar" @click="isCalendarOpen = true">
+              <Icon name="heroicons:calendar-days-20-solid" />
+              <span>{{ store.datasSelecionadas.length > 0 ? `Datas Selecionadas (${store.datasSelecionadas.length})` : 'Selecionar Datas' }}</span>
+            </button>
+
+            <div class="datepicker-wrapper-desktop">
+              <Datepicker 
+                v-model="store.datasSelecionadas" 
+                multi-dates 
+                inline 
+                auto-apply 
+                :enable-time-picker="false" 
+                locale="pt-BR"
+                :min-date="new Date()"
+                @update-month-year="handleMonthChange"
+                :markers="dateMarkers"
+              />
+            </div>
+
+            <div v-if="isCalendarOpen" class="calendar-modal-overlay" @click="isCalendarOpen = false">
+              <div class="calendar-modal-content" @click.stop>
+                <div class="calendar-modal-header">
+                  <h2>Selecione as Datas</h2>
+                  <button @click="isCalendarOpen = false" class="btn-close-modal">
+                    <Icon name="i-lucide-x" />
+                  </button>
+                </div>
+                <div class="calendar-modal-body">
+                  <Datepicker 
+                    v-model="store.datasSelecionadas" 
+                    multi-dates 
+                    inline 
+                    auto-apply 
+                    :enable-time-picker="false" 
+                    locale="pt-BR"
+                    :min-date="new Date()"
+                    @update-month-year="handleMonthChange"
+                    :markers="dateMarkers"
+                  />
+                </div>
+                <div class="calendar-modal-footer">
+                  <button class="btn-confirm" @click="isCalendarOpen = false">Confirmar</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="col-dates" v-if="store.datasSelecionadas.length">
@@ -167,6 +201,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const store = useAgendamentoStore();
+const isCalendarOpen = ref(false);
 
 const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
@@ -363,7 +398,16 @@ input[type="date"],select{width:100%;padding:0.5rem;border:0.063rem solid #d1d5d
 .btn-add{background:#10b981;color:#fff;border:none;border-radius:0.375rem;padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;align-self:flex-start}
 .btn-remove{background:#ef4444;color:#fff;border:none;border-radius:0.375rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem;min-width:auto}
 .btn-continue{background-color:#374151;color:#fff;padding:0.75rem 2rem;border-radius:0.5rem;border:none;cursor:pointer;font-weight:500}
+.btn-open-calendar{display:none}
+.calendar-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center}
+.calendar-modal-content{background:white;border-radius:0.75rem;width:auto;max-width:calc(100vw - 2rem);box-shadow:0 10px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden}
+.calendar-modal-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb}
+.calendar-modal-header h2{font-size:1.25rem;margin:0}
+.btn-close-modal{background:none;border:none;cursor:pointer;padding:0.5rem;line-height:1;font-size:1.5rem;color:#6b7280}
+.calendar-modal-body{padding:0 1.5rem}
+.calendar-modal-footer{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;text-align:right}
+.btn-confirm{background-color:#374151;color:white;padding:0.75rem 2rem;border-radius:0.5rem;border:none;cursor:pointer}
 @media (max-width:64rem){.content-grid{grid-template-columns:1fr 1fr;gap:1.5rem}.col-times{grid-column:1/-1}}
-@media (max-width:48rem){.page-container{padding:0}.card{margin:0;border-radius:0;height:100vh;max-height:none;box-shadow:none}.card-header{padding:1rem;position:sticky;top:0;z-index:10;background-color:#fff}.card-content{padding:1rem;flex-grow:1;overflow-y:auto}.card-footer{padding:1rem;position:sticky;bottom:0;z-index:10}.content-grid{grid-template-columns:1fr;gap:1.5rem;height:auto}.col-calendar,.col-dates,.col-times{height:auto}.opcoes{flex-direction:column;gap:0.75rem;align-items:stretch}.radio-label,.checkbox-label{justify-content:center;padding:0.75rem;border:1px solid #e5e7eb;border-radius:0.5rem;background:#f9fafb}.time-mode{flex-direction:column;gap:1rem}.date-period{flex-direction:column;gap:1rem}.weekdays-grid{grid-template-columns:repeat(4,1fr);gap:0.75rem}.dates-list{max-height:20rem}.slots-container{max-height:12rem}}
+@media (max-width:48rem){.page-container{padding:0}.card{margin:0;border-radius:0;height:calc(100vh - 64px);box-shadow:none}.card-header{padding:1rem;position:sticky;top:0;z-index:10;background-color:#fff}.card-content{padding:1rem;flex-grow:1;overflow-y:auto}.card-footer{padding:1rem;position:sticky;bottom:0;z-index:10}.content-grid{grid-template-columns:1fr;gap:1.5rem;height:auto}.col-calendar,.col-dates,.col-times{height:auto}.opcoes{flex-direction:column;gap:0.75rem;align-items:stretch}.radio-label,.checkbox-label{justify-content:center;padding:0.75rem;border:1px solid #e5e7eb;border-radius:0.5rem;background:#f9fafb}.time-mode{flex-direction:column;gap:1rem}.date-period{flex-direction:column;gap:1rem}.weekdays-grid{grid-template-columns:repeat(4,1fr);gap:0.75rem}.dates-list{max-height:20rem}.slots-container{max-height:12rem}.datepicker-wrapper-desktop{display:none}.btn-open-calendar{display:flex;align-items:center;justify-content:center;gap:0.75rem;width:100%;padding:0.75rem 1rem;font-size:1rem;font-weight:500;border:1px solid #d1d5db;border-radius:0.5rem;background-color:#f9fafb;cursor:pointer}}
 @media (max-width:31.25rem){.title{font-size:1.25rem;margin-bottom:0.75rem}.progress-bar{flex-direction:column;gap:0.5rem;margin-bottom:1rem}.line{display:none}.card-header{padding:0.75rem}.card-content{padding:0.75rem}.card-footer{padding:0.75rem}.content-grid{gap:1rem}.weekdays-grid{grid-template-columns:repeat(3,1fr);gap:0.5rem}.weekday-item{padding:0.375rem;font-size:0.75rem}.btn-continue{width:100%;padding:0.875rem 1rem}.opcoes{gap:0.5rem}.radio-label,.checkbox-label{padding:0.5rem;font-size:0.9rem}.same-time-section,.different-times-section{padding:0.75rem}.dates-list{max-height:15rem}.slots-container{max-height:10rem}}
 </style>
