@@ -51,6 +51,7 @@ export const formatarStatus = (status) => {
     'finalizado': 'Finalizado',
     'parcialmente_aprovado': 'Parcialmente Aprovado',
     'parcialmente_negado': 'Parcialmente Negado',
+    'indefinido': 'Indefinido'
   };
 
   if (nomesStatus[s]) {

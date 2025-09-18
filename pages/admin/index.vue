@@ -172,7 +172,7 @@ const calcularStatusGeral = (reservas) => {
 };
 
 const filteredSolicitacoes = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado'];
+  const inProgressStatuses = ['pendente', 'aprovado'];
   
   if (activeTab.value === 'em_andamento') {
     return solicitacoes.value.filter(s => inProgressStatuses.includes(s.status_geral));

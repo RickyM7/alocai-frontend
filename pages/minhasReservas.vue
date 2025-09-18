@@ -120,28 +120,28 @@ const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
 
     if (hasAprovado) {
         if (hasPendente || hasNegado) {
-            return 'Parcialmente Aprovado';
+            return 'parcialmente_aprovado';
         }
-        return 'Aprovado';
+        return 'aprovado';
     }
 
     if (hasPendente) {
         if (hasNegado) {
-            return 'Parcialmente Negado';
+            return 'parcialmente_negado';
         }
-        return 'Pendente';
+        return 'pendente';
     }
 
-    if (statuses.size === 1 && hasConcluido) return 'Concluído';
-    if (statuses.size === 1 && hasNegado) return 'Negado';
+    if (statuses.size === 1 && hasConcluido) return 'concluido';
+    if (statuses.size === 1 && hasNegado) return 'negado';
     
-    if (hasConcluido && hasNegado) return 'Finalizado';
+    if (hasConcluido && hasNegado) return 'finalizado';
 
-    return 'Indefinido';
+    return 'indefinido';
 };
 
 const filteredReservas = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado', 'Parcialmente Negado'];
+  const inProgressStatuses = ['pendente', 'aprovado', 'parcialmente_aprovado', 'parcialmente_negado'];
   if (activeTab.value === 'em_andamento') {
     return reservasAgrupadas.value.filter(grupo => inProgressStatuses.includes(grupo.status_geral));
   }
