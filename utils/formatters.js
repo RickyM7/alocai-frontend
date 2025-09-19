@@ -2,7 +2,7 @@ export const getStatusClass = (status) => {
   if (!status) return 'status-default';
   const s = status.toLowerCase();
   
-  if (s.includes('negado') || s.includes('indisponivel')) return 'status-error';
+  if (s.includes('negado') || s.includes('indisponivel') || s.includes('cancelado')) return 'status-error';
 
   if (s.includes('aprovado') || s.includes('disponivel')) return 'status-success';
   
@@ -49,6 +49,7 @@ export const formatarStatus = (status) => {
     'pendente': 'Pendente',
     'concluido': 'Concluído',
     'finalizado': 'Finalizado',
+    'cancelado': 'Cancelado',
     'parcialmente_aprovado': 'Parcialmente Aprovado',
     'parcialmente_negado': 'Parcialmente Negado',
     'indefinido': 'Indefinido'

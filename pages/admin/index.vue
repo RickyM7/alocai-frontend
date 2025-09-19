@@ -55,7 +55,7 @@
             <div class="header-actions">
               <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ formatarStatus(solicitacao.status_geral) }}</span>
               <div class="action-buttons">
-                <template v-if="solicitacao.status_geral === 'Pendente'">
+                <template v-if="solicitacao.status_geral === 'pendente'">
                   <button class="btn btn-outline btn-sm" @click.stop="editarSolicitacao(solicitacao)" :disabled="processingId === solicitacao.id_agendamento_pai" title="Editar">
                     <Icon name="i-lucide-pencil" />
                     <span class="btn-text">Editar</span>
@@ -149,13 +149,17 @@ const calcularStatusGeral = (reservas) => {
     }
 
     if (statuses.has('aprovado')) {
+        if (statuses.size > 1) {
+            return 'parcialmente_aprovado';
+        }
         return 'aprovado';
     }
 
     const concluidos = reservas.filter(r => r.status_agendamento === 'concluido').length;
     const negados = reservas.filter(r => r.status_agendamento === 'negado').length;
+    const cancelados = reservas.filter(r => r.status_agendamento === 'cancelado').length;
 
-    if (concluidos > 0 && negados > 0) {
+    if (concluidos > 0 && (negados > 0 || cancelados > 0)) {
         return 'finalizado';
     }
     if (concluidos > 0 && concluidos === total) {
@@ -164,7 +168,10 @@ const calcularStatusGeral = (reservas) => {
     if (negados === total) {
         return 'negado';
     }
-    if (concluidos > 0) {
+    if (cancelados === total) {
+        return 'cancelado';
+    }
+    if (concluidos > 0 || negados > 0 || cancelados > 0) {
         return 'finalizado';
     }
     
@@ -172,7 +179,7 @@ const calcularStatusGeral = (reservas) => {
 };
 
 const filteredSolicitacoes = computed(() => {
-  const inProgressStatuses = ['pendente', 'aprovado'];
+  const inProgressStatuses = ['pendente', 'aprovado', 'parcialmente_aprovado'];
   
   if (activeTab.value === 'em_andamento') {
     return solicitacoes.value.filter(s => inProgressStatuses.includes(s.status_geral));
@@ -363,6 +370,8 @@ onMounted(fetchSolicitacoes);
 .btn-approve:hover{background-color:#16a34a}
 .btn-deny{background-color:#ef4444;color:white}
 .btn-deny:hover{background-color:#dc2626}
+.btn-cancel{background-color:#6b7280;color:white}
+.btn-cancel:hover{background-color:#4b5563}
 .status-small{font-size:.75rem;padding:.25rem .625rem}
 .no-action{color:#9ca3af;font-size:.875rem}
 .status-badge{display:inline-block;padding:.375rem .875rem;border-radius:9999px;font-size:.8125rem;font-weight:600;text-transform:capitalize;letter-spacing:.025em}

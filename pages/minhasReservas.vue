@@ -42,6 +42,9 @@
                 <button v-if="grupo.status_geral === 'Aprovado' || grupo.status_geral === 'Parcialmente Aprovado'" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn btn-outline btn-sm" title="Concluir Todos os Horários">
                   <Icon name="i-lucide-check-check" />
                 </button>
+                <button v-if="grupo.status_geral !== 'Cancelado' && grupo.status_geral !== 'Concluído' && grupo.status_geral !== 'Finalizado' && grupo.status_geral !== 'Negado'" @click.stop="cancelarGrupo(grupo)" class="btn btn-danger-outline btn-sm" title="Cancelar Todos os Horários Pendentes/Aprovados">
+                  <Icon name="i-lucide-x" />
+                </button>
               </div>
             </div>
 
@@ -68,6 +71,9 @@
                       <td class="actions-cell">
                          <button v-if="reserva.status_agendamento === 'aprovado'" @click.stop="marcarHorarioComoConcluido(reserva)" class="btn-icon" title="Marcar este horário como Concluído">
                           <Icon name="i-lucide-check" />
+                        </button>
+                        <button v-if="reserva.status_agendamento === 'aprovado' || reserva.status_agendamento === 'pendente'" @click.stop="cancelarHorario(reserva)" class="btn-icon-danger" title="Cancelar este horário">
+                          <Icon name="i-lucide-x" />
                         </button>
                       </td>
                     </tr>
@@ -117,31 +123,33 @@ const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
     const hasAprovado = statuses.has('aprovado');
     const hasNegado = statuses.has('negado');
     const hasConcluido = statuses.has('concluido');
+    const hasCancelado = statuses.has('cancelado');
 
     if (hasAprovado) {
-        if (hasPendente || hasNegado) {
-            return 'parcialmente_aprovado';
+        if (hasPendente || hasNegado || hasCancelado) {
+            return 'Parcialmente Aprovado';
         }
-        return 'aprovado';
+        return 'Aprovado';
     }
 
     if (hasPendente) {
-        if (hasNegado) {
-            return 'parcialmente_negado';
+        if (hasNegado || hasCancelado) {
+            return 'Parcialmente Negado';
         }
-        return 'pendente';
+        return 'Pendente';
     }
 
-    if (statuses.size === 1 && hasConcluido) return 'concluido';
-    if (statuses.size === 1 && hasNegado) return 'negado';
+    if (statuses.size === 1 && hasConcluido) return 'Concluído';
+    if (statuses.size === 1 && hasNegado) return 'Negado';
+    if (statuses.size === 1 && hasCancelado) return 'Cancelado';
     
-    if (hasConcluido && hasNegado) return 'finalizado';
+    if (hasConcluido || hasNegado || hasCancelado) return 'Finalizado';
 
-    return 'indefinido';
+    return 'Indefinido';
 };
 
 const filteredReservas = computed(() => {
-  const inProgressStatuses = ['pendente', 'aprovado', 'parcialmente_aprovado', 'parcialmente_negado'];
+  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado', 'Parcialmente Negado'];
   if (activeTab.value === 'em_andamento') {
     return reservasAgrupadas.value.filter(grupo => inProgressStatuses.includes(grupo.status_geral));
   }
@@ -193,6 +201,20 @@ const marcarGrupoComoConcluido = async (grupo: GrupoDeReserva) => {
   }
 };
 
+const cancelarGrupo = async (grupo: GrupoDeReserva) => {
+  if (!confirm(`Tem certeza que deseja CANCELAR TODOS os horários pendentes e aprovados para "${grupo.recurso}"?`)) return;
+  try {
+    const response = await authenticatedFetch(`${config.public.apiUrl}/api/agendamentos/pai/${grupo.id_agendamento_pai}/status/`, {
+      method: 'PUT',
+      body: JSON.stringify({ status_agendamento: 'cancelado' }),
+    });
+    if (!response.ok) throw new Error('Falha ao cancelar os agendamentos.');
+    await fetchReservas();
+  } catch (err: any) {
+    alert(`Erro: ${err.message}`);
+  }
+};
+
 const marcarHorarioComoConcluido = async (reserva: ReservaFilho) => {
   try {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/agendamentos/${reserva.id_agendamento}/status/`, {
@@ -200,6 +222,20 @@ const marcarHorarioComoConcluido = async (reserva: ReservaFilho) => {
       body: JSON.stringify({ status_agendamento: 'concluido' }),
     });
     if (!response.ok) throw new Error('Falha ao atualizar o status do horário.');
+    await fetchReservas();
+  } catch (err: any) {
+    alert(`Erro: ${err.message}`);
+  }
+};
+
+const cancelarHorario = async (reserva: ReservaFilho) => {
+  if (!confirm(`Tem certeza que deseja CANCELAR o agendamento do dia ${formatarData(reserva.data_inicio)}?`)) return;
+  try {
+    const response = await authenticatedFetch(`${config.public.apiUrl}/api/agendamentos/${reserva.id_agendamento}/status/`, {
+      method: 'PUT',
+      body: JSON.stringify({ status_agendamento: 'cancelado' }),
+    });
+    if (!response.ok) throw new Error('Falha ao cancelar o horário.');
     await fetchReservas();
   } catch (err: any) {
     alert(`Erro: ${err.message}`);
@@ -231,8 +267,11 @@ onMounted(fetchReservas);
 .header-actions { display: flex; align-items: center; gap: 1rem; }
 .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
 .btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; }
+.btn-danger-outline { background-color: transparent; color: #b91c1c; border-color: #fecaca; }
 .btn-icon { background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: #6b7280; display: flex; align-items: center; }
 .btn-icon:hover { background-color: #f3f4f6; color: #1f2937; }
+.btn-icon-danger { background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: #b91c1c; display: flex; align-items: center; }
+.btn-icon-danger:hover { background-color: #fee2e2; }
 .child-table-wrapper { max-height: 180px; overflow-y: auto; border-top: 1px solid #e5e7eb; }
 .custom-table { width: 100%; border-collapse: collapse; }
 .custom-table th { position: sticky; top: 0; background-color: #f9fafb; z-index: 1; padding: 0.75rem 1.5rem; text-align: left; font-size: 0.8rem; }
