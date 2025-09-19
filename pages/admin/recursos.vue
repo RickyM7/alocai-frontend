@@ -2,9 +2,9 @@
   <div class="page-content-layout">
     <div class="page-header">
       <h1 class="page-title">{{ viewMode === 'list' ? 'Gerenciamento de Recursos' : (isEditing ? 'Editar Recurso' : 'Adicionar Novo Recurso') }}</h1>
-      <button class="btn btn-primary" @click="toggleViewMode">
-        <Icon :name="viewMode === 'list' ? 'i-lucide-plus' : 'i-lucide-arrow-left'" />
-        <span>{{ viewMode === 'list' ? 'Adicionar Recurso' : 'Voltar para a Lista' }}</span>
+      <button v-if="viewMode === 'list'" class="btn btn-primary" @click="iniciarAdicao">
+        <Icon name="i-lucide-plus" />
+        <span>Adicionar Recurso</span>
       </button>
     </div>
 
@@ -111,15 +111,6 @@ const fetchStatusDisponiveis = async () => {
 const aplicarFiltro = (status) => {
   filtroStatus.value = filtroStatus.value === status ? null : status;
   fetchRecursos();
-};
-
-
-const toggleViewMode = () => {
-  if (viewMode.value === 'list') {
-    iniciarAdicao();
-  } else {
-    voltarParaLista();
-  }
 };
 
 const voltarParaLista = () => {

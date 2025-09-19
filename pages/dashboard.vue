@@ -3,13 +3,11 @@
     <div v-if="!selectedResource" class="page-header">
       <h1 class="page-title">Dashboard</h1>
       <div class="tabs">
-        <button :class="['tab-btn', { 'active': viewMode === 'list' }]" @click="viewMode = 'list'">
-          <Icon name="i-lucide-list" />
-          <span>Lista de Recursos</span>
+        <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">
+          Lista de Recursos
         </button>
-        <button :class="['tab-btn', { 'active': viewMode === 'calendar' }]" @click="viewMode = 'calendar'">
-          <Icon name="i-lucide-calendar" />
-          <span>Calendário Geral</span>
+        <button :class="{ active: viewMode === 'calendar' }" @click="viewMode = 'calendar'">
+          Calendário Geral
         </button>
       </div>
     </div>
@@ -41,37 +39,43 @@
             <div class="card-header" @click="toggleRecurso(recurso.id_recurso)">
               <div class="header-info">
                 <Icon :name="recursoAberto === recurso.id_recurso ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="expand-icon" />
-                <div>
+                <div class="info-content">
                   <h2 class="recurso-nome">{{ recurso.nome_recurso }}</h2>
-                  <p class="recurso-local">{{ recurso.localizacao }}</p>
+                  <div class="meta-info">
+                    <div class="meta-item">
+                      <Icon name="i-lucide-map-pin" class="meta-icon" />
+                      <div class="meta-text">
+                        <span class="meta-label">Localização</span>
+                        <strong>{{ recurso.localizacao }}</strong>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="header-actions">
                 <span :class="getStatusClass(recurso.status_recurso)" class="status-badge">{{ formatarStatus(recurso.status_recurso) }}</span>
                 <span class="badge">{{ recurso.agendamentos.length }} agendamento(s)</span>
-                <button class="btn btn-outline btn-sm" @click.stop="showResourceCalendar(recurso)" title="Ver Calendário">
-                  <Icon name="i-lucide-calendar-days" />
-                  <span>Calendário</span>
-                </button>
+                <div class="action-buttons">
+                  <button class="btn btn-outline btn-sm" @click.stop="showResourceCalendar(recurso)" title="Ver Calendário">
+                    <Icon name="i-lucide-calendar-days" class="btn-icon-mobile" />
+                    <span class="btn-text">Calendário</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div v-if="recursoAberto === recurso.id_recurso">
-              <div v-if="recurso.agendamentos.length > 0" class="child-table-wrapper">
-                <table class="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Horário</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="agendamento in recurso.agendamentos" :key="agendamento.id_agendamento">
-                      <td>{{ formatarData(agendamento.data_inicio) }}</td>
-                      <td>{{ agendamento.hora_inicio.substring(0, 5) }} - {{ agendamento.hora_fim.substring(0, 5) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div v-if="recursoAberto === recurso.id_recurso" class="card-expanded">
+              <div v-if="recurso.agendamentos.length > 0" class="card-content">
+                <div class="horarios-list">
+                  <div v-for="agendamento in recurso.agendamentos" :key="agendamento.id_agendamento" class="horario-item">
+                    <div class="horario-info">
+                      <div class="horario-date-time">
+                        <span class="horario-date">{{ formatarData(agendamento.data_inicio) }}</span>
+                        <span class="horario-time">Das {{ agendamento.hora_inicio.substring(0, 5) }} às {{ agendamento.hora_fim.substring(0, 5) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div v-else class="no-agendamentos">
                 <p>Nenhum agendamento aprovado.</p>
@@ -177,45 +181,64 @@ onMounted(fetchListData);
 </script>
 
 <style scoped>
-.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden;min-width:0}
-.page-header{flex-shrink:0;background:transparent;position:sticky;top:-2rem;padding-top:2rem;z-index:10;padding-bottom:1rem}
-.page-title{font-size:1.75rem;font-weight:700;margin:0}
-.tabs{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
-.tab-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.25rem;border:none;background:transparent;border-bottom:3px solid transparent;cursor:pointer;font-weight:600;color:#6b7280;transition:all .2s}
-.tab-btn.active{color:#4f46e5;border-bottom-color:#4f46e5}
-.resource-header{display:flex;align-items:center;gap:1rem}
-.btn-back{background:none;border:none;cursor:pointer;color:#4b5563;padding:.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.page-header{flex-shrink:0;padding:1.5rem 1.5rem 1rem;background:linear-gradient(to bottom,#ffffff,#f8fafc);position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.page-title{font-size:1.875rem;font-weight:700;color:#111827}
+.tabs{display:flex;gap:.25rem;background-color:#f3f4f6;padding:.25rem;border-radius:.5rem}
+.tabs button{background:transparent;border:none;padding:.625rem 1.25rem;cursor:pointer;font-size:.875rem;font-weight:600;color:#6b7280;border-radius:.375rem;transition:all .2s}
+.tabs button:hover:not(.active){background-color:#ffffff;color:#374151}
+.tabs button.active{background-color:#ffffff;color:#4f46e5;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.resource-header{display:flex;align-items:center;gap:1rem;width:100%}
+.btn-back{background:none;border:none;cursor:pointer;color:#4b5563;padding:.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .btn-back:hover{background:#f3f4f6}
-.scrollable-list{flex-grow:1;overflow-y:auto;padding-right:1rem;min-width:0}
+.scrollable-list{flex-grow:1;overflow-y:auto;padding:1.5rem}
 .scrollable-list.no-scroll{overflow:hidden;padding-right:0}
-.list-content{padding:0}
+.list-content{max-width:1400px;margin:0 auto;width:100%}
 .calendar-content{height:100%;display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden}
-.calendar-content :deep(.calendar-container){min-width:0;width:100%}
-.calendar-content :deep(.calendar-grid){max-width:100%}
-.status-container{text-align:center;padding:2rem;color:#6b7280}
-.spinner{font-size:2rem;animation:spin 1s linear infinite}
+.recursos-container{display:flex;flex-direction:column;gap:1rem;max-width:1400px;margin:0 auto;width:100%}
+.card{background-color:white;border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);overflow:hidden;transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 6px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.06)}
+.card-header{padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;background-color:#ffffff;transition:background-color .2s}
+.card-header:hover{background-color:#f9fafb}
+.header-info{display:flex;align-items:flex-start;gap:1rem;flex:1;min-width:0}
+.expand-icon{font-size:1.25rem;color:#9ca3af;margin-top:.125rem;flex-shrink:0}
+.info-content{flex:1;min-width:0}
+.recurso-nome{font-size:1.375rem;font-weight:600;margin:0 0 .75rem 0;color:#111827;line-height:1.3}
+.meta-info{display:flex;gap:2rem;flex-wrap:wrap}
+.meta-item{display:flex;align-items:flex-start;gap:.625rem;min-width:0}
+.meta-icon{font-size:1rem;color:#6b7280;margin-top:.125rem;flex-shrink:0}
+.meta-text{display:flex;flex-direction:column;gap:.125rem;min-width:0}
+.meta-label{font-size:.75rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.025em;font-weight:500}
+.meta-text strong{font-size:.875rem;color:#374151;font-weight:600}
+.header-actions{display:flex;align-items:center;gap:1rem;flex-shrink:0}
+.action-buttons{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.375rem;padding:.5rem 1rem;border-radius:.5rem;border:1px solid transparent;cursor:pointer;font-weight:500;font-size:.875rem;transition:all .2s;white-space:nowrap}
+.btn-sm{padding:.4375rem .875rem;font-size:.8125rem}
+.btn-outline{background-color:white;color:#4b5563;border-color:#d1d5db}
+.btn-outline:hover{background-color:#f9fafb;border-color:#9ca3af}
+.btn-icon-mobile{display:none}
+.badge{background:#e5e7eb;color:#374151;padding:.375rem .875rem;border-radius:9999px;font-weight:500;font-size:.8125rem}
+.status-badge{display:inline-block;padding:.375rem .875rem;border-radius:9999px;font-size:.8125rem;font-weight:600;text-transform:capitalize;letter-spacing:.025em}
+.status-success{background-color:#dcfce7;color:#14532d}
+.status-warning{background-color:#fef3c7;color:#713f12}
+.status-error{background-color:#fee2e2;color:#7f1d1d}
+.status-info{background-color:#dbeafe;color:#1e3a8a}
+.status-default{background-color:#f3f4f6;color:#374151}
+.card-expanded{animation:slideDown .2s ease-out}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.card-content{padding:1.5rem;border-top:1px solid #e5e7eb;background-color:#f9fafb}
+.horarios-list{background-color:white;padding:1rem 1.5rem 1.5rem}
+.horario-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:.5rem;margin-bottom:.75rem;transition:all .2s}
+.horario-item:last-child{margin-bottom:0}
+.horario-item:hover{background-color:#f1f5f9;border-color:#cbd5e1}
+.horario-info{display:flex;align-items:center;gap:1rem;flex:1}
+.horario-date-time{display:flex;flex-direction:column;gap:.25rem}
+.horario-date{font-size:.875rem;font-weight:600;color:#374151}
+.horario-time{font-size:.8125rem;color:#6b7280}
+.no-agendamentos{padding:1rem 1.5rem;color:#6b7280;font-size:.9rem;text-align:center}
+.status-container{text-align:center;padding:3rem;color:#6b7280}
+.spinner{font-size:2.5rem;animation:spin 1s linear infinite;color:#4f46e5}
 @keyframes spin{to{transform:rotate(360deg)}}
-.recursos-container{display:flex;flex-direction:column;gap:1rem}
-.card{background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.05);overflow:hidden}
-.card-header{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;border-bottom:1px solid #e5e7eb}
-.card-header:hover{background:#f9fafb}
-.header-info{display:flex;align-items:flex-start;gap:1rem;flex:1}
-.expand-icon{font-size:1.25rem;color:#9ca3af;margin-top:.125rem}
-.recurso-nome{font-size:1.25rem;font-weight:600;margin:0}
-.recurso-local{font-size:.875rem;color:#6b7280;margin:0}
-.header-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:6px;border:1px solid transparent;cursor:pointer;font-weight:500;transition:all .2s;white-space:nowrap}
-.btn-sm{padding:.375rem .75rem;font-size:.875rem}
-.btn-outline{background:transparent;color:#4b5563;border-color:#d1d5db}
-.btn-outline:hover{background:#f9fafb}
-.badge{background:#e5e7eb;color:#374151;padding:.25rem .75rem;border-radius:9999px;font-weight:500;font-size:.8rem}
-.status-badge{display:inline-block;padding:.25rem .75rem;border-radius:9999px;font-size:.875rem;font-weight:500;text-transform:capitalize}
-.child-table-wrapper{max-height:200px;overflow-y:auto;overflow-x:auto}
-.child-table-wrapper .custom-table th{position:sticky;top:0;background:#f9fafb;z-index:1}
-.custom-table{width:100%;border-collapse:collapse}
-.custom-table th,.custom-table td{padding:.75rem 1rem;text-align:left;border-bottom:1px solid #e5e7eb}
-.custom-table tbody tr:last-child td{border-bottom:none}
-.no-agendamentos{padding:1rem 1.5rem;color:#6b7280;font-size:.9rem}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
 .modal-container{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:90%;max-width:500px;max-height:80vh;overflow:hidden;animation:modalSlideIn .15s ease-out}
 @keyframes modalSlideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
@@ -235,16 +258,7 @@ onMounted(fetchListData);
 .event-horario{color:#1f2937;font-weight:500;margin:0;font-size:.875rem}
 .modal-no-events{padding:2rem 1.5rem;text-align:center;color:#6b7280}
 .modal-no-events p{margin:0;font-style:italic}
-
-@media(max-width:48rem){
-  .page-content-layout{padding: 1rem}
-  .page-header{position:static;top:auto;padding-top:1rem}
-  .scrollable-list{padding-right:0}
-  .calendar-content :deep(.calendar-container){width:98%;margin:0 auto}
-  .tab-btn{padding:.6rem 1rem;font-size:.95rem}
-}
-@media(max-width:31.25rem){
-  .page-title{font-size:1.5rem}
-  .tab-btn{padding:.5rem .9rem;font-size:.9rem}
-}
+@media (max-width:1024px){.page-header{padding:1.25rem 1rem .875rem}.page-title{font-size:1.625rem}.scrollable-list{padding:1.25rem 1rem}.card-header{padding:1rem 1.25rem}.recurso-nome{font-size:1.25rem}.meta-info{gap:1.5rem}.horarios-list{padding:1rem}.horario-item{padding:.875rem}}
+@media (max-width:768px){.page-header{flex-direction:column;align-items:stretch;gap:1rem;padding:1rem}.page-title{font-size:1.375rem}.tabs{width:100%;justify-content:stretch}.tabs button{flex:1;padding:.5rem .75rem}.scrollable-list{padding:1rem .75rem}.card-header{flex-direction:column;gap:1rem;padding:1rem}.header-info{width:100%}.recurso-nome{font-size:1.125rem;margin-bottom:.625rem}.meta-info{flex-direction:column;gap:.625rem}.header-actions{width:100%;justify-content:flex-start}.action-buttons{flex-wrap:wrap}.btn-text{display:none}.btn-icon-mobile{display:inline-block}.horarios-list{padding:.75rem}.horario-item{flex-direction:column;align-items:stretch;gap:.75rem;padding:.75rem}.horario-info{justify-content:space-between}.horario-date-time{flex:1}.resource-header{flex-direction:row;align-items:center}}
+@media (max-width:480px){.page-title{font-size:1.25rem}.scrollable-list{padding:.75rem .5rem}.card-header{padding:.75rem}.recurso-nome{font-size:1rem}.btn-sm{padding:.375rem .5rem;font-size:.75rem}.status-badge{font-size:.75rem;padding:.25rem .5rem}.card-content{padding:1rem}.horarios-list{padding:.5rem}.horario-item{padding:.625rem}.horario-date{font-size:.8125rem}.horario-time{font-size:.75rem}}
 </style>

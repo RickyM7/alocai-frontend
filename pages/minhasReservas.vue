@@ -39,46 +39,34 @@
               </div>
               <div class="header-actions">
                 <span :class="getStatusClass(grupo.status_geral)" class="status-badge">{{ formatarStatus(grupo.status_geral) }}</span>
-                <button v-if="grupo.status_geral === 'Aprovado' || grupo.status_geral === 'Parcialmente Aprovado'" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn btn-outline btn-sm" title="Concluir Todos os Horários">
-                  <Icon name="i-lucide-check-check" />
-                </button>
-                <button v-if="grupo.status_geral !== 'Cancelado' && grupo.status_geral !== 'Concluído' && grupo.status_geral !== 'Finalizado' && grupo.status_geral !== 'Negado'" @click.stop="cancelarGrupo(grupo)" class="btn btn-danger-outline btn-sm" title="Cancelar Todos os Horários Pendentes/Aprovados">
-                  <Icon name="i-lucide-x" />
-                </button>
+                <div class="botoes-grupo-principal">
+                  <button v-if="['aprovado', 'parcialmente_aprovado'].includes(grupo.status_geral)" @click.stop="marcarGrupoComoConcluido(grupo)" class="btn-icon-action btn-icon-success" title="Concluir Todos os Horários">
+                    <Icon name="i-lucide-check-check" />
+                  </button>
+                  <button v-if="!['cancelado', 'concluido', 'finalizado', 'negado'].includes(grupo.status_geral)" @click.stop="cancelarGrupo(grupo)" class="btn-icon-action btn-icon-danger" title="Cancelar Todos os Horários Pendentes/Aprovados">
+                    <Icon name="i-lucide-x" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div v-if="isGroupExpanded(grupo.id_agendamento_pai)">
-              <div class="child-table-wrapper">
-                <table class="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Horário</th>
-                      <th>Status</th>
-                      <th class="actions-cell">Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="reserva in grupo.agendamentos_filhos" :key="reserva.id_agendamento">
-                      <td>{{ formatarData(reserva.data_inicio) }}</td>
-                      <td>{{ reserva.hora_inicio?.substring(0, 5) }} - {{ reserva.hora_fim?.substring(0, 5) }}</td>
-                      <td>
-                        <span :class="getStatusClass(reserva.status_agendamento)" class="status-badge-sm">
-                          {{ formatarStatus(reserva.status_agendamento) }}
-                        </span>
-                      </td>
-                      <td class="actions-cell">
-                         <button v-if="reserva.status_agendamento === 'aprovado'" @click.stop="marcarHorarioComoConcluido(reserva)" class="btn-icon" title="Marcar este horário como Concluído">
-                          <Icon name="i-lucide-check" />
-                        </button>
-                        <button v-if="reserva.status_agendamento === 'aprovado' || reserva.status_agendamento === 'pendente'" @click.stop="cancelarHorario(reserva)" class="btn-icon-danger" title="Cancelar este horário">
-                          <Icon name="i-lucide-x" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div v-if="isGroupExpanded(grupo.id_agendamento_pai)" class="horarios-detalhes">
+              <div v-for="reserva in grupo.agendamentos_filhos" :key="reserva.id_agendamento" class="horario-card">
+                <div class="horario-info-principal">
+                  <div class="info-data-hora">
+                    <span class="horario-data">{{ formatarDataCompleta(reserva.data_inicio) }}</span>
+                    <span class="horario-hora">Das {{ reserva.hora_inicio?.substring(0, 5) }} às {{ reserva.hora_fim?.substring(0, 5) }}</span>
+                  </div>
+                  <span :class="getStatusClass(reserva.status_agendamento)" class="status-badge-sm">{{ formatarStatus(reserva.status_agendamento) }}</span>
+                </div>
+                <div v-if="['aprovado', 'pendente'].includes(reserva.status_agendamento)" class="horario-actions">
+                   <button v-if="reserva.status_agendamento === 'aprovado'" @click.stop="marcarHorarioComoConcluido(reserva)" class="btn-horario btn-concluir">
+                    <Icon name="i-lucide-check" /> Concluir
+                  </button>
+                  <button @click.stop="cancelarHorario(reserva)" class="btn-horario btn-cancelar">
+                    <Icon name="i-lucide-x" /> Cancelar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -91,7 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
-import { getStatusClass, formatarData, formatarStatus } from '~/utils/formatters';
+import { getStatusClass, formatarData, formatarStatus, formatarDataCompleta } from '~/utils/formatters';
 
 interface ReservaFilho {
   id_agendamento: number;
@@ -126,30 +114,30 @@ const calcularStatusGeral = (reservas: ReservaFilho[]): string => {
     const hasCancelado = statuses.has('cancelado');
 
     if (hasAprovado) {
-        if (hasPendente || hasNegado || hasCancelado) {
-            return 'Parcialmente Aprovado';
+        if (statuses.size > 1) {
+            return 'parcialmente_aprovado';
         }
-        return 'Aprovado';
+        return 'aprovado';
     }
 
     if (hasPendente) {
         if (hasNegado || hasCancelado) {
-            return 'Parcialmente Negado';
+            return 'parcialmente_negado';
         }
-        return 'Pendente';
+        return 'pendente';
     }
 
-    if (statuses.size === 1 && hasConcluido) return 'Concluído';
-    if (statuses.size === 1 && hasNegado) return 'Negado';
-    if (statuses.size === 1 && hasCancelado) return 'Cancelado';
+    if (statuses.size === 1 && hasConcluido) return 'concluido';
+    if (statuses.size === 1 && hasNegado) return 'negado';
+    if (statuses.size === 1 && hasCancelado) return 'cancelado';
     
-    if (hasConcluido || hasNegado || hasCancelado) return 'Finalizado';
+    if (hasConcluido || hasNegado || hasCancelado) return 'finalizado';
 
-    return 'Indefinido';
+    return 'indefinido';
 };
 
 const filteredReservas = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado', 'Parcialmente Aprovado', 'Parcialmente Negado'];
+  const inProgressStatuses = ['pendente', 'aprovado', 'parcialmente_aprovado', 'parcialmente_negado'];
   if (activeTab.value === 'em_andamento') {
     return reservasAgrupadas.value.filter(grupo => inProgressStatuses.includes(grupo.status_geral));
   }
@@ -174,11 +162,9 @@ const fetchReservas = async () => {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/agendamentos/minhas-reservas/`);
     if (!response.ok) throw new Error('Não foi possível buscar suas reservas.');
     const data: GrupoDeReserva[] = await response.json();
-    
     data.forEach(grupo => {
       grupo.status_geral = calcularStatusGeral(grupo.agendamentos_filhos);
     });
-
     reservasAgrupadas.value = data;
   } catch (err: any) {
     error.value = err.message;
@@ -246,38 +232,49 @@ onMounted(fetchReservas);
 </script>
 
 <style scoped>
-.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; }
 .card-main { width: 100%; max-width: 1200px; height: 85vh; max-height: 800px; background-color: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
 .card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #e5e7eb; }
 .title { font-size: 1.75rem; font-weight: 700; margin: 0; }
 .tabs { margin-top: 1rem; display: flex; border-bottom: 2px solid #e5e7eb; }
 .tabs button { background: none; border: none; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem; font-weight: 600; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; }
 .tabs button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
-.card-content { flex-grow: 1; overflow-y: auto; padding: 1.5rem; }
+.card-content { flex-grow: 1; overflow-y: auto; padding: 1.5rem; background-color: #f9fafb; }
 .status-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; color: #6b7280; }
-.spinner { font-size: 2.5rem; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+.spinner { font-size: 2.5rem; animation: spin 1s linear infinite; } 
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-empty { font-size: 3rem; margin-bottom: 1rem; color: #9ca3af; }
 .reservas-container { display: flex; flex-direction: column; gap: 1rem; }
 .card-item { background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e5e7eb; }
 .card-item-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .card-item-header:hover { background-color: #f9fafb; }
-.header-info { display: flex; align-items: center; gap: 1rem; }
+.header-info { display: flex; align-items: center; gap: 1rem; min-width: 0; }
 .expand-icon { font-size: 1.25rem; color: #9ca3af; }
 .recurso-nome { font-size: 1.15rem; font-weight: 600; }
 .finalidade-info { font-size: 0.875rem; color: #6b7280; }
-.header-actions { display: flex; align-items: center; gap: 1rem; }
-.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
-.btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; }
-.btn-danger-outline { background-color: transparent; color: #b91c1c; border-color: #fecaca; }
-.btn-icon { background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: #6b7280; display: flex; align-items: center; }
-.btn-icon:hover { background-color: #f3f4f6; color: #1f2937; }
-.btn-icon-danger { background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: #b91c1c; display: flex; align-items: center; }
-.btn-icon-danger:hover { background-color: #fee2e2; }
-.child-table-wrapper { max-height: 180px; overflow-y: auto; border-top: 1px solid #e5e7eb; }
-.custom-table { width: 100%; border-collapse: collapse; }
-.custom-table th { position: sticky; top: 0; background-color: #f9fafb; z-index: 1; padding: 0.75rem 1.5rem; text-align: left; font-size: 0.8rem; }
-.custom-table td { padding: 0.75rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.custom-table tbody tr:last-child td { border-bottom: none; }
-.actions-cell { text-align: right; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.botoes-grupo-principal { display: flex; gap: 0.5rem; }
+.btn-icon-action { background-color: #f3f4f6; border: 1px solid #d1d5db; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.btn-icon-action .icon { font-size: 1.1rem; }
+.btn-icon-action.btn-icon-success { color: #16a34a; }
+.btn-icon-action.btn-icon-danger { color: #dc2626; }
+.btn-icon-action:hover { transform: scale(1.1); }
+.btn-icon-action.btn-icon-success:hover { background-color: #dcfce7; border-color: #16a34a; }
+.btn-icon-action.btn-icon-danger:hover { background-color: #fee2e2; border-color: #dc2626; }
+.horarios-detalhes { padding: 0 1.5rem 1.5rem; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 0.75rem; background-color: #f9fafb; }
+.horarios-detalhes > *:first-child { margin-top: 1.5rem; }
+.horario-card { background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+.horario-info-principal { display: flex; justify-content: space-between; align-items: flex-start; }
+.info-data-hora { display: flex; flex-direction: column; }
+.horario-data { font-weight: 600; font-size: 0.9rem; color: #374151; }
+.horario-hora { font-size: 0.85rem; color: #6b7280; }
+.horario-actions { border-top: 1px solid #f3f4f6; padding-top: 0.75rem; margin-top: 0.75rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
+.btn-horario { border: 1px solid transparent; font-weight: 500; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; transition: all 0.2s; }
+.btn-horario .icon { font-size: 0.9rem; }
+.btn-horario.btn-concluir { background-color: #f0fdf4; color: #15803d; }
+.btn-horario.btn-concluir:hover { background-color: #dcfce7; border-color: #16a34a; }
+.btn-horario.btn-cancelar { background-color: #fef2f2; color: #b91c1c; }
+.btn-horario.btn-cancelar:hover { background-color: #fee2e2; border-color: #dc2626; }
 .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; text-transform: capitalize; }
 .status-badge-sm { padding: 0.15rem 0.6rem; font-size: 0.75rem; }
 .status-success { background-color: #dcfce7; color: #166534; }
@@ -285,4 +282,19 @@ onMounted(fetchReservas);
 .status-error { background-color: #fecaca; color: #991b1b; }
 .status-info { background-color: #e0e7ff; color: #3730a3; }
 .status-default { background-color: #e5e7eb; color: #374151; }
+@media (max-width: 768px) {
+  .page-container { padding: 0; align-items: stretch; }
+  .card-main { height: auto; min-height: 100vh; max-height: none; border-radius: 0; box-shadow: none; }
+  .card-header { padding: 1rem; }
+  .title { font-size: 1.5rem; }
+  .tabs button { padding: 0.5rem 1rem; font-size: 0.9rem; }
+  .card-content { padding: 1rem; }
+  .card-item-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .header-actions { width: 100%; justify-content: space-between; }
+  .horarios-detalhes { padding: 1rem; }
+  .horarios-detalhes > *:first-child { margin-top: 1rem; }
+}
+@media (min-width: 769px) {
+  .horarios-detalhes > *:first-child { margin-top: 1rem; }
+}
 </style>

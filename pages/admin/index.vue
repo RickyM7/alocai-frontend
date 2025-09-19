@@ -97,7 +97,7 @@
                 <div class="horario-info">
                   <div class="horario-date-time">
                     <span class="horario-date">{{ formatarData(agendamento.data_inicio) }}</span>
-                    <span class="horario-time">{{ agendamento.hora_inicio.substring(0, 5) }} - {{ agendamento.hora_fim.substring(0, 5) }}</span>
+                    <span class="horario-time">Das {{ agendamento.hora_inicio.substring(0, 5) }} ás {{ agendamento.hora_fim.substring(0, 5) }}</span>
                   </div>
                   <span :class="getStatusClass(agendamento.status_agendamento)" class="status-badge status-small">
                     {{ formatarStatus(agendamento.status_agendamento) }}
