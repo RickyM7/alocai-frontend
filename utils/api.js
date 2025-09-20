@@ -40,7 +40,9 @@ export async function authenticatedFetch(url, options = {}) {
   let token = localStorage.getItem('access');
   const config = useRuntimeConfig();
 
-  const fullUrl = `${config.public.apiUrl}${url}`;
+  const fullUrl = url.startsWith('http')
+    ? url
+    : `${config.public.apiUrl}${url}`;
 
   const headers = {
     ...options.headers,
