@@ -70,7 +70,7 @@
                 <small>Use para entrar pela tela de login de administrador.</small>
               </div>
               <div class="action-area">
-                <button @click="startPasswordEdit" class="btn btn-secondary">Alterar Senha</button>
+                <button @click="startPasswordEdit" class="btn btn-secondary">{{ user.tem_senha ? 'Alterar Senha' : 'Definir Senha' }}</button>
               </div>
             </div>
 
@@ -85,7 +85,8 @@
                     class="form-input" 
                     placeholder="Mínimo de 8 caracteres" 
                     required 
-                    minlength="8" />
+                    minlength="8"
+                    autocomplete="new-password" />
                   <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
                     <Icon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" />
                   </button>
@@ -199,6 +200,12 @@ const changePassword = async () => {
       throw new Error(data.error || 'Não foi possível alterar a senha.');
     }
     alert(data.detail);
+    
+    if (user.value) {
+        user.value.tem_senha = true;
+        localStorage.setItem('user_data', JSON.stringify(user.value));
+    }
+
     cancelPasswordEdit();
   } catch (err: any) {
     passwordError.value = err.message;

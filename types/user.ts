@@ -7,4 +7,5 @@ export interface User {
   id_perfil: number;
   nome_perfil: string | null;
   google_id?: string | null;
+  tem_senha?: boolean;
 }
