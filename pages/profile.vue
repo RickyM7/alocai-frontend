@@ -492,10 +492,11 @@ const changePassword = async () => {
 @media (max-width: 768px) {
   .page-container {
     padding: 0rem;
+    font-size: 0.8rem;
   }
 
     .card {
-    padding: 1.5rem;
+    padding: 1rem;
     margin: 0.5rem;
   }
   
