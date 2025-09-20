@@ -63,7 +63,7 @@ onMounted(() => {
     if (googleSignInButton.value) {
       (window as any).google.accounts.id.renderButton(
         googleSignInButton.value,
-        { theme: 'outline', size: 'large', text: 'signin_with', width: '300' }
+        { theme: 'outline', size: 'large', text: 'signin_with' }
       );
     }
   } else {

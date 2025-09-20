@@ -516,6 +516,7 @@ const menuItems = computed(() => {
   font-size: 0.9rem;
   color: #374151;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .notification-time {
@@ -569,9 +570,13 @@ const menuItems = computed(() => {
   }
 
   .notification-dropdown {
-    width: calc(100vw - 32px);
-
-    max-width: 320px;
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    transform: none;
   }
 
   .notification-header h3 {
