@@ -18,6 +18,7 @@ async function refreshToken() {
     const response = await fetch(`${config.public.apiUrl}/api/token/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({})
     });
 
@@ -37,6 +38,9 @@ async function refreshToken() {
 
 export async function authenticatedFetch(url, options = {}) {
   let token = localStorage.getItem('access');
+  const config = useRuntimeConfig();
+
+  const fullUrl = `${config.public.apiUrl}${url}`;
 
   const headers = {
     ...options.headers,
@@ -44,7 +48,7 @@ export async function authenticatedFetch(url, options = {}) {
     'Content-Type': 'application/json',
   };
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(fullUrl, { ...options, credentials: 'include', headers });
 
   if (response.status === 401) {
     if (isRefreshing) {
@@ -53,7 +57,7 @@ export async function authenticatedFetch(url, options = {}) {
       })
       .then(newToken => {
         headers['Authorization'] = `Bearer ${newToken}`;
-        return fetch(url, { ...options, headers });
+        return fetch(fullUrl, { ...options, credentials: 'include', headers });
       })
       .catch(err => {
         return Promise.reject(err);
@@ -68,7 +72,7 @@ export async function authenticatedFetch(url, options = {}) {
       if (newToken) {
         processQueue(null, newToken);
         headers['Authorization'] = `Bearer ${newToken}`;
-        response = await fetch(url, { ...options, headers });
+        response = await fetch(fullUrl, { ...options, credentials: 'include', headers });
       } else {
         processQueue(new Error('Sua sessão expirou. Por favor, faça login novamente.'));
         localStorage.removeItem('access');

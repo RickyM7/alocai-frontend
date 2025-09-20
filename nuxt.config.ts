@@ -45,7 +45,7 @@ export default ({
   runtimeConfig: {
     public: {
       googleClientId: process.env.GOOGLE_CLIENT_ID,
-      apiUrl: process.env.API_URL
+      apiUrl: isDev ? '' : process.env.API_URL
     }
   },
   vite: {
@@ -55,12 +55,18 @@ export default ({
     server: isDev ? {
       hmr: {
         overlay: false,
+      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        }
       }
     } : {},
     optimizeDeps: {
       include: [
         '@fullcalendar/daygrid',
-        '@fullcalendar/interaction', 
+        '@fullcalendar/interaction',
         '@fullcalendar/timegrid',
         '@fullcalendar/vue3',
         '@vuepic/vue-datepicker'
