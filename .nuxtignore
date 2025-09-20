@@ -1,0 +1,8 @@
+# Arquivos para o Nuxt ignorar durante o build
+README.md
+.git
+.github
+.vscode
+*.log
+.DS_Store
+Thumbs.db

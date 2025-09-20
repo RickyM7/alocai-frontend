@@ -1,10 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isDev = process.env.NODE_ENV === 'development'
+
 export default ({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
-
   css: ['~/assets/css/main.css'],
-
   modules: [
     '@nuxt/test-utils',
     '@nuxt/icon',
@@ -13,25 +13,23 @@ export default ({
     '@nuxt/fonts',
     '@pinia/nuxt',
   ],
-
   pinia: {
     storesDirs: ['./stores/**'],
   },
-
   icon: {
     provider: 'iconify',
     collections: ['heroicons', 'lucide'],
+    serverBundle: {
+      collections: ['heroicons', 'lucide']
+    }
   },
-
   ui: {
     icons: ['heroicons', 'lucide'],
     global: true
   },
-
   typescript: {
-    typeCheck: true
+    typeCheck: !isDev
   },
-
   app: {
     head: {
       title: 'Alocaí',
@@ -44,17 +42,65 @@ export default ({
       ],
     },
   },
-
   runtimeConfig: {
     public: {
       googleClientId: process.env.GOOGLE_CLIENT_ID,
       apiUrl: process.env.API_URL
     }
   },
-
   vite: {
     esbuild: {
-      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+      drop: !isDev ? ['console', 'debugger'] : [],
     },
+    server: isDev ? {
+      hmr: {
+        overlay: false,
+      }
+    } : {},
+    optimizeDeps: {
+      include: [
+        '@fullcalendar/daygrid',
+        '@fullcalendar/interaction', 
+        '@fullcalendar/timegrid',
+        '@fullcalendar/vue3',
+        '@vuepic/vue-datepicker'
+      ]
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            calendar: ['@fullcalendar/daygrid', '@fullcalendar/interaction', '@fullcalendar/timegrid', '@fullcalendar/vue3'],
+            datepicker: ['@vuepic/vue-datepicker'],
+            vendor: ['vue', 'vue-router', 'pinia']
+          }
+        }
+      },
+      minify: 'esbuild',
+      target: 'esnext',
+      cssCodeSplit: true
+    }
   },
+  devServer: isDev ? {
+    port: 3000,
+    host: 'localhost'
+  } : {},
+  experimental: {
+    payloadExtraction: !isDev,
+    inlineSSRStyles: !isDev
+  },
+  nitro: {
+    compressPublicAssets: true,
+    minify: true
+  },
+  components: {
+    global: false,
+    dirs: [
+      {
+        path: '~/components',
+        pathPrefix: false,
+      }
+    ]
+  },
+  buildDir: '.nuxt'
 })
