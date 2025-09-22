@@ -31,8 +31,11 @@
             id="capacidade" 
             type="number" 
             v-model.number="form.capacidade" 
+            @input="validarCapacidade"
+            @blur="validarCapacidade"
             class="form-input" 
             placeholder="Ex: 25" 
+            min="1" 
           />
         </div>
         
@@ -100,10 +103,25 @@ const initializeForm = () => {
   };
 };
 
+const validarCapacidade = () => {
+  const valor = form.value.capacidade;
+  
+  if (isNaN(valor) || valor === null || valor === undefined || valor < 1) {
+    form.value.capacidade = 1;
+  } else {
+    form.value.capacidade = Math.floor(Math.abs(valor));
+    if (form.value.capacidade < 1) {
+      form.value.capacidade = 1;
+    }
+  }
+};
+
 onMounted(initializeForm);
 watch(() => props.recursoInicial, initializeForm, { deep: true });
 
 const salvar = async () => {
+  validarCapacidade();
+  
   isSaving.value = true;
   const isEditing = !!form.value.id_recurso;
   const url = isEditing 

@@ -46,7 +46,9 @@
               <input
                 type="number"
                 id="participantes"
-                v-model="participantes"
+                v-model.number="participantes"
+                @input="validarParticipantes"
+                @blur="validarParticipantes"
                 placeholder="Ex: 25"
                 min="1"
                 :max="maxParticipantes"
@@ -103,16 +105,33 @@ const resumoPeriodo = computed(() => {
   return `${formatar(primeiraData)} até ${formatar(ultimaData)}`;
 });
 
+const validarParticipantes = () => {
+  const valor = participantes.value;
+  
+  if (isNaN(valor) || valor === null || valor === undefined || valor < 1) {
+    participantes.value = 1;
+  } else {
+    let valorValidado = Math.floor(Math.abs(valor));
+    
+    if (valorValidado < 1) {
+      valorValidado = 1;
+    }
+    
+    if (maxParticipantes.value && valorValidado > maxParticipantes.value) {
+      valorValidado = maxParticipantes.value;
+    }
+    
+    participantes.value = valorValidado;
+  }
+};
+
 function irParaConclusao() {
   if (!finalidade.value.trim()) {
     alert('Por favor, informe a finalidade do agendamento.');
     return;
   }
   
-  if (participantes.value && maxParticipantes.value && parseInt(participantes.value) > maxParticipantes.value) {
-    alert(`O número de participantes (${participantes.value}) excede a capacidade do recurso (${maxParticipantes.value}).`);
-    return;
-  }
+  validarParticipantes();
   
   store.setInfo({
     finalidade: finalidade.value,
