@@ -138,25 +138,55 @@ watch(visibleMonth, async () => { await nextTick(); computeHeights() })
 watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 </script>
 
-<style>
-.calendar-container{height:100%;width:100%;min-width:0;display:flex;flex-direction:column;overflow:hidden;--day-cell-height:96px}
-.calendar-container,.calendar-container *{box-sizing:border-box}
-.cal-toolbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.5rem;margin-bottom:.5rem}
-.cal-toolbar-left,.cal-toolbar-right{display:flex;align-items:center;gap:.5rem}
-.cal-title{text-align:center;font-weight:800;font-size:1.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.btn-nav{background-color:#4f46e5;border:1px solid #4f46e5;color:#fff;padding:.5rem .6rem;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-.btn-nav:hover{background-color:#4338ca}
-.calendar-grid{width:100%;max-width:100%;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(6,var(--day-cell-height))}
-.weekday{font-weight:700;text-align:center;padding:.45rem .25rem;background:#f9fafb;color:#374151;box-shadow:inset -1px 0 #e5e7eb,inset 0 -1px #e5e7eb}
-.day-cell{position:relative;background:#fff;overflow:hidden;box-shadow:inset -1px 0 #e5e7eb,inset 0 -1px #e5e7eb}
-.day-content{width:100%;height:100%;display:grid;place-items:center}
-.day-number{font-weight:700;font-size:1.05rem;line-height:1;color:#111827}
-.other-month .day-number{color:#9ca3af}
-.has-events{cursor:pointer}
-.has-events:hover{background:#f9fafb}
-.today{background:#dbeafe;border:2px solid #3b82f6}
-.today .day-number{color:#1d4ed8;font-weight:900}
-.event-indicator{position:absolute;top:6px;right:6px;background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:1;pointer-events:none}
-@media(max-width:48rem){.cal-toolbar{grid-template-columns:1fr auto;grid-template-areas:"title nav";row-gap:.5rem}.cal-title{grid-area:title;font-size:1.25rem;white-space:normal}.cal-toolbar-left{grid-area:nav;justify-self:end}.weekday{font-size:.78rem;padding:.3rem .15rem}.day-number{font-size:.9rem}.event-indicator{width:14px;height:14px;font-size:8px;top:4px;right:4px}.btn-nav{padding:.35rem .45rem;border-radius:7px}.calendar-grid{grid-template-columns:repeat(7,minmax(32px,1fr))}}
-@media(max-width:22.5rem){.cal-title{font-size:1.1rem}.weekday{font-size:.7rem;padding:.25rem .12rem}.day-number{font-size:.85rem}.event-indicator{width:12px;height:12px;font-size:7px;top:3px;right:3px}.btn-nav{padding:.3rem .4rem;border-radius:6px}.calendar-grid{grid-template-columns:repeat(7,minmax(28px,1fr))}}
+<style scoped>
+.calendar-container { height: 100%; width: 100%; min-width: 0; display: flex; flex-direction: column; overflow: hidden; --day-cell-height: 96px; }
+.calendar-container,
+.calendar-container * { box-sizing: border-box; }
+.cal-toolbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0 0.25rem; }
+.cal-toolbar-left,
+.cal-toolbar-right { display: flex; align-items: center; gap: 0.5rem; }
+.cal-title { text-align: center; font-weight: 800; font-size: 1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; text-transform: capitalize; }
+.btn-nav { background-color: #4f46e5; border: 1px solid #4f46e5; color: #fff; padding: 0.5rem 0.6rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.btn-nav:hover { background-color: #4338ca; }
+.calendar-grid { width: 100%; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, var(--day-cell-height)); background: #e5e7eb; gap: 1px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1px; }
+.weekday { font-weight: 700; text-align: center; padding: 0.75rem 0.25rem; background: #f9fafb; color: #374151; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.025em; border: none; }
+.day-cell { position: relative; background: #fff; overflow: hidden; transition: all 0.2s; border: none; }
+.day-content { width: 100%; height: 100%; display: grid; place-items: center; }
+.day-number { font-weight: 600; font-size: 1.05rem; line-height: 1; color: #111827; }
+.other-month .day-number { color: #9ca3af; }
+.has-events { cursor: pointer; }
+.has-events:hover { background: #f9fafb; }
+.today { background: #dbeafe !important; border: 2px solid #3b82f6 !important; }
+.today .day-number { color: #1d4ed8; font-weight: 900; }
+.event-indicator { position: absolute; top: 6px; right: 6px; background: #ef4444; color: #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; z-index: 1; pointer-events: none; }
+
+@media (max-width: 1024px) {
+  .cal-title { font-size: 1.5rem; }
+  .btn-nav { padding: 0.45rem 0.55rem; }
+  .weekday { padding: 0.625rem 0.25rem; font-size: 0.8125rem; }
+  .day-number { font-size: 1rem; }
+  .event-indicator { width: 18px; height: 18px; font-size: 10px; top: 5px; right: 5px; }
+}
+
+@media (max-width: 768px) {
+  .cal-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "title nav"; row-gap: 0.75rem; padding: 0; }
+  .cal-title { grid-area: title; font-size: 1.375rem; white-space: normal; text-align: left; }
+  .cal-toolbar-left { grid-area: nav; justify-self: end; }
+  .weekday { font-size: 0.75rem; padding: 0.5rem 0.15rem; }
+  .day-number { font-size: 0.9rem; }
+  .event-indicator { width: 16px; height: 16px; font-size: 9px; top: 4px; right: 4px; }
+  .btn-nav { padding: 0.375rem 0.5rem; border-radius: 6px; }
+  .calendar-grid { grid-template-columns: repeat(7, minmax(40px, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .calendar-container { margin-bottom: 1rem; }
+  .cal-title { font-size: 1.25rem; }
+  .weekday { font-size: 0.7rem; padding: 0.375rem 0.125rem; }
+  .day-number { font-size: 0.85rem; }
+  .event-indicator { width: 14px; height: 14px; font-size: 8px; top: 3px; right: 3px; }
+  .btn-nav { padding: 0.3rem 0.4rem; border-radius: 5px; }
+  .calendar-grid { grid-template-columns: repeat(7, minmax(32px, 1fr)); border-radius: 6px; }
+  .cal-toolbar { row-gap: 0.5rem; }
+}
 </style>

@@ -4,10 +4,16 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --host",
+    "dev:safe": "NODE_OPTIONS='--max-old-space-size=4096' nuxt dev",
+    "dev:fast": "NODE_OPTIONS='--max-old-space-size=4096' nuxt dev --no-fork-ts-checker",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "type-check": "vue-tsc --noEmit",
+    "type-check:watch": "vue-tsc --noEmit --watch",
+    "clean": "rm -rf .nuxt node_modules/.vite node_modules/.cache",
+    "analyze": "nuxt build --analyze"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.19",

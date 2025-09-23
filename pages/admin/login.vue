@@ -95,7 +95,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.page-container { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; padding: 2rem; font-family: 'Arial', sans-serif; }
+.page-container { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 0 1rem ; font-family: 'Arial', sans-serif; }
 .login-card { background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); width: 100%; max-width: 480px; display: flex; flex-direction: column; }
 .logo-section { padding: 2rem; text-align: center; border-bottom: 1px solid #f0f0f0; }
 .logo { max-width: 80px; height: auto; margin-bottom: 1rem; }
@@ -123,7 +123,6 @@ const handleLogin = async () => {
 .animate-spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @media (max-width:768px) {
-  .page-container { padding: 1.5rem; }
   .logo-section { padding: 1.5rem; }
   .app-title { font-size: 1.5rem; }
   .description { font-size: 0.9rem; }
@@ -132,7 +131,6 @@ const handleLogin = async () => {
   .login-button { padding: 12px 24px; font-size: 1rem; width: 100%; max-width: 300px; }
 }
 @media (max-width:480px) {
-  .page-container { padding: 1rem; }
   .login-card { max-width: 100%; }
   .logo-section { padding: 1.25rem; }
   .app-title { font-size: 1.3rem; }

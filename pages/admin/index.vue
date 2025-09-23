@@ -53,9 +53,9 @@
               </div>
             </div>
             <div class="header-actions">
-              <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ solicitacao.status_geral }}</span>
+              <span :class="getStatusClass(solicitacao.status_geral)" class="status-badge">{{ formatarStatus(solicitacao.status_geral) }}</span>
               <div class="action-buttons">
-                <template v-if="solicitacao.status_geral === 'Pendente'">
+                <template v-if="solicitacao.status_geral === 'pendente'">
                   <button class="btn btn-outline btn-sm" @click.stop="editarSolicitacao(solicitacao)" :disabled="processingId === solicitacao.id_agendamento_pai" title="Editar">
                     <Icon name="i-lucide-pencil" />
                     <span class="btn-text">Editar</span>
@@ -71,7 +71,7 @@
                     <span class="btn-text">Negar Todas</span>
                   </button>
                 </template>
-                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger" :disabled="processingId === solicitacao.id_agendamento_pai" title="Excluir solicitação">
+                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger trash" :disabled="processingId === solicitacao.id_agendamento_pai" title="Excluir solicitação">
                   <Icon name="i-lucide-trash-2" />
                 </button>
               </div>
@@ -97,10 +97,10 @@
                 <div class="horario-info">
                   <div class="horario-date-time">
                     <span class="horario-date">{{ formatarData(agendamento.data_inicio) }}</span>
-                    <span class="horario-time">{{ agendamento.hora_inicio.substring(0, 5) }} - {{ agendamento.hora_fim.substring(0, 5) }}</span>
+                    <span class="horario-time">Das {{ agendamento.hora_inicio.substring(0, 5) }} às {{ agendamento.hora_fim.substring(0, 5) }}</span>
                   </div>
                   <span :class="getStatusClass(agendamento.status_agendamento)" class="status-badge status-small">
-                    {{ agendamento.status_agendamento }}
+                    {{ formatarStatus(agendamento.status_agendamento) }}
                   </span>
                 </div>
                 <div class="horario-actions">
@@ -127,6 +127,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import { useRouter } from 'vue-router';
+import { getStatusClass, formatarData, formatarDataHora, formatarStatus } from '~/utils/formatters';
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' });
 
@@ -141,29 +142,44 @@ const processingId = ref(null);
 
 const calcularStatusGeral = (reservas) => {
     const statuses = new Set(reservas.map(r => r.status_agendamento));
+    const total = reservas.length;
 
     if (statuses.has('pendente')) {
-        return 'Pendente';
-    }
-    
-    if (statuses.has('aprovado') || statuses.has('concluido')) {
-        return 'Aprovado';
+        return 'pendente';
     }
 
-    if (statuses.size >= 1 && statuses.has('negado')) {
-        return 'Negado';
-    }
-    
-    if (statuses.has('concluido') || statuses.has('negado')) {
-        return 'Finalizado';
+    if (statuses.has('aprovado')) {
+        if (statuses.size > 1) {
+            return 'parcialmente_aprovado';
+        }
+        return 'aprovado';
     }
 
-    return 'Indefinido';
+    const concluidos = reservas.filter(r => r.status_agendamento === 'concluido').length;
+    const negados = reservas.filter(r => r.status_agendamento === 'negado').length;
+    const cancelados = reservas.filter(r => r.status_agendamento === 'cancelado').length;
+
+    if (concluidos > 0 && (negados > 0 || cancelados > 0)) {
+        return 'finalizado';
+    }
+    if (concluidos > 0 && concluidos === total) {
+        return 'concluido';
+    }
+    if (negados === total) {
+        return 'negado';
+    }
+    if (cancelados === total) {
+        return 'cancelado';
+    }
+    if (concluidos > 0 || negados > 0 || cancelados > 0) {
+        return 'finalizado';
+    }
+    
+    return 'indefinido';
 };
 
-
 const filteredSolicitacoes = computed(() => {
-  const inProgressStatuses = ['Pendente', 'Aprovado'];
+  const inProgressStatuses = ['pendente', 'aprovado', 'parcialmente_aprovado'];
   
   if (activeTab.value === 'em_andamento') {
     return solicitacoes.value.filter(s => inProgressStatuses.includes(s.status_geral));
@@ -293,37 +309,6 @@ const confirmarDelecao = async (solicitacao) => {
   }
 };
 
-const formatarData = (dataString) => {
-  if (!dataString) return 'Data inválida';
-  const dateOnly = dataString.split('T')[0];
-  try {
-    const date = new Date(dateOnly + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
-  } catch (error) {
-    return 'Data inválida';
-  }
-};
-
-const formatarDataHora = (dataString) => {
-    if (!dataString) return '';
-    try {
-        const data = new Date(dataString);
-        return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch {
-        return dataString;
-    }
-};
-
-const getStatusClass = (status) => {
-  if (!status) return 'status-default';
-  const s = status.toLowerCase();
-  if (s.includes('aprovado')) return 'status-success';
-  if (s.includes('pendente')) return 'status-warning';
-  if (s.includes('negado')) return 'status-error';
-  if (s.includes('concluído') || s.includes('finalizado')) return 'status-info';
-  return 'status-default';
-};
-
 onMounted(fetchSolicitacoes);
 </script>
 
@@ -339,7 +324,7 @@ onMounted(fetchSolicitacoes);
 .solicitacoes-container{display:flex;flex-direction:column;gap:1rem;max-width:1400px;margin:0 auto;width:100%}
 .card{background-color:white;border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);overflow:hidden;transition:box-shadow .2s}
 .card:hover{box-shadow:0 4px 6px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.06)}
-.card-header{padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;background-color:#ffffff;transition:background-color .2s}
+.card-header{padding:1.25rem 1.5rem;display:flex;gap:1rem;align-items:flex-start;cursor:pointer;background-color:#ffffff;transition:background-color .2s}
 .card-header:hover{background-color:#f9fafb}
 .header-info{display:flex;align-items:flex-start;gap:1rem;flex:1;min-width:0}
 .expand-icon{font-size:1.25rem;color:#9ca3af;margin-top:.125rem;flex-shrink:0}
@@ -352,7 +337,7 @@ onMounted(fetchSolicitacoes);
 .meta-label{font-size:.75rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.025em;font-weight:500}
 .meta-text strong{font-size:.875rem;color:#374151;font-weight:600}
 .meta-date{font-size:.8125rem;color:#6b7280}
-.header-actions{display:flex;align-items:center;gap:1rem;flex-shrink:0}
+.header-actions{display:flex;align-items:center;gap:1rem;flex-shrink:0;margin-left:auto}
 .action-buttons{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:.375rem;padding:.5rem 1rem;border-radius:.5rem;border:1px solid transparent;cursor:pointer;font-weight:500;font-size:.875rem;transition:all .2s;white-space:nowrap}
 .btn-sm{padding:.4375rem .875rem;font-size:.8125rem}
@@ -385,6 +370,8 @@ onMounted(fetchSolicitacoes);
 .btn-approve:hover{background-color:#16a34a}
 .btn-deny{background-color:#ef4444;color:white}
 .btn-deny:hover{background-color:#dc2626}
+.btn-cancel{background-color:#6b7280;color:white}
+.btn-cancel:hover{background-color:#4b5563}
 .status-small{font-size:.75rem;padding:.25rem .625rem}
 .no-action{color:#9ca3af;font-size:.875rem}
 .status-badge{display:inline-block;padding:.375rem .875rem;border-radius:9999px;font-size:.8125rem;font-weight:600;text-transform:capitalize;letter-spacing:.025em}
@@ -396,7 +383,56 @@ onMounted(fetchSolicitacoes);
 .status-container{text-align:center;padding:3rem;color:#6b7280}
 .spinner{font-size:2.5rem;animation:spin 1s linear infinite;color:#4f46e5}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media (max-width:1024px){.page-header{padding:1.25rem 1rem .875rem}.page-title{font-size:1.625rem}.scrollable-list{padding:1.25rem 1rem}.card-header{padding:1rem 1.25rem}.recurso-nome{font-size:1.25rem}.meta-info{gap:1.5rem}.horarios-list{padding:1rem}.horario-item{padding:.875rem}}
-@media (max-width:768px){.page-header{flex-direction:column;align-items:stretch;gap:1rem;padding:1rem}.page-title{font-size:1.375rem}.tabs{width:100%;justify-content:stretch}.tabs button{flex:1;padding:.5rem .75rem}.scrollable-list{padding:1rem .75rem}.card-header{flex-direction:column;gap:1rem;padding:1rem}.header-info{width:100%}.recurso-nome{font-size:1.125rem;margin-bottom:.625rem}.meta-info{flex-direction:column;gap:.625rem}.header-actions{width:100%;justify-content:flex-start}.action-buttons{flex-wrap:wrap}.btn-text{display:none}.btn-icon-mobile{display:inline-block}.horarios-list{padding:.75rem}.horario-item{flex-direction:column;align-items:stretch;gap:.75rem;padding:.75rem}.horario-info{justify-content:space-between}.horario-date-time{flex:1}.horario-actions{justify-content:center;width:100%}.btn-horario{flex:1;max-width:120px}}
-@media (max-width:480px){.page-title{font-size:1.25rem}.scrollable-list{padding:.75rem .5rem}.card-header{padding:.75rem}.recurso-nome{font-size:1rem}.btn-sm{padding:.375rem .5rem;font-size:.75rem}.status-badge{font-size:.75rem;padding:.25rem .5rem}.card-content{padding:1rem}.horarios-list{padding:.5rem}.horario-item{padding:.625rem}.horario-date{font-size:.8125rem}.horario-time{font-size:.75rem}.btn-horario{font-size:.75rem;padding:.3125rem .625rem}}
+
+@media (min-width:1600px){
+  .trash{font-size: 0.8rem;}
+}
+
+@media (max-width:1024px){
+  .page-header{padding:1.25rem 1rem .875rem}
+  .page-title{font-size:1.625rem}
+  .scrollable-list{padding:1.25rem 1rem}
+  .card-header{padding:1rem 1.25rem}
+  .recurso-nome{font-size:1.25rem}
+  .meta-info{gap:1.5rem}
+  .horarios-list{padding:1rem}
+  .horario-item{padding:.875rem}
+}
+
+@media (max-width:768px){
+  .page-header{flex-direction:column;align-items:stretch;gap:1rem;padding:1rem}
+  .page-title{font-size:1.375rem}
+  .tabs{width:100%;justify-content:stretch}
+  .tabs button{flex:1;padding:.5rem .75rem}
+  .scrollable-list{padding:1rem .75rem}
+  .card-header{flex-direction:column;gap:1rem;padding:1rem}
+  .header-info{width:100%}
+  .recurso-nome{font-size:1.125rem;margin-bottom:.625rem}
+  .meta-info{flex-direction:column;gap:.625rem}
+  .header-actions{width:100%;justify-content:flex-end;margin-left:0}
+  .action-buttons{flex-wrap:wrap}
+  .btn-text{display:none}
+  .btn-icon-mobile{display:inline-block}
+  .horarios-list{padding:.75rem}
+  .horario-item{flex-direction:column;align-items:stretch;gap:.75rem;padding:.75rem}
+  .horario-info{justify-content:space-between}
+  .horario-date-time{flex:1}
+  .horario-actions{justify-content:center;width:100%}
+  .btn-horario{flex:1;max-width:120px}
+}
+
+@media (max-width:480px){
+  .page-title{font-size:1.25rem}
+  .scrollable-list{padding:.75rem .5rem}
+  .card-header{padding:.75rem}
+  .recurso-nome{font-size:1rem}
+  .btn-sm{padding:.375rem .5rem;font-size:.75rem}
+  .status-badge{font-size:.75rem;padding:.25rem .5rem}
+  .card-content{padding:1rem}
+  .horarios-list{padding:.5rem}
+  .horario-item{padding:.625rem}
+  .horario-date{font-size:.8125rem}
+  .horario-time{font-size:.75rem}
+  .btn-horario{font-size:.75rem;padding:.3125rem .625rem}
+}
 </style>

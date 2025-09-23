@@ -1,9 +1,24 @@
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 async function refreshToken() {
   const config = useRuntimeConfig();
   try {
     const response = await fetch(`${config.public.apiUrl}/api/token/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({})
     });
 
@@ -23,6 +38,11 @@ async function refreshToken() {
 
 export async function authenticatedFetch(url, options = {}) {
   let token = localStorage.getItem('access');
+  const config = useRuntimeConfig();
+
+  const fullUrl = url.startsWith('http')
+    ? url
+    : `${config.public.apiUrl}${url}`;
 
   const headers = {
     ...options.headers,
@@ -30,22 +50,40 @@ export async function authenticatedFetch(url, options = {}) {
     'Content-Type': 'application/json',
   };
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(fullUrl, { ...options, credentials: 'include', headers });
 
-  // Se a requisição falhar com 401 (Unauthorized), tenta renovar o token
   if (response.status === 401) {
-    const newToken = await refreshToken();
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+      .then(newToken => {
+        headers['Authorization'] = `Bearer ${newToken}`;
+        return fetch(fullUrl, { ...options, credentials: 'include', headers });
+      })
+      .catch(err => {
+        return Promise.reject(err);
+      });
+    }
 
-    if (newToken) {
-      // Se a renovação for bem-sucedida, atualiza os headers e tenta a requisição novamente
-      headers['Authorization'] = `Bearer ${newToken}`;
-      response = await fetch(url, { ...options, headers });
-    } else {
-      // Se a renovação falhar, desloga o usuário
-      localStorage.removeItem('access');
-      localStorage.removeItem('user_data');
-      window.location.href = '/login';
-      throw new Error('Sua sessão expirou. Por favor, faça login novamente.');
+    isRefreshing = true;
+
+    try {
+      const newToken = await refreshToken();
+
+      if (newToken) {
+        processQueue(null, newToken);
+        headers['Authorization'] = `Bearer ${newToken}`;
+        response = await fetch(fullUrl, { ...options, credentials: 'include', headers });
+      } else {
+        processQueue(new Error('Sua sessão expirou. Por favor, faça login novamente.'));
+        localStorage.removeItem('access');
+        localStorage.removeItem('user_data');
+        window.location.href = '/login';
+        throw new Error('Sua sessão expirou. Por favor, faça login novamente.');
+      }
+    } finally {
+      isRefreshing = false;
     }
   }
 

@@ -171,7 +171,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.page-content-layout{display:flex;flex-direction:column;height:100%;overflow:hidden;padding:1rem}
 .page-header{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;padding-bottom:1rem}
 .page-title{font-size:1.75rem;font-weight:700;color:#111827}
 .scrollable-content{flex-grow:1;overflow-y:auto;padding:0rem}
@@ -219,6 +219,12 @@ onMounted(async () => {
 .w-full{width:100%}
 .max-w-lg{max-width:32rem}
 .mx-auto{margin-left:auto;margin-right:auto}
+
+@media (min-width: 1600px) {
+  .form-select {
+    font-size: 0.8rem;
+  }
+}
 
 @media (max-width:1024px){
 .usuarios-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}

@@ -1,24 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import type { User } from '~/types/user';
-
-const user = ref<User | null>(null);
-
-onMounted(() => {
-  const userDataString = localStorage.getItem('user_data');
-  if (userDataString) {
-    user.value = JSON.parse(userDataString);
-  }
-});
-
-const canMakeReservations = computed(() => {
-  if (!user.value || !user.value.nome_perfil) {
-    return false;
-  }
-  return ['Administrador', 'Servidor'].includes(user.value.nome_perfil);
-});
-</script>
-
 <template>
   <div class="page-container">
     <div v-if="user" class="welcome-message">
@@ -45,6 +24,27 @@ const canMakeReservations = computed(() => {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue';
+import type { User } from '~/types/user';
+
+const user = ref<User | null>(null);
+
+onMounted(() => {
+  const userDataString = localStorage.getItem('user_data');
+  if (userDataString) {
+    user.value = JSON.parse(userDataString);
+  }
+});
+
+const canMakeReservations = computed(() => {
+  if (!user.value || !user.value.nome_perfil) {
+    return false;
+  }
+  return ['Administrador', 'Servidor'].includes(user.value.nome_perfil);
+});
+</script>
 
 <style scoped>
 .page-container {

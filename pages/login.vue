@@ -96,8 +96,8 @@ onMounted(() => {
   --border-color: #ddd;
   --background-color: #f0f2f5;
 }
-.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
-.login-card { background-color: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 450px; box-sizing: border-box; }
+.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 0 1rem; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
+.login-card { background-color: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 450px; box-sizing: border-box; }
 .logo-section { margin-bottom: 20px; }
 .logo { max-width: 80px; height: auto; margin-bottom: 10px; }
 .welcome-text { font-size: 1.2em; color: var(--light-text-color); margin-bottom: 5px; }
@@ -122,4 +122,10 @@ onMounted(() => {
 }
 .error-message { background-color: #ffebee; border: 1px solid #f44336; color: #c62828; padding: 12px; border-radius: 5px; margin-top: 20px; font-size: 0.9em; text-align: center; }
 .success-message { background-color: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 5px; margin-top: 20px; font-size: 0.9em; text-align: center; }
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1rem 0.5rem;
+  }
+}
 </style>

@@ -88,6 +88,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { authenticatedFetch } from '~/utils/api';
+import { getStatusClass, formatarData } from '~/utils/formatters';
 
 const route = useRoute();
 const config = useRuntimeConfig();
@@ -113,22 +114,6 @@ const fetchDetalhes = async () => {
   } finally {
     isLoading.value = false;
   }
-};
-
-const formatarData = (dataString: string): string => {
-  try {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  } catch { return dataString; }
-};
-
-const getStatusClass = (status: string) => {
-  if (!status) return 'status-default';
-  const statusLower = status.toLowerCase();
-  if (statusLower.includes('confirmado') || statusLower.includes('aprovado')) return 'status-success';
-  if (statusLower.includes('pendente')) return 'status-warning';
-  if (statusLower.includes('cancelado')) return 'status-error';
-  return 'status-default';
 };
 
 onMounted(fetchDetalhes);
@@ -232,7 +217,6 @@ onMounted(fetchDetalhes);
   flex-grow: 1;
 }
 .placeholder {
-  /* O botão "Voltar" agora usa a classe .back-link, então ajustamos o placeholder */
   width: 80px; 
   flex-shrink: 0;
 }

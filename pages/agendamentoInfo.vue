@@ -46,7 +46,9 @@
               <input
                 type="number"
                 id="participantes"
-                v-model="participantes"
+                v-model.number="participantes"
+                @input="validarParticipantes"
+                @blur="validarParticipantes"
                 placeholder="Ex: 25"
                 min="1"
                 :max="maxParticipantes"
@@ -93,27 +95,44 @@ const maxParticipantes = computed(() => store.recursoSelecionado?.capacidade);
 
 const resumoPeriodo = computed(() => {
   if (store.agendamentos.length === 0) return '';
-  
+
   const datasOrdenadas = [...store.agendamentos].sort((a, b) => a.data.localeCompare(b.data));
   const primeiraData = parseDateAsLocal(datasOrdenadas[0].data);
   const ultimaData = parseDateAsLocal(datasOrdenadas[datasOrdenadas.length - 1].data);
   const formatar = (d) => d.toLocaleDateString('pt-BR');
-  
+
   if (store.agendamentos.length === 1) return formatar(primeiraData);
   return `${formatar(primeiraData)} até ${formatar(ultimaData)}`;
 });
+
+const validarParticipantes = () => {
+  const valor = participantes.value;
+
+  if (isNaN(valor) || valor === null || valor === undefined || valor < 1) {
+    participantes.value = 1;
+  } else {
+    let valorValidado = Math.floor(Math.abs(valor));
+
+    if (valorValidado < 1) {
+      valorValidado = 1;
+    }
+
+    if (maxParticipantes.value && valorValidado > maxParticipantes.value) {
+      valorValidado = maxParticipantes.value;
+    }
+
+    participantes.value = valorValidado;
+  }
+};
 
 function irParaConclusao() {
   if (!finalidade.value.trim()) {
     alert('Por favor, informe a finalidade do agendamento.');
     return;
   }
-  
-  if (participantes.value && maxParticipantes.value && parseInt(participantes.value) > maxParticipantes.value) {
-    alert(`O número de participantes (${participantes.value}) excede a capacidade do recurso (${maxParticipantes.value}).`);
-    return;
-  }
-  
+
+  validarParticipantes();
+
   store.setInfo({
     finalidade: finalidade.value,
     participantes: participantes.value,
@@ -149,40 +168,47 @@ onMounted(() => {
 .resumo-item .value { font-weight: 500; word-break: break-word; }
 .formulario { display: flex; flex-direction: column; gap: 1.5rem; }
 .campo label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
-.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
-.campo textarea { min-height: 6.25rem; resize: vertical; }
+.campo input, .campo textarea { width: 100%; padding: 0.75rem; border: 0.063rem solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; font-size: 1rem }
+.campo textarea { min-height: 5rem; resize: none; }
 .card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; flex-shrink: 0; background-color: white; box-shadow: 0 -0.125rem 0.5rem rgba(0,0,0,0.05); }
-.botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
+.botao-prosseguir { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.8rem }
 
-@media (max-width: 64rem) {
+@media (min-width: 1600px) {
+  .card { max-width: 75rem; }
+  .card-header, .card-content-grid, .card-footer { padding-left: 3rem; padding-right: 3rem; }
+  .title { font-size: 2rem; }
+  .card-content-grid { gap: 3rem; }
+}
+
+@media (max-width: 1024px) {
   .card-content-grid { grid-template-columns: 16rem 1fr; gap: 1.5rem; padding: 1.5rem; }
   .col-resumo { padding: 1rem; }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 768px) {
   .card { max-height: none; height: auto; margin: 1rem; }
-  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
-  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
   .card-header { padding: 1rem 1.25rem; }
+  .progress-bar { margin-bottom: 1rem; }
   .title { font-size: 1.5rem; }
+  .card-content-grid { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; padding-top: 0.5rem; }
+  .resumo-item { margin-bottom: 0.75rem; }
+  .formulario { gap: 1rem; }
+  .botao-prosseguir { width: 100%; padding: 0.75rem; font-size: 1rem; }
 }
 
-@media (max-width: 31.25rem) {
+@media (max-width: 480px) {
   .page-container { align-items: stretch; justify-content: flex-start; }
-  .card { border-radius: 0; margin: 0; min-height: 100vh; max-height: none; }
+  .card { border-radius: 0; margin: 1rem; max-height: none; }
   .card-header { padding: 1rem; }
-  .card-content-grid { padding: 1rem; gap: 1rem; }
   .progress-bar { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
   .line { display: none; }
   .title { font-size: 1.25rem; }
+  .card-content-grid { padding: 1rem; gap: 1rem; }
   .col-resumo { padding: 1rem; border-radius: 0.5rem; }
+  .resumo-item { margin-bottom: 0.5rem; }
+  .formulario { gap: 0.75rem; }
+  .campo label { margin-bottom: 0.25rem; }
   .campo input, .campo textarea { padding: 0.75rem; font-size: 1rem; }
   .card-footer { padding: 1rem; }
-}
-
-@media (max-width: 20rem) {
-  .card-content-grid { padding: 0.75rem; gap: 0.75rem; }
-  .card-header { padding: 0.75rem; }
-  .title { font-size: 1.125rem; }
 }
 </style>
