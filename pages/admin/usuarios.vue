@@ -220,6 +220,12 @@ onMounted(async () => {
 .max-w-lg{max-width:32rem}
 .mx-auto{margin-left:auto;margin-right:auto}
 
+@media (min-width: 1600px) {
+  .form-select {
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width:1024px){
 .usuarios-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
 .usuario-header{padding:1rem 1rem .875rem}

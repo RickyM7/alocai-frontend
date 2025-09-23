@@ -55,8 +55,8 @@ const toggleSidebar = () => { isSidebarCollapsed.value = !isSidebarCollapsed.val
 .admin-layout{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;flex-shrink:0}
 .admin-container{display:flex;flex-grow:1;padding-top:64px;overflow:hidden}
-.admin-sidebar{width:150px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;flex-shrink:0;transition:width .15s ease-out}
-.admin-sidebar.is-collapsed{width:60px}
+.admin-sidebar{width:auto;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;flex-shrink:0;transition:width .15s ease-out}
+.admin-sidebar.is-collapsed{width:auto}
 .sidebar-content{padding:.75rem}
 .nav-item{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:.25rem;border-radius:6px;text-decoration:none;color:#374151;font-weight:500;font-size:.875rem;white-space:nowrap;transition:background-color .1s ease-out;position:relative;overflow:hidden}
 .nav-item:hover{background:#f3f4f6}
@@ -74,6 +74,10 @@ const toggleSidebar = () => { isSidebarCollapsed.value = !isSidebarCollapsed.val
 .mobile-nav-item:hover{background:#f3f4f6}
 .mobile-nav-item.is-active{background:#e0e7ff;color:#4338ca}
 .mobile-nav-item span{font-size:.7rem;line-height:1}
+@media (min-width:1600px){
+  .sidebar-content{padding:0.8rem}
+  .nav-icon{width:20px;height:20px;}
+}
 @media (max-width:768px){
 .admin-sidebar{display:none}
 .mobile-nav{display:flex}

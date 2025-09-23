@@ -282,6 +282,11 @@ onMounted(fetchReservas);
 .status-error { background-color: #fecaca; color: #991b1b; }
 .status-info { background-color: #e0e7ff; color: #3730a3; }
 .status-default { background-color: #e5e7eb; color: #374151; }
+
+@media (min-width: 1600px) {
+  .card-main { max-width: 1500px; }
+}
+
 @media (max-width: 768px) {
   .page-container { padding: 0; align-items: stretch; }
   .card-main { height: auto; min-height: 100vh; max-height: none; border-radius: 0; box-shadow: none; }

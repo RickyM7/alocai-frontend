@@ -1,3 +1,14 @@
+html {
+  font-size: clamp(12px, 1.3vw, 20px);
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #f1f5f9;
+  font-size: 1rem;
+}
+
 .status-badge.status-success { background-color: #dcfce7; color: #14532d; }
 .status-badge.status-warning { background-color: #fef3c7; color: #713f12; }
 .status-badge.status-error   { background-color: #fee2e2; color: #7f1d1d; }

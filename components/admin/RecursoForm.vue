@@ -162,6 +162,7 @@ const salvar = async () => {
 .btn-outline{background-color:transparent;color:#4b5563;border-color:#d1d5db}
 .btn-outline:hover{background-color:#f9fafb}
 .btn:disabled{opacity:0.7;cursor:not-allowed}
+@media (min-width: 1600px) {.form-footer>button{font-size: 0.8rem}}
 @media (max-width:768px){.form-wrapper{padding:1.25rem}.form-grid{grid-template-columns:1fr;gap:1rem}.status-options{justify-content:center}.status-btn{padding:0.4rem 0.8rem;font-size:0.8125rem}.form-footer{justify-content:stretch}.btn{flex:1;min-width:120px}}
 @media (max-width:480px){.form-wrapper{padding:1rem}.form-grid{gap:0.5rem}.status-options{gap:0.5rem}.status-btn{padding:0.375rem 0.75rem;font-size:0.75rem}.form-footer{flex-direction:column}.btn{width:100%}}
 </style>

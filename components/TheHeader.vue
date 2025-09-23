@@ -4,41 +4,42 @@
       <NuxtLink to="/">
         <img src="/img/logo.webp" alt="Logo UFAPE" class="navbar-logo" />
       </NuxtLink>
-      <div class="navbar-actions">
-        <div class="notification-container" ref="notificationRef">
-          <button @click="toggleNotificacoes" class="notification-button">
-            <Icon name="i-lucide-bell" class="navbar-icon" />
-            <span v-if="notificacaoStore.naoLidas > 0" class="notification-badge">{{ notificacaoStore.naoLidas }}</span>
-          </button>
-          <Transition name="dropdown">
-            <div v-if="isNotificacoesOpen" class="notification-dropdown">
-              <div class="notification-header">
-                <h3>Notificações</h3>
-                <button v-if="notificacaoStore.naoLidas > 0" @click.stop="marcarTodasComoLidas" class="mark-all-read-btn">
-                  Marcar todas como lidas
-                </button>
-              </div>
-              <ul class="notification-list">
-                <li v-for="notificacao in notificacaoStore.notificacoes" :key="notificacao.id_notificacao" :class="{ 'unread': !notificacao.lida }" class="notification-item-wrapper">
-                  <div @click="irParaAgendamento(notificacao)" class="notification-item">
-                    <span class="unread-dot" v-if="!notificacao.lida"></span>
-                    <div class="notification-content">
-                      <p class="notification-message">{{ notificacao.mensagem }}</p>
-                      <span class="notification-time">{{ formatarTempoRelativo(notificacao.data_criacao) }}</span>
-                    </div>
-                  </div>
-                  <button @click.stop="excluirNotificacao(notificacao.id_notificacao)" class="delete-notification-btn" title="Excluir notificação">
-                    <Icon name="i-lucide-x" />
+      <div class="navbar-actions"> 
+        <template v-if="isLoggedIn">
+          <div class="notification-container" ref="notificationRef">
+            <button @click="toggleNotificacoes" class="notification-button">
+              <Icon name="i-lucide-bell" class="navbar-icon" />
+              <span v-if="notificacaoStore.naoLidas > 0" class="notification-badge">{{ notificacaoStore.naoLidas }}</span>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="isNotificacoesOpen" class="notification-dropdown">
+                <div class="notification-header">
+                  <h3>Notificações</h3>
+                  <button v-if="notificacaoStore.naoLidas > 0" @click.stop="marcarTodasComoLidas" class="mark-all-read-btn">
+                    Marcar todas como lidas
                   </button>
-                </li>
-                <li v-if="notificacaoStore.notificacoes.length === 0" class="empty-notifications">
-                  Nenhuma notificação.
-                </li>
-              </ul>
-            </div>
-          </Transition>
-        </div>
-        
+                </div>
+                <ul class="notification-list">
+                  <li v-for="notificacao in notificacaoStore.notificacoes" :key="notificacao.id_notificacao" :class="{ 'unread': !notificacao.lida }" class="notification-item-wrapper">
+                    <div @click="irParaAgendamento(notificacao)" class="notification-item">
+                      <span class="unread-dot" v-if="!notificacao.lida"></span>
+                      <div class="notification-content">
+                        <p class="notification-message">{{ notificacao.mensagem }}</p>
+                        <span class="notification-time">{{ formatarTempoRelativo(notificacao.data_criacao) }}</span>
+                      </div>
+                    </div>
+                    <button @click.stop="excluirNotificacao(notificacao.id_notificacao)" class="delete-notification-btn" title="Excluir notificação">
+                      <Icon name="i-lucide-x" />
+                    </button>
+                  </li>
+                  <li v-if="notificacaoStore.notificacoes.length === 0" class="empty-notifications">
+                    Nenhuma notificação.
+                  </li>
+                </ul>
+              </div>
+            </Transition>
+          </div>
+        </template>
         <div class="dropdown-container" ref="dropdownRef">
           <template v-if="isLoggedIn">
             <img 
@@ -547,6 +548,44 @@ const menuItems = computed(() => {
   font-size: 0.9rem;
 }
 
+@media (min-width: 1600px) {
+  .navbar-content {
+    padding: 0 48px; 
+  }
+
+  .navbar-icon {
+    font-size: 1.9rem;
+  }
+
+  .dropdown-menu {
+    width: 222px;
+  }
+
+  .dropdown-item {
+    font-size: 18px;
+    padding: 18px 24px;
+  }
+
+  .dropdown-icon {
+    font-size: 22px;
+  }
+
+  .profile-picture,
+  .profile-picture-placeholder.logged-in-placeholder {
+    width: 40px;
+    height: 40px;
+  }
+
+  .delete-notification-btn {
+    font-size: 1rem;
+    padding: 10px;
+  }
+
+  .notification-dropdown {
+    width: 550px;
+  }
+}
+
 @media (max-width: 480px) {
   .navbar-content {
     padding: 0 16px;
@@ -562,7 +601,7 @@ const menuItems = computed(() => {
   }
 
   .navbar-icon {
-    font-size: 1.4rem;
+    font-size: 32px;
   }
 
   .user-icon {

@@ -71,7 +71,7 @@
                     <span class="btn-text">Negar Todas</span>
                   </button>
                 </template>
-                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger" :disabled="processingId === solicitacao.id_agendamento_pai" title="Excluir solicitação">
+                <button @click.stop="confirmarDelecao(solicitacao)" class="btn-icon-danger trash" :disabled="processingId === solicitacao.id_agendamento_pai" title="Excluir solicitação">
                   <Icon name="i-lucide-trash-2" />
                 </button>
               </div>
@@ -97,7 +97,7 @@
                 <div class="horario-info">
                   <div class="horario-date-time">
                     <span class="horario-date">{{ formatarData(agendamento.data_inicio) }}</span>
-                    <span class="horario-time">Das {{ agendamento.hora_inicio.substring(0, 5) }} ás {{ agendamento.hora_fim.substring(0, 5) }}</span>
+                    <span class="horario-time">Das {{ agendamento.hora_inicio.substring(0, 5) }} às {{ agendamento.hora_fim.substring(0, 5) }}</span>
                   </div>
                   <span :class="getStatusClass(agendamento.status_agendamento)" class="status-badge status-small">
                     {{ formatarStatus(agendamento.status_agendamento) }}
@@ -383,6 +383,10 @@ onMounted(fetchSolicitacoes);
 .status-container{text-align:center;padding:3rem;color:#6b7280}
 .spinner{font-size:2.5rem;animation:spin 1s linear infinite;color:#4f46e5}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+@media (min-width:1600px){
+  .trash{font-size: 0.8rem;}
+}
 
 @media (max-width:1024px){
   .page-header{padding:1.25rem 1rem .875rem}

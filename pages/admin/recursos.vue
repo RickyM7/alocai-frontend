@@ -187,6 +187,18 @@ onMounted(() => {
 
 .status-container{text-align:center;padding:3rem;color:#6b7280;font-size:1.125rem}
 
+@media (min-width: 1600px) {
+  .btn-primary {
+    font-size: 0.8rem;
+  }
+  .filters-container > button {
+    font-size: 0.8rem;
+  }
+  .recurso-actions > button {
+    font-size: 1rem;
+  }
+}
+
 @media (max-width:1024px){
 .recursos-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
 .recurso-header{padding:1rem 1rem .875rem}

@@ -19,6 +19,10 @@ import TheHeader from '~/components/TheHeader.vue'
 .dashboard-main { flex: 1; display: flex; flex-direction: column; padding-top: 64px; overflow: hidden; min-width: 0; }
 .content-wrapper { padding: 2rem; width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; flex: 1; overflow: hidden; min-width: 0; }
 
+@media (min-width: 1600px) {
+  .content-wrapper { max-width: 1440px; }
+}
+
 @media (max-width: 1024px) {
   .content-wrapper { padding: 1.5rem; max-width: 100%; }
 }

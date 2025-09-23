@@ -121,6 +121,7 @@ onMounted(() => {
 .botao-prosseguir{background-color:#374151;color:#fff;padding:.875rem 2rem;border-radius:.5rem;border:none;cursor:pointer;font-weight:500;transition:background-color .2s ease}
 .botao-prosseguir:hover:not(:disabled){background-color:#1f2937}
 .botao-prosseguir:disabled{background-color:#9ca3af;cursor:not-allowed}
+@media (min-width: 1600px){.botao-prosseguir{font-size: 0.8rem}}
 @media (min-width:1024px){.recursos-grid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));max-width:none}}
 @media (min-width:768px) and (max-width:1023px){.recursos-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.card{max-width:95vw;height:90vh}}
 @media (max-width:767px){.page-container{padding:.5rem;height:calc(100vh - 85px);align-items:stretch}.card{max-width:100%;height:100%;max-height:none}.card-header{padding:1rem 1.5rem}.title{font-size:1.5rem}.recursos-grid{grid-template-columns:1fr;padding:1.5rem;gap:1rem}.recurso-card{padding:1.25rem}.card-footer{padding:1rem 1.5rem;position:sticky;bottom:0;background:#fff;border-top:2px solid #e5e7eb}.botao-prosseguir{width:100%;padding:1rem;font-size:1rem}}

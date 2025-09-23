@@ -25,51 +25,44 @@
       <div class="card-content">
         <div v-if="store.tipoAgendamento === 'Data'" class="content-grid">
           <div class="col-calendar">
-            <button type="button" class="btn-open-calendar" @click="isCalendarOpen = true">
-              <Icon name="heroicons:calendar-days-20-solid" />
-              <span>{{ store.datasSelecionadas.length > 0 ? `Datas Selecionadas (${store.datasSelecionadas.length})` : 'Selecionar Datas' }}</span>
-            </button>
-
-            <div class="datepicker-wrapper-desktop">
-              <Datepicker 
-                v-model="store.datasSelecionadas" 
-                multi-dates 
-                inline 
-                auto-apply 
-                :enable-time-picker="false" 
-                locale="pt-BR"
-                :min-date="new Date()"
-                @update-month-year="handleMonthChange"
-                :markers="dateMarkers"
-              />
+            <div v-if="isLoading" class="loading-calendar">
+              <p>Carregando calendário...</p>
             </div>
+            <template v-else>
+              <button type="button" class="btn-open-calendar" @click="isCalendarOpen = true">
+                <Icon name="heroicons:calendar-days-20-solid" />
+                <span>{{ store.datasSelecionadas.length > 0 ? `Datas Selecionadas (${store.datasSelecionadas.length})` : 'Selecionar Datas' }}</span>
+              </button>
 
-            <div v-if="isCalendarOpen" class="calendar-modal-overlay" @click="isCalendarOpen = false">
-              <div class="calendar-modal-content" @click.stop>
-                <div class="calendar-modal-header">
-                  <h2>Selecione as Datas</h2>
-                  <button @click="isCalendarOpen = false" class="btn-close-modal">
-                    <Icon name="i-lucide-x" />
-                  </button>
-                </div>
-                <div class="calendar-modal-body">
-                  <Datepicker 
-                    v-model="store.datasSelecionadas" 
-                    multi-dates 
-                    inline 
-                    auto-apply 
-                    :enable-time-picker="false" 
-                    locale="pt-BR"
-                    :min-date="new Date()"
-                    @update-month-year="handleMonthChange"
-                    :markers="dateMarkers"
-                  />
-                </div>
-                <div class="calendar-modal-footer">
-                  <button class="btn-confirm" @click="isCalendarOpen = false">Confirmar</button>
+              <div class="datepicker-wrapper-desktop">
+                <CustomDateSelector 
+                  v-model="store.datasSelecionadas"
+                  :horarios-ocupados="store.horariosOcupados"
+                  :key="calendarKey"
+                />
+              </div>
+
+              <div v-if="isCalendarOpen" class="calendar-modal-overlay" @click="isCalendarOpen = false">
+                <div class="calendar-modal-content" @click.stop>
+                  <div class="calendar-modal-header">
+                    <h2>Selecione as Datas</h2>
+                    <button @click="isCalendarOpen = false" class="btn-close-modal">
+                      <Icon name="i-lucide-x" />
+                    </button>
+                  </div>
+                  <div class="calendar-modal-body">
+                    <CustomDateSelector 
+                      v-model="store.datasSelecionadas" 
+                      :horarios-ocupados="store.horariosOcupados"
+                      :key="calendarKey"
+                    />
+                  </div>
+                  <div class="calendar-modal-footer">
+                    <button class="btn-confirm" @click="isCalendarOpen = false">Confirmar</button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
 
           <div class="col-dates" v-if="store.datasSelecionadas.length">
@@ -112,21 +105,21 @@
             </div>
           </div>
         </div>
-        
+       
         <div v-if="store.tipoAgendamento === 'Período Recorrente'" class="content-grid">
           <div class="col-calendar">
             <div class="recurrent-config">
-              <div class="date-period">
-                <div class="field-group">
-                  <label>Data de Início</label>
-                  <input type="date" v-model="store.dataInicioRecorrente" :min="formatDateToLocal(new Date())"/>
-                </div>
-                <div class="field-group">
-                  <label>Data de Fim</label>
-                  <input type="date" v-model="store.dataFimRecorrente" :min="store.dataInicioRecorrente"/>
-                </div>
+              <div class="field-group">
+                 <label class="section-label">Período</label>
+                 <button type="button" class="btn-open-calendar-recurrent" @click="openRecurrentModal">
+                    <Icon
+                      name="heroicons:calendar-days-20-solid"
+                      class="recurrent-icon"
+                      :class="{ selected: isPeriodSelected }"
+                    />
+                   <span class="recurrent-text">{{ recurrentPeriodText }}</span>
+                 </button>
               </div>
-
               <div class="weekdays-section">
                 <label class="section-label">Dias da Semana</label>
                 <div class="weekdays-grid">
@@ -137,6 +130,24 @@
                 </div>
               </div>
             </div>
+             <div v-if="isRecurrentCalendarOpen" class="calendar-modal-overlay" @click="closeRecurrentModal(false)">
+               <div class="calendar-modal-content" @click.stop>
+                 <div class="calendar-modal-header">
+                   <h2>Selecione o Período</h2>
+                   <button @click="closeRecurrentModal(false)" class="btn-close-modal"><Icon name="i-lucide-x" /></button>
+                 </div>
+                 <div class="calendar-modal-body">
+                   <CustomDateSelector
+                     v-model="tempRecurrentRange"
+                     :horarios-ocupados="store.horariosOcupados"
+                     range
+                   />
+                 </div>
+                 <div class="calendar-modal-footer">
+                   <button class="btn-confirm" @click="closeRecurrentModal(true)">Confirmar</button>
+                 </div>
+               </div>
+             </div>
           </div>
 
           <div class="col-dates" v-if="store.datasRecorrentes.length">
@@ -176,7 +187,7 @@
                   <input type="time" v-model="slot.inicio" :min="minInicioRecorrente" @input="handleRecorrenteSlotStartChange(idx)" class="time-field"/>
                   <span class="time-separator">até</span>
                   <input type="time" v-model="slot.fim" :min="slot.minFim" @input="handleRecorrenteSlotEndChange(idx)" class="time-field"/>
-                  <button type="button" class="btn-remove" @click="store.removerRecorrenteSlot(idx)">×</button>
+                  <button type="button" class="btn-remove" @click="store.removerRecorrenteSlot(idx)">X</button>
                 </div>
                 <button type="button" class="btn-add" @click="store.adicionarRecorrenteSlot">+ Horário</button>
               </div>
@@ -184,7 +195,7 @@
           </div>
         </div>
       </div>
-      
+     
       <div class="card-footer">
         <button class="btn-continue" @click="irParaInfo">Prosseguir</button>
       </div>
@@ -194,21 +205,57 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
 import { useAgendamentoStore } from '~/stores/agendamento';
 import { useRouter } from 'vue-router';
+import CustomDateSelector from '~/components/CustomDateSelector.vue';
 
 const router = useRouter();
 const store = useAgendamentoStore();
 const isCalendarOpen = ref(false);
+const calendarKey = ref(0);
+const isLoading = ref(true);
+
+const isRecurrentCalendarOpen = ref(false);
+const tempRecurrentRange = ref([]);
+
+const isPeriodSelected = computed(() => !!(store.dataInicioRecorrente && store.dataFimRecorrente));
+
+const recurrentPeriodText = computed(() => {
+  if (store.dataInicioRecorrente && store.dataFimRecorrente) {
+    const formatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
+    const start = new Date(store.dataInicioRecorrente + 'T00:00:00').toLocaleDateString('pt-BR', formatOptions);
+    const end = new Date(store.dataFimRecorrente + 'T00:00:00').toLocaleDateString('pt-BR', formatOptions);
+    return `De ${start} a ${end}`;
+  }
+  return 'Selecionar Período';
+});
+
+function openRecurrentModal() {
+  tempRecurrentRange.value = (store.dataInicioRecorrente && store.dataFimRecorrente)
+    ? [new Date(store.dataInicioRecorrente + 'T00:00:00'), new Date(store.dataFimRecorrente + 'T00:00:00')]
+    : [];
+  isRecurrentCalendarOpen.value = true;
+}
+
+function closeRecurrentModal(shouldConfirm) {
+  if (shouldConfirm && tempRecurrentRange.value.length === 2) {
+    const [start, end] = tempRecurrentRange.value;
+    store.dataInicioRecorrente = formatDateToLocal(start);
+    store.dataFimRecorrente = formatDateToLocal(end);
+  }
+  isRecurrentCalendarOpen.value = false;
+}
 
 const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
+const safeNewDate = (date) => (typeof date === 'string' ? new Date(date) : date);
+
 const formatDateToLocal = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const d = safeNewDate(date);
+  if (!d || isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
@@ -222,13 +269,15 @@ const horaAgora = () => {
 const hojeStr = formatDateToLocal(new Date());
 
 const minInicioParaMesmo = computed(() => {
-  const hasToday = store.datasSelecionadas.some(d => formatDateToLocal(d) === hojeStr);
+  if (!store.datasSelecionadas || store.datasSelecionadas.length === 0) return '';
+  const hasToday = store.datasSelecionadas.some(d => formatDateToLocal(safeNewDate(d)) === hojeStr);
   return hasToday ? horaAgora() : '';
 });
 
 const incluiHojeNaRecorrencia = computed(() => {
   if (!store.dataInicioRecorrente || !store.dataFimRecorrente || store.diasSemanaSelecionados.length === 0) return false;
   const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
   const inicio = new Date(store.dataInicioRecorrente + 'T00:00:00');
   const fim = new Date(store.dataFimRecorrente + 'T00:00:00');
   if (hoje < inicio || hoje > fim) return false;
@@ -236,45 +285,16 @@ const incluiHojeNaRecorrencia = computed(() => {
 });
 
 const minInicioRecorrente = computed(() => incluiHojeNaRecorrencia.value ? horaAgora() : '');
+const minInicio = (dateStr) => (dateStr === hojeStr ? horaAgora() : '');
 
-const minInicio = (dateStr) => {
-  return dateStr === hojeStr ? horaAgora() : '';
-};
-
-watch(() => store.datasSelecionadas, () => {
-  store.syncHorariosMultiplos();
-}, { deep: true });
-
+watch(() => store.datasSelecionadas, () => store.syncHorariosMultiplos(), { deep: true });
 watch([() => store.dataInicioRecorrente, () => store.dataFimRecorrente, () => store.diasSemanaSelecionados], () => {
   if (store.recorrenteSlots.length === 0) store.adicionarRecorrenteSlot();
 });
 
-const dateMarkers = computed(() => {
-  const markers = [];
-  for (const dateStr in store.horariosOcupados) {
-    const times = store.horariosOcupados[dateStr];
-    if (times && times.length > 0) {
-      const formattedTimes = times.map(t => `${t.start} - ${t.end}`).join('\n');
-      markers.push({
-        date: new Date(dateStr + 'T00:00:00'),
-        type: 'dot',
-        color: '#ef4444',
-        tooltip: [{ text: `Ocupado:\n${formattedTimes}` }]
-      });
-    }
-  }
-  return markers;
-});
-
-const handleMonthChange = (payload) => {
-  store.fetchDisponibilidade(payload.year, payload.month + 1);
-};
-
 const handleStartTimeChange = (horarioRef) => {
   if (!horarioRef.inicio) {
-    horarioRef.minFim = '';
-    horarioRef.fim = '';
-    return;
+    horarioRef.minFim = ''; horarioRef.fim = ''; return;
   }
   const [h, m] = horarioRef.inicio.split(':');
   const data = new Date();
@@ -287,17 +307,13 @@ const handleStartTimeChange = (horarioRef) => {
   }
 };
 
-
 const handleUnicoStartChange = () => {
   handleStartTimeChange(store.horarioUnico);
-  
   if (store.horarioUnico.inicio && store.datasSelecionadas.length > 0) {
     const validacao = store.validarHorarioUnico();
     if (validacao.conflito) {
       alert(validacao.mensagem);
-      store.horarioUnico.inicio = '';
-      store.horarioUnico.fim = '';
-      store.horarioUnico.minFim = '';
+      store.horarioUnico.inicio = ''; store.horarioUnico.fim = ''; store.horarioUnico.minFim = '';
     }
   }
 };
@@ -315,21 +331,17 @@ const handleUnicoEndChange = () => {
 const handleSlotStartChange = (dateIndex, slotIndex) => {
   const slot = store.horariosMultiplos[dateIndex].slots[slotIndex];
   handleStartTimeChange(slot);
-  
   if (slot.inicio) {
     const validacao = store.validarSlotMultiplo(dateIndex, slotIndex);
     if (validacao.conflito) {
       alert(validacao.mensagem);
-      slot.inicio = '';
-      slot.fim = '';
-      slot.minFim = '';
+      slot.inicio = ''; slot.fim = ''; slot.minFim = '';
     }
   }
 };
 
 const handleSlotEndChange = (dateIndex, slotIndex) => {
   const slot = store.horariosMultiplos[dateIndex].slots[slotIndex];
-  
   if (slot.fim) {
     const validacao = store.validarSlotMultiplo(dateIndex, slotIndex);
     if (validacao.conflito) {
@@ -341,14 +353,11 @@ const handleSlotEndChange = (dateIndex, slotIndex) => {
 
 const handleRecorrenteStartChange = () => {
   handleStartTimeChange(store.horarioRecorrente);
-  
   if (store.horarioRecorrente.inicio && store.datasRecorrentes.length > 0) {
     const validacao = store.validarHorarioRecorrente();
     if (validacao.conflito) {
       alert(validacao.mensagem);
-      store.horarioRecorrente.inicio = '';
-      store.horarioRecorrente.fim = '';
-      store.horarioRecorrente.minFim = '';
+      store.horarioRecorrente.inicio = ''; store.horarioRecorrente.fim = ''; store.horarioRecorrente.minFim = '';
     }
   }
 };
@@ -366,21 +375,17 @@ const handleRecorrenteEndChange = () => {
 const handleRecorrenteSlotStartChange = (slotIndex) => {
   const slot = store.recorrenteSlots[slotIndex];
   handleStartTimeChange(slot);
-  
   if (slot.inicio && store.datasRecorrentes.length > 0) {
     const validacao = store.validarSlotRecorrente(slotIndex);
     if (validacao.conflito) {
       alert(validacao.mensagem);
-      slot.inicio = '';
-      slot.fim = '';
-      slot.minFim = '';
+      slot.inicio = ''; slot.fim = ''; slot.minFim = '';
     }
   }
 };
 
 const handleRecorrenteSlotEndChange = (slotIndex) => {
   const slot = store.recorrenteSlots[slotIndex];
-  
   if (slot.fim && store.datasRecorrentes.length > 0) {
     const validacao = store.validarSlotRecorrente(slotIndex);
     if (validacao.conflito) {
@@ -391,20 +396,16 @@ const handleRecorrenteSlotEndChange = (slotIndex) => {
 };
 
 function formatarData(data) {
-  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return safeNewDate(data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function validarCampos() {
-  const sobrepoe = (aIni, aFim, bIni, bFim) => aIni < bFim && aFim > bIni;
-
   store.compilarAgendamentosParaSalvar();
   const agendamentos = store.agendamentos;
-
   if (agendamentos.length === 0) {
     alert('Nenhuma data válida foi selecionada ou gerada para o agendamento.');
     return false;
   }
-
   for (let i = 0; i < agendamentos.length; i++) {
     const ag = agendamentos[i];
     if (!ag.hora_inicio || !ag.hora_fim) {
@@ -419,20 +420,6 @@ function validarCampos() {
       alert(`Na data de hoje, não é possível agendar um horário que já passou.`);
       return false;
     }
-    const slotsOcupados = store.horariosOcupados[ag.data] || [];
-    for (const slot of slotsOcupados) {
-      if (sobrepoe(ag.hora_inicio, ag.hora_fim, slot.start, slot.end)) {
-        alert(`Conflito! O horário de ${ag.hora_inicio} às ${ag.hora_fim} no dia ${formatarData(new Date(ag.data + 'T00:00:00'))} sobrepõe uma reserva existente.`);
-        return false;
-      }
-    }
-    for (let j = i + 1; j < agendamentos.length; j++) {
-        const outroAg = agendamentos[j];
-        if (ag.data === outroAg.data && sobrepoe(ag.hora_inicio, ag.hora_fim, outroAg.hora_inicio, outroAg.hora_fim)) {
-            alert(`Você selecionou horários que se sobrepõem no dia ${formatarData(new Date(ag.data + 'T00:00:00'))}.`);
-            return false;
-        }
-    }
   }
   return true;
 }
@@ -443,74 +430,132 @@ async function irParaInfo() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!store.recursoSelecionado) {
     alert("Nenhum recurso selecionado. Redirecionando...");
     router.push('/agendamentoSelectRecurso');
     return;
   }
-  const hoje = new Date();
-  store.fetchDisponibilidade(hoje.getFullYear(), hoje.getMonth() + 1);
+  try {
+    const hoje = new Date();
+    await store.fetchDisponibilidade(hoje.getFullYear(), hoje.getMonth() + 1);
+    calendarKey.value++;
+  } catch (error) {
+    console.error("Falha ao carregar dados de disponibilidade:", error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
-<style>
-.dp__marker_tooltip{background:#27272a!important;color:#fff!important;border-radius:6px!important;padding:6px 10px!important;font-size:.8rem!important;white-space:pre-line!important;border:1px solid #3f3f46!important;box-shadow:0 2px 8px rgba(0,0,0,.2)!important}.dp__tooltip_text{color:#fff!important}.dp__main{width:100%!important}.dp__calendar_wrapper{width:100%!important}.dp__calendar{max-width:100%!important}
-</style>
-
 <style scoped>
-.page-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;background:transparent}
-.card{width:100%;max-width:75rem;background-color:#fff;border-radius:0.75rem;box-shadow:0 0.625rem 1.875rem rgba(0,0,0,0.1);display:flex;flex-direction:column;height:90vh;max-height:50rem}
-.card-header{padding:1.5rem 2rem;border-bottom:0.063rem solid #e5e7eb;flex-shrink:0}
-.card-content{flex-grow:1;overflow:hidden;min-height:0;padding:1.5rem 2rem}
-.card-footer{padding:1rem 2rem;border-top:0.063rem solid #e5e7eb;text-align:right;flex-shrink:0;background-color:#fff;box-shadow:0 -0.125rem 0.5rem rgba(0,0,0,0.05)}
-.progress-bar{display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
-.icon-active{font-size:1.5rem;color:#2563eb}
-.icon-inactive{font-size:1.5rem;color:#d1d5db}
-.line{flex-grow:1;height:0.125rem;background-color:#e5e7eb;margin:0 1rem}
-.title{font-size:1.75rem;font-weight:700;text-align:center;margin:0 0 1rem}
-.section-title{font-size:1rem;font-weight:600;margin:0 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid #e5e7eb}
-.section-label{display:block;margin-bottom:0.75rem;font-weight:600;font-size:0.9rem}
-.opcoes{display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap}
-.radio-label,.checkbox-label{display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:500}
-.radio-label-sm{font-size:0.9rem}
-input[type="date"],select{width:100%;padding:0.5rem;border:0.063rem solid #d1d5db;border-radius:0.375rem;box-sizing:border-box;font-size:0.9rem}
-.field-group{flex:1}
-.field-group label{display:block;margin-bottom:0.5rem;font-weight:500;font-size:0.9rem}
-.content-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;height:100%;align-items:flex-start}
-.col-calendar,.col-dates,.col-times{min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden}
-.dates-list{flex-grow:1;overflow-y:auto;border:1px solid #f3f4f6;border-radius:0.5rem;background:#f9fafb}
-.date-item{padding:0.75rem;border-bottom:1px solid #e5e7eb}
-.date-item:last-child{border-bottom:none}
-.date-item-simple{padding:0.5rem 0.75rem;border-bottom:1px dashed #e5e7eb;font-size:0.9rem}
-.date-item-simple:last-child{border-bottom:none}
-.date-label{font-weight:600;color:#374151;font-size:0.9rem;display:block;margin-bottom:0.5rem}
-.time-mode{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
-.same-time-section,.different-times-section{border:1px solid #f3f4f6;border-radius:0.5rem;padding:1rem;background:#f9fafb}
-.time-inputs{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem}
-.time-field{border:0.063rem solid #d1d5db;border-radius:0.375rem;padding:0.5rem;font-size:0.9rem;min-width:0;flex:1}
-.time-separator{background:#eef2ff;color:#4338ca;border-radius:9999px;padding:0.25rem 0.5rem;font-size:0.75rem;font-weight:700;line-height:1;white-space:nowrap}
-.time-preview{font-size:0.85rem;color:#6b7280;margin-top:0.5rem}
-.slots-container{display:flex;flex-direction:column;gap:0.5rem;max-height:15rem;overflow-y:auto}
-.recurrent-config{display:flex;flex-direction:column;gap:1.5rem}
-.date-period{display:flex;gap:1rem}
-.weekdays-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem}
-.weekday-item{display:flex;flex-direction:column;align-items:center;gap:0.25rem;padding:0.5rem;border:1px solid #e5e7eb;border-radius:0.375rem;cursor:pointer;font-size:0.8rem;text-align:center}
-.weekday-item:has(input:checked){background:#eef2ff;border-color:#4338ca}
-.weekday-item input{margin:0}
-.btn-add{background:#10b981;color:#fff;border:none;border-radius:0.375rem;padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;align-self:flex-start}
-.btn-remove{background:#ef4444;color:#fff;border:none;border-radius:0.375rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem;min-width:auto}
-.btn-continue{background-color:#374151;color:#fff;padding:0.75rem 2rem;border-radius:0.5rem;border:none;cursor:pointer;font-weight:500}
-.btn-open-calendar{display:none}
-.calendar-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center}
-.calendar-modal-content{background:white;border-radius:0.75rem;width:auto;max-width:calc(100vw - 2rem);box-shadow:0 10px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden}
-.calendar-modal-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb}
-.calendar-modal-header h2{font-size:1.25rem;margin:0}
-.btn-close-modal{background:none;border:none;cursor:pointer;padding:0.5rem;line-height:1;font-size:1.5rem;color:#6b7280}
-.calendar-modal-body{padding:0 1.5rem}
-.calendar-modal-footer{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;text-align:right}
-.btn-confirm{background-color:#374151;color:white;padding:0.75rem 2rem;border-radius:0.5rem;border:none;cursor:pointer}
-@media (max-width:64rem){.content-grid{grid-template-columns:1fr 1fr;gap:1.5rem}.col-times{grid-column:1/-1}}
-@media (max-width:48rem){.page-container{padding:0}.card{margin:0;border-radius:0;height:calc(100vh - 64px);box-shadow:none}.card-header{padding:1rem;position:sticky;top:0;z-index:10;background-color:#fff}.card-content{padding:1rem;flex-grow:1;overflow-y:auto}.card-footer{padding:1rem;position:sticky;bottom:0;z-index:10}.content-grid{grid-template-columns:1fr;gap:1.5rem;height:auto}.col-calendar,.col-dates,.col-times{height:auto}.opcoes{flex-direction:column;gap:0.75rem;align-items:stretch}.radio-label,.checkbox-label{justify-content:center;padding:0.75rem;border:1px solid #e5e7eb;border-radius:0.5rem;background:#f9fafb}.time-mode{flex-direction:column;gap:1rem}.date-period{flex-direction:column;gap:1rem}.weekdays-grid{grid-template-columns:repeat(4,1fr);gap:0.75rem}.dates-list{max-height:20rem}.slots-container{max-height:12rem}.datepicker-wrapper-desktop{display:none}.btn-open-calendar{display:flex;align-items:center;justify-content:center;gap:0.75rem;width:100%;padding:0.75rem 1rem;font-size:1rem;font-weight:500;border:1px solid #d1d5db;border-radius:0.5rem;background-color:#f9fafb;cursor:pointer}}
-@media (max-width:31.25rem){.title{font-size:1.25rem;margin-bottom:0.75rem}.progress-bar{flex-direction:column;gap:0.5rem;margin-bottom:1rem}.line{display:none}.card-header{padding:0.75rem}.card-content{padding:0.75rem}.card-footer{padding:0.75rem}.content-grid{gap:1rem}.weekdays-grid{grid-template-columns:repeat(3,1fr);gap:0.5rem}.weekday-item{padding:0.375rem;font-size:0.75rem}.btn-continue{width:100%;padding:0.875rem 1rem}.opcoes{gap:0.5rem}.radio-label,.checkbox-label{padding:0.5rem;font-size:0.9rem}.same-time-section,.different-times-section{padding:0.75rem}.dates-list{max-height:15rem}.slots-container{max-height:10rem}}
+  .page-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; background: transparent; }
+  .card { width: 100%; max-width: 75rem; background-color: #fff; border-radius: 0.75rem; box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 90vh; max-height: 50rem; }
+  .card-header { padding: 1.5rem 2rem; border-bottom: 0.063rem solid #e5e7eb; flex-shrink: 0; }
+  .card-content { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; padding: 1.5rem 2rem; }
+  .card-footer { padding: 1rem 2rem; border-top: 0.063rem solid #e5e7eb; text-align: right; flex-shrink: 0; background-color: #fff; box-shadow: 0 -0.125rem 0.5rem rgba(0,0,0,0.05); }
+  .progress-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+  .icon-active { font-size: 1.5rem; color: #2563eb; }
+  .icon-inactive { font-size: 1.5rem; color: #d1d5db; }
+  .line { flex-grow: 1; height: 0.125rem; background-color: #e5e7eb; margin: 0 1rem; }
+  .title { font-size: 1.75rem; font-weight: 700; text-align: center; margin: 0 0 1rem; }
+  .section-title { font-size: 1rem; font-weight: 600; margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+  .section-label { display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.9rem; }
+  .opcoes { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+  .radio-label, .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; }
+  .radio-label-sm { font-size: 0.9rem; }
+  .field-group { flex: 1; }
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; height: 100%; align-items: stretch; }
+  .col-calendar, .col-dates, .col-times { min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .col-calendar { flex: 1; min-height: 0; }
+  .loading-calendar { display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; }
+  .datepicker-wrapper-desktop { flex: 1; display: flex; flex-direction: column; min-height: 0; height: 100%; overflow: hidden; }
+  .dates-list { flex-grow: 1; overflow-y: auto; border: 1px solid #f3f4f6; border-radius: 0.5rem; background: #f9fafb; }
+  .date-item { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+  .date-item:last-child { border-bottom: none; }
+  .date-item-simple { padding: 0.5rem 0.75rem; border-bottom: 1px dashed #e5e7eb; font-size: 0.9rem; }
+  .date-item-simple:last-child { border-bottom: none; }
+  .date-label { font-weight: 600; color: #374151; font-size: 0.9rem; display: block; margin-bottom: 0.5rem; }
+  .time-mode { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .same-time-section, .different-times-section { border: 1px solid #f3f4f6; border-radius: 0.5rem; padding: 1rem; background: #f9fafb; }
+  .time-inputs { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .time-field { border: 0.063rem solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem; font-size: 0.9rem; min-width: 0; flex: 1; }
+  .time-separator { background: #eef2ff; color: #4338ca; border-radius: 9999px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 700; line-height: 1; white-space: nowrap; }
+  .slots-container { display: flex; flex-direction: column; gap: 0.5rem; max-height: 15rem; overflow-y: auto; }
+  .recurrent-config { display: flex; flex-direction: column; gap: 1.5rem; }
+  .weekdays-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.5rem; }
+  .weekday-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 0.375rem; cursor: pointer; font-size: 0.8rem; text-align: center; }
+  .weekday-item:has(input:checked) { background: #eef2ff; border-color: #4338ca; }
+  .weekday-item input { margin: 0; }
+  .btn-add { background: #10b981; color: #fff; border: none; border-radius: 0.375rem; padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.85rem; align-self: flex-start; }
+  .btn-remove { background: #ef4444; color: #fff; border: none; border-radius: 0.375rem; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem; min-width: auto; }
+  .btn-continue { background-color: #374151; color: #fff; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 500; font-size: 0.8rem; }
+  .btn-open-calendar { display: none; }
+  .btn-open-calendar-recurrent { display: flex; align-items: center; justify-content: flex-start; gap: 0.75rem; width: 100%; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 500; color: #374151; border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #fff; cursor: pointer; text-align: left; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: box-shadow 0.2s, border-color 0.2s; }
+  .btn-open-calendar-recurrent:hover { border-color: #d1d5db; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
+  .btn-open-calendar-recurrent .recurrent-icon { color: #9ca3af; transition: color 0.2s ease-in-out; font-size: 1.25rem; flex-shrink: 0; }
+  .btn-open-calendar-recurrent .recurrent-icon.selected { color: #2563eb; }
+  .btn-open-calendar-recurrent .recurrent-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 1rem; }
+  .calendar-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .calendar-modal-content { background: white; border-radius: 0.75rem; width: 100%; height: 90%; max-width: 500px; max-height: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+  .calendar-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+  .calendar-modal-header h2 { font-size: 1.25rem; margin: 0; }
+  .btn-close-modal { background: none; border: none; cursor: pointer; padding: 0.5rem; line-height: 1; font-size: 1.5rem; color: #6b7280; }
+  .calendar-modal-body { padding: 1rem; flex-grow: 1; min-height: 0; }
+  .calendar-modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; text-align: right; flex-shrink: 0; }
+  .btn-confirm { background-color: #374151; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; }
+
+  @media (max-width: 1920px) {
+    .btn-open-calendar-recurrent .recurrent-text { font-size: 0.93rem; }
+  }
+
+  @media (max-width: 1024px) {
+    .content-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .col-calendar { order: 1; }
+    .col-times { order: 2; }
+    .col-dates { order: 3; }
+    .card { max-width: none; width: 95%; }
+  }
+
+  @media (max-width: 768px) {
+    .page-container { padding: 0; }
+    .card { margin: 0; border-radius: 0; height: calc(100vh - 64px); box-shadow: none; max-width: none; width: 100%; }
+    .card-header { padding: 16px; position: sticky; top: 0; z-index: 10; background-color: #fff; }
+    .card-content { padding: 16px; flex-grow: 1; overflow-y: auto; }
+    .card-footer { padding: 16px; position: sticky; bottom: 0; z-index: 10; }
+    .content-grid { grid-template-columns: 1fr; gap: 24px; height: auto; }
+    .col-calendar, .col-dates, .col-times { height: auto; }
+    .opcoes { flex-direction: column; gap: 12px; align-items: stretch; }
+    .radio-label, .checkbox-label { justify-content: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
+    .time-mode { flex-direction: column; gap: 16px; }
+    .weekdays-grid { grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .dates-list { max-height: 320px; }
+    .slots-container { max-height: 200px; }
+    .datepicker-wrapper-desktop { display: none; }
+    .btn-open-calendar { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px 16px; font-size: 16px; font-weight: 500; border: 1px solid #d1d5db; border-radius: 8px; background-color: #f9fafb; cursor: pointer; }
+    .title { font-size: 24px; }
+  }
+
+  @media (max-width: 480px) {
+    .title { font-size: 20px; margin-bottom: 12px; }
+    .progress-bar { flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .line { display: none; }
+    .card-header { padding: 12px; }
+    .card-content { padding: 12px; }
+    .card-footer { padding: 12px; }
+    .content-grid { gap: 16px; }
+    .weekdays-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .weekday-item { padding: 6px; font-size: 12px; }
+    .btn-continue { width: 100%; padding: 14px 16px; font-size: 16px; }
+    .opcoes { gap: 8px; }
+    .radio-label, .checkbox-label { padding: 8px; font-size: 14px; }
+    .same-time-section, .different-times-section { padding: 12px; }
+    .dates-list { max-height: 240px; }
+    .slots-container { max-height: 160px; }
+    .section-title { font-size: 14px; }
+    .time-field { font-size: 14px; padding: 8px; }
+    .time-separator { font-size: 11px; padding: 4px 8px; }
+    .calendar-modal-body { padding: 0.75rem; }
+    .btn-open-calendar-recurrent .recurrent-text { font-size: 1.195rem; }
+  }
 </style>

@@ -54,7 +54,7 @@
                   <span class="time-separator">às</span>
                   <input type="time" v-model="filho.hora_fim" class="time-input"/>
                 </div>
-                <button @click="removerHorario(index)" class="btn-icon-danger" title="Remover horário">
+                <button @click="removerHorario(index)" class="btn-icon-danger trash" title="Remover horário">
                     <Icon name="i-lucide-trash-2" />
                 </button>
               </div>
@@ -90,12 +90,26 @@ const isSaving = ref(false);
 const error = ref(null);
 const id = route.params.id;
 
+const formatarParaHoraMinuto = (hora) => {
+  if (typeof hora === 'string' && hora.includes(':')) {
+    const partes = hora.split(':');
+    return `${partes[0].padStart(2, '0')}:${partes[1].padStart(2, '0')}`;
+  }
+  return '00:00';
+};
+
 onMounted(async () => {
   try {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${id}/`);
     if (!response.ok) throw new Error('Não foi possível carregar os dados da solicitação.');
     const data = await response.json();
-    data.agendamentos_filhos.forEach(f => f.data_fim = f.data_inicio);
+    
+    data.agendamentos_filhos.forEach(f => {
+        f.data_fim = f.data_inicio;
+        f.hora_inicio = formatarParaHoraMinuto(f.hora_inicio);
+        f.hora_fim = formatarParaHoraMinuto(f.hora_fim);
+    });
+
     agendamentoPai.value = data;
   } catch (err) {
     error.value = err.message;
@@ -200,6 +214,15 @@ const salvarAlteracoes = async () => {
 .btn:disabled { opacity: 0.7; cursor: not-allowed; }
 .error-message { color: #b91c1c; background-color: #fee2e2; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
 .mt-4 { margin-top: 1rem; }
+
+@media (min-width: 1600px) {
+  .btn-primary {
+    font-size: 1rem;
+  }
+  .trash {
+    font-size: 0.8rem;
+  }
+}
 
 @media (max-width: 1024px) {
   .edit-layout {

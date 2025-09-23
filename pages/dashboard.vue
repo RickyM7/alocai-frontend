@@ -250,7 +250,7 @@ onMounted(fetchListData);
 .modal-summary{ padding: 1rem 1.5rem; background: #eff6ff; border-bottom: 1px solid #e0e7ff; text-align: center }
 .summary-text{ font-size: 1.125rem; font-weight: 600; color: #1e40af; margin: 0 }
 .modal-events-container{ flex-grow: 1; overflow: hidden; display: flex; flex-direction: column }
-.modal-events-list{ padding: 1.5rem; overflow-y: auto; flex-grow: 1 }
+.modal-events-list{ padding: 1.5rem; overflow-y: auto; flex-grow: 1; max-height: 45vh; }
 .modal-event-item{ border-bottom: 1px solid #f3f4f6; padding-bottom: 1rem; margin-bottom: 1rem }
 .modal-event-item:last-child{ border-bottom: none; margin-bottom: 0 }
 .event-recurso{ font-weight: 600; color: #1f2937; margin: 0 0 .25rem 0; font-size: 1rem }
