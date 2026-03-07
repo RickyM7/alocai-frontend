@@ -1,13 +1,16 @@
 <template>
-  <div>
-    <div class="page-container">
-      <div class="card">
-        <div class="card-header">
-          <button @click="$router.push('/')" class="back-button">
-            <Icon name="i-lucide-arrow-left" />
-          </button>
-          <h1 class="title">Meu Perfil</h1>
-        </div>
+  <div class="page-content-layout">
+    <div class="page-header">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button @click="$router.push('/')" class="btn-back">
+          <Icon name="i-lucide-arrow-left" />
+        </button>
+        <h1 class="page-title">Meu Perfil</h1>
+      </div>
+    </div>
+    <div class="scrollable-list">
+      <div class="profile-card-container">
+        <div class="card">
 
         <div v-if="isLoading" class="status-container">
           <Icon name="i-lucide-loader-2" class="spinner" />
@@ -18,56 +21,59 @@
           <p class="text-error">Não foi possível carregar os dados do usuário.</p>
         </div>
 
-        <div v-else class="profile-card-content">
-          <div class="profile-header">
-            <img 
-              v-if="user.foto_perfil && !imageLoadError" 
-              :src="user.foto_perfil" 
-              alt="Foto do Perfil" 
-              class="profile-picture" 
-              crossorigin="anonymous" 
-              @error="handleImageError" />
-            <div v-else class="profile-picture-placeholder profile-page-placeholder">
-              <Icon name="i-lucide-user" />
+        <div v-else class="profile-card-content" :class="{ 'is-admin': user.nome_perfil === 'Administrador' }">
+          <div class="profile-col profile-col-left">
+            <div class="profile-header">
+              <img 
+                v-if="user.foto_perfil && !imageLoadError" 
+                :src="user.foto_perfil" 
+                alt="Foto do Perfil" 
+                class="profile-picture" 
+                crossorigin="anonymous" 
+                @error="handleImageError" />
+              <div v-else class="profile-picture-placeholder profile-page-placeholder">
+                <Icon name="i-lucide-user" />
+              </div>
+              
+              <div class="profile-info">
+                <h2 class="user-name">{{ user.nome }}</h2>
+                <p class="user-email">{{ user.email }}</p>
+              </div>
             </div>
-            
-            <div class="profile-info">
-              <h2 class="user-name">{{ user.nome }}</h2>
-              <p class="user-email">{{ user.email }}</p>
-            </div>
-          </div>
 
-          <div class="profile-details">
-            <div class="detail-item">
-              <span class="detail-label">Tipo de Conta</span>
-              <span class="detail-value profile-badge">{{ user.nome_perfil || 'Não definido' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Membro desde</span>
-              <span class="detail-value">{{ formatarData(user.data_criacao_conta) }}</span>
+            <div class="profile-details">
+              <div class="detail-item">
+                <span class="detail-label">Tipo de Conta</span>
+                <span class="detail-value profile-badge">{{ user.nome_perfil || 'Não definido' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Membro desde</span>
+                <span class="detail-value">{{ formatarData(user.data_criacao_conta) }}</span>
+              </div>
             </div>
           </div>
           
-          <div v-if="user.nome_perfil === 'Administrador'" class="admin-section">
+          <div v-if="user.nome_perfil === 'Administrador'" class="profile-col profile-col-right admin-section">
             <h3 class="section-title">Integrações e Segurança</h3>
             <div class="detail-item">
               <div class="detail-label">
                 <strong>Conta Google</strong><br>
-                <small>Vincule sua conta para fazer login com o Google.</small>
+                <small>Vincule para fazer login rápido pelo botão Google.</small>
               </div>
               <div class="action-area">
                 <div v-if="!user.google_id">
-                  <GoogleSignInButton @success="linkGoogleAccount" @error="handleLinkError" />
+                  <GoogleSignInButton @success="(payload: any) => linkGoogleAccount(payload)" @error="handleLinkError" />
                 </div>
                 <span v-else class="profile-badge-success">Vinculada</span>
               </div>
             </div>
             <p v-if="linkError" class="text-error">{{ linkError }}</p>
+            <p v-if="linkSuccess" class="text-success">{{ linkSuccess }}</p>
             
             <div v-if="!isEditingPassword" class="detail-item">
               <div class="detail-label">
                 <strong>Senha de Acesso</strong><br>
-                <small>Use para entrar pela tela de login de administrador.</small>
+                <small>Permite login offline por Email e Senha.</small>
               </div>
               <div class="action-area">
                 <button @click="startPasswordEdit" class="btn btn-secondary">{{ user.tem_senha ? 'Alterar Senha' : 'Definir Senha' }}</button>
@@ -87,7 +93,7 @@
                     required 
                     minlength="8"
                     autocomplete="new-password" />
-                  <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                  <button type="button" @click="showPassword = !showPassword" class="password-toggle-btn" :title="showPassword ? 'Ocultar ou mostrar' : 'Ocultar ou mostrar'">
                     <Icon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" />
                   </button>
                 </div>
@@ -96,30 +102,37 @@
                 <button type="button" @click="cancelPasswordEdit" class="btn btn-outline">Cancelar</button>
                 <button type="submit" class="btn btn-primary" :disabled="isSavingPassword">
                   <Icon v-if="isSavingPassword" name="i-lucide-loader-2" class="animate-spin" />
-                  <span>Salvar Nova Senha</span>
+                  <span>Salvar</span>
                 </button>
               </div>
             </form>
             <p v-if="passwordError" class="text-error">{{ passwordError }}</p>
+            <p v-if="passwordSuccess" class="text-success">{{ passwordSuccess }}</p>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { User } from '~/types/user';
 import GoogleSignInButton from '~/components/GoogleSignInButton.vue';
 import { authenticatedFetch } from '~/utils/api';
+import { formatarData } from '~/utils/formatters';
+
+definePageMeta({ middleware: 'auth' });
 
 const router = useRouter();
-const user = ref<User | null>(null);
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
 const isLoading = ref(true);
 const imageLoadError = ref(false);
 const linkError = ref<string | null>(null);
+const linkSuccess = ref<string | null>(null);
+const passwordSuccess = ref<string | null>(null);
 const config = useRuntimeConfig();
 
 const newPassword = ref('');
@@ -129,22 +142,12 @@ const isEditingPassword = ref(false);
 const showPassword = ref(false);
 
 onMounted(() => {
-  const userDataString = localStorage.getItem('user_data');
-  if (!userDataString) {
+  if (!userStore.isAuthenticated) {
     router.push('/login');
     return;
   }
-  user.value = JSON.parse(userDataString);
   isLoading.value = false;
 });
-
-const formatarData = (dataString: string): string => {
-  try {
-    return new Date(dataString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-  } catch {
-    return 'Data inválida';
-  }
-};
 
 const handleImageError = () => { imageLoadError.value = true; };
 const handleLinkError = (error: string) => { linkError.value = `Erro: ${error}`; };
@@ -164,11 +167,10 @@ const linkGoogleAccount = async (googleResponse: { credential?: string }) => {
         if (!response.ok) {
             throw new Error(data.error || 'Falha ao vincular a conta.');
         }
-        localStorage.setItem('user_data', JSON.stringify(data.user_data));
-        user.value = data.user_data;
-        alert('Conta Google vinculada com sucesso!');
-    } catch (err: any) {
-        linkError.value = err.message;
+        userStore.setUser(data.user_data);
+        linkSuccess.value = 'Conta Google vinculada com sucesso!';
+    } catch (err: unknown) {
+        linkError.value = err instanceof Error ? err.message : 'Erro ao vincular conta.';
     }
 };
 
@@ -188,6 +190,10 @@ const changePassword = async () => {
     passwordError.value = "O campo de senha não pode estar vazio.";
     return;
   }
+  if (newPassword.value.length < 8) {
+    passwordError.value = "A senha deve ter pelo menos 8 caracteres.";
+    return;
+  }
   isSavingPassword.value = true;
   passwordError.value = null;
   try {
@@ -197,18 +203,17 @@ const changePassword = async () => {
     });
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || 'Não foi possível alterar a senha.');
+      const errorMsg = Array.isArray(data.error) ? data.error.join(' ') : data.error;
+      throw new Error(errorMsg || 'Não foi possível alterar a senha.');
     }
-    alert(data.detail);
+    passwordSuccess.value = data.detail || 'Senha alterada com sucesso!';
     
-    if (user.value) {
-        user.value.tem_senha = true;
-        localStorage.setItem('user_data', JSON.stringify(user.value));
+    if (userStore.user) {
+      userStore.setUser({ ...userStore.user, tem_senha: true });
     }
-
     cancelPasswordEdit();
-  } catch (err: any) {
-    passwordError.value = err.message;
+  } catch (err: unknown) {
+    passwordError.value = err instanceof Error ? err.message : 'Erro ao alterar a senha.';
   } finally {
     isSavingPassword.value = false;
   }
@@ -216,310 +221,171 @@ const changePassword = async () => {
 </script>
 
 <style scoped>
-.page-container {
-  width: 100%;
-  height: 100%;
+.page-content-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 64px);
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+}
+
+.page-header {
   display: flex;
   align-items: center;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.btn-back{ background: none; border: none; cursor: pointer; color: #4b5563; padding: 0.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: none; flex-shrink: 0; }
+.btn-back:hover{ background: #f3f4f6; color: #111827; }
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.scrollable-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
   justify-content: center;
-  padding: 1rem;
+  align-items: flex-start;
+  padding-bottom: 2rem;
+}
+
+.profile-card-container {
+  width: 100%;
+  max-width: 850px;
 }
 
 .card {
-  width: 100%;
-  max-width: 600px;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.card-header {
+.profile-card-content {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  position: relative;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.back-button {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  padding: 0.5rem;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4b5563;
-  transition: all 0.2s;
-  font-size: 1.2rem;
-}
-
-.back-button:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
+.profile-col { flex: 1; min-width: 0; }
+.profile-col-left { display: flex; flex-direction: column; gap: 1.25rem; }
+.profile-col-right {
+  display: flex; flex-direction: column; gap: 1rem;
+  padding-top: 1.25rem; border-top: 1px solid #e5e7eb;
 }
 
 .profile-header {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
 }
 
-.profile-picture {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+.profile-picture, .profile-picture-placeholder {
+  width: 64px; height: 64px; border-radius: 50%;
+  object-fit: cover; background-color: #e5e7eb;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #9ca3af; flex-shrink: 0;
 }
 
-.profile-picture-placeholder.profile-page-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: #9ca3af;
-  border: 3px solid #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.user-name {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.user-email {
-  color: #6b7280;
-  margin: 0;
-}
+.profile-info { flex: 1; min-width: 0; }
+.user-name { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 0.3rem 0; }
+.user-email { font-size: 0.95rem; color: #6b7280; margin: 0; word-break: break-all; }
 
 .profile-details {
-  display: grid;
-  gap: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.5rem;
+  display: flex; flex-direction: column; gap: 1.25rem;
+  padding-top: 1rem; border-top: 1px solid #f3f4f6;
 }
 
 .detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
+  display: flex; justify-content: space-between; align-items: center;
 }
 
-.detail-label {
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.detail-label small {
-  color: #6b7280;
-  font-weight: 400;
-  font-size: 0.8em;
-  display: block;
-  margin-top: 4px;
-}
-
-.detail-value {
-  font-weight: normal;
-}
+.detail-label { font-weight: 500; color: #4b5563; font-size: 0.95rem; }
+.detail-label strong { color: #111827; }
+.detail-label small { color: #6b7280; font-weight: 400; font-size: 0.85rem; display: block; margin-top: 0.2rem; line-height: 1.3; }
+.detail-value { font-weight: 500; color: #111827; font-size: 0.95rem; }
 
 .profile-badge {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  background-color: #e0e7ff; color: #4338ca;
+  padding: 0.35rem 0.85rem; border-radius: 9999px;
+  font-size: 0.85rem; font-weight: 600;
 }
 
-.status-container {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-}
+.section-title { font-size: 1.15rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
 
-.spinner {
-  font-size: 2.5rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.admin-section {
-  margin-top: 1.5rem;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.action-area {
-  min-width: 220px;
-  text-align: right;
-}
+.action-area { min-width: 150px; text-align: right; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
 
 .profile-badge-success {
-  background-color: #dcfce7;
-  color: #166534;
-  padding: 0.35rem 0.8rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  background-color: #dcfce7; color: #166534;
+  padding: 0.35rem 0.85rem; border-radius: 9999px;
+  font-size: 0.85rem; font-weight: 600; display: inline-block;
 }
 
-.text-error {
-  color: #b91c1c;
-  font-size: 0.9em;
-  margin-top: 0.5rem;
-  text-align: right;
-}
+.text-error { color: #b91c1c; font-size: 0.85rem; margin-top: 0.5rem; text-align: right; }
+.text-success { color: #15803d; font-size: 0.85rem; margin-top: 0.5rem; text-align: right; }
 
 .password-form {
-  background-color: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
+  background-color: #f9fafb; padding: 1.25rem;
+  border-radius: 8px; border: 1px solid #e5e7eb;
 }
 
-.form-group {
-  width: 100%;
-}
+.form-group { width: 100%; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: #374151; }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9em;
-  color: #374151;
-}
-
-.password-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
+.password-input-wrapper { position: relative; display: flex; align-items: center; }
 .form-input {
-  flex-grow: 1;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  flex-grow: 1; padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;
 }
+.form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
 
 .password-toggle-btn {
-  position: absolute;
-  right: 0.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 1.25rem;
-  padding: 0.25rem;
+  position: absolute; right: 0.5rem; background: none; border: none;
+  cursor: pointer; color: #6b7280; font-size: 1.15rem; padding: 0.25rem;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
+.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid transparent;
+  cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s;
 }
+.btn-primary { background-color: var(--color-primary); color: white; }
+.btn-primary:hover:not(:disabled) { background-color: var(--color-primary-hover); }
+.btn-secondary { background-color: #fff; color: #4b5563; border-color: #d1d5db; }
+.btn-secondary:hover { background-color: #f9fafb; }
+.btn-outline { background-color: transparent; color: #4b5563; border-color: #d1d5db; border: 1px solid #d1d5db; }
+.btn-outline:hover { background-color: #f9fafb; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.btn-primary {
-  background-color: #4f46e5;
-  color: white;
-}
-
-.btn-secondary {
-  background-color: #fff;
-  color: #4b5563;
-  border-color: #d1d5db;
-  border: 1px solid #d1d5db;
-}
-
-.btn-outline {
-  background-color: transparent;
-  color: #4b5563;
-  border-color: #d1d5db;
-  border: 1px solid #d1d5db;
-}
-
-.btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
+.status-container { text-align: center; padding: 3rem; color: #6b7280; font-size: 0.95rem; }
+.spinner { font-size: 2rem; animation: spin 1s linear infinite; margin-bottom: 0.5rem; }
 
 @media (max-width: 768px) {
-  .page-container {
-    padding: 0rem;
-    font-size: 0.8rem;
-  }
-
-    .card {
-    padding: 1rem;
-    margin: 0.5rem;
-  }
+  .page-content-layout { padding: 1rem; }
+  .profile-card-content.is-admin { flex-direction: column; }
+  .profile-col-right { padding-left: 0; border-left: none; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
+  .card { padding: 1.5rem; }
   
-  .detail-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
+  .detail-item { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .action-area { text-align: left; width: 100%; }
+  .text-error { text-align: left; }
   
-  .action-area {
-    min-width: unset;
-    text-align: left;
-    width: 100%;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
+  .form-actions { justify-content: flex-start; width: 100%; }
+  .form-actions .btn { flex: 1; }
+}
+@media (max-width: 480px) {
+  .profile-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
 }
 </style>

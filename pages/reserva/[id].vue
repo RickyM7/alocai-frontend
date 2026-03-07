@@ -8,13 +8,9 @@
         </NuxtLink>
         <div class="header-section">
           <div>
-            <h1 class="title">{{ agendamento.recurso }}</h1>
+            <h1 class="title" :title="agendamento.recurso">{{ agendamento.recurso }}</h1>
             <p class="subtitle">{{ agendamento.finalidade }}</p>
           </div>
-          <button class="btn-editar">
-            <Icon name="i-lucide-pencil" />
-            Editar
-          </button>
         </div>
         <div class="details-grid">
           <div class="detail-item">
@@ -43,7 +39,7 @@
               <Icon name="i-lucide-arrow-left" />
               <span>Voltar</span>
             </button>
-            <h2 class="section-title-expanded">{{ agendamento.recurso }}</h2>
+            <h2 class="section-title-expanded" :title="agendamento.recurso">{{ agendamento.recurso }}</h2>
             <div class="placeholder"></div> </div>
         </div>
 
@@ -63,7 +59,7 @@
                   <td>{{ filho.hora_inicio.substring(0, 5) }} - {{ filho.hora_fim.substring(0, 5) }}</td>
                   <td>
                     <span :class="getStatusClass(filho.status_agendamento)" class="status-badge">
-                      {{ filho.status_agendamento }}
+                      {{ formatarStatus(filho.status_agendamento) }}
                     </span>
                   </td>
                 </tr>
@@ -88,7 +84,9 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { authenticatedFetch } from '~/utils/api';
-import { getStatusClass, formatarData } from '~/utils/formatters';
+
+definePageMeta({ middleware: 'auth' });
+import { getStatusClass, formatarData, formatarStatus } from '~/utils/formatters';
 
 const route = useRoute();
 const config = useRuntimeConfig();
@@ -109,8 +107,8 @@ const fetchDetalhes = async () => {
     const response = await authenticatedFetch(`${config.public.apiUrl}/api/agendamentos/pai/${id}/`);
     if (!response.ok) throw new Error('Não foi possível buscar os detalhes da reserva.');
     agendamento.value = await response.json();
-  } catch (err: any) {
-    error.value = err.message;
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Erro ao carregar detalhes da reserva.';
   } finally {
     isLoading.value = false;
   }
@@ -156,7 +154,7 @@ onMounted(fetchDetalhes);
   font-weight: 500;
 }
 .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
-.title { font-size: 1.75rem; font-weight: 700; }
+.title { font-size: 1.75rem; font-weight: 700; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
 .subtitle { color: #4b5563; margin-top: 0.25rem; }
 .btn-editar { background-color: #f9fafb; border: 1px solid #d1d5db; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
 .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 1rem; background-color: #f9fafb; border-radius: 8px; }
@@ -215,6 +213,10 @@ onMounted(fetchDetalhes);
   color: #1f2937;
   text-align: center;
   flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .placeholder {
   width: 80px; 

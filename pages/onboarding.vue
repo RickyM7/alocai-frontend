@@ -3,101 +3,53 @@
     <div class="onboarding-card">
       <div class="logo-section">
         <img src="/img/logo.webp" alt="Logo Instituição" class="logo" />
-        <h2 class="app-title">Tipo de Conta</h2>
-        <p class="description">Escolha o tipo de conta que melhor descreve sua função para que possamos personalizar sua experiência:</p>
+        <h2 class="app-title">Conta Criada com Sucesso!</h2>
       </div>
 
-      <form class="onboarding-form" @submit.prevent="handleSubmit">
-        <div class="profile-list-container">
-          <UserProfileList
-            v-model:perfilSelecionado="perfilSelecionado"
-            :onSuccess="(data) => { perfis = data; }"
-            :onError="(error) => { console.error('Erro ao buscar perfis de usuário:', error); }"
-          />
+      <div class="info-section">
+        <div class="info-icon">
+          <Icon name="i-lucide-clock" />
         </div>
-        <div class="button-container">
-          <button type="submit" class="onboarding-button">Concluir</button>
-        </div>
-      </form>
+        <p class="description">
+          Sua conta foi criada, mas ainda precisa ser aprovada por um administrador antes que você possa acessar o sistema.
+        </p>
+        <p class="sub-description">
+          Um administrador será notificado e definirá seu perfil de acesso em breve.
+          Após a aprovação, você poderá acessar todas as funcionalidades.
+        </p>
+      </div>
+
+      <div class="button-container">
+        <button class="onboarding-button" @click="voltarParaLogin">
+          Voltar para o Login
+        </button>
+      </div>
     </div>
   </div>
-  <NuxtLoadingIndicator />
-  <NuxtPage />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import UserProfileList from '~/components/UserProfileList.vue';
-import type { User } from '~/types/user';
+definePageMeta({ layout: 'default' });
 
-const config = useRuntimeConfig();
 const router = useRouter();
-const apiUrl = config.public.apiUrl;
+const userStore = useUserStore();
 
-const perfilSelecionado = ref<number | null>(null);
-const user = ref<User | null>(null);
-const userId = ref<number | null>(null);
-const perfis = ref<any[]>([]);
-
-// Ao montar o componente, busca os dados do usuário do localStorage
 onMounted(() => {
-  const userJson = localStorage.getItem('user_data');
-  if (userJson) {
-    user.value = JSON.parse(userJson) as User;
-    userId.value = user.value?.id_usuario || null;
-  } else {
-    // Se não encontrar dados do usuário, redireciona para o login
+  if (!userStore.isAuthenticated) {
     router.push('/login');
+    return;
+  }
+  // Se o usuário já tem perfil, redireciona para a home
+  if (userStore.hasPerfil) {
+    router.push('/');
   }
 });
 
-const handleSubmit = async (event: Event) => {
-  event.preventDefault();
-  if (perfilSelecionado.value === null) {
-    alert('Por favor, selecione um perfil antes de continuar.');
-    return;
-  }
-
-  if (!userId.value) {
-    alert('Não foi possível identificar o usuário. Por favor, faça login novamente.');
-    router.push('/login');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${apiUrl}/api/user/${userId.value}/`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access') || ''}`,
-      },
-      body: JSON.stringify({ id_perfil: perfilSelecionado.value }),
-    });
-
-    if (response.ok) {
-      alert('Perfil definido com sucesso!');
-
-      if (user.value) {
-        const perfilEscolhido = perfis.value.find(p => p.id_perfil === perfilSelecionado.value);
-        
-        user.value.id_perfil = perfilSelecionado.value;
-        if (perfilEscolhido) {
-          user.value.nome_perfil = perfilEscolhido.nome_perfil;
-        }
-        
-        localStorage.setItem('user_data', JSON.stringify(user.value));
-      }
-      
-      router.push('/'); // Redireciona para a página inicial
-    } else {
-      const errorData = await response.json();
-      console.error('Erro ao atualizar o perfil:', errorData);
-      alert(`Erro ao salvar perfil: ${errorData.error || response.statusText}`);
-    }
-  } catch (error) {
-    console.error('Erro de conexão:', error);
-    alert('Erro de conexão ao tentar salvar o perfil.');
-  }
+const voltarParaLogin = () => {
+  localStorage.removeItem('access');
+  localStorage.removeItem('user_data');
+  userStore.clear();
+  router.push('/login');
 };
 </script>
 
@@ -108,7 +60,6 @@ const handleSubmit = async (event: Event) => {
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  font-family: 'Arial', sans-serif;
 }
 
 .onboarding-card {
@@ -116,7 +67,7 @@ const handleSubmit = async (event: Event) => {
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   width: 100%;
-  max-width: 800px;
+  max-width: 550px;
   display: flex;
   flex-direction: column;
 }
@@ -134,28 +85,36 @@ const handleSubmit = async (event: Event) => {
 }
 
 .app-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   color: #333;
   font-weight: bold;
-  margin: 0 0 0.75rem 0;
-}
-
-.description {
-  color: #666;
-  font-size: 1rem;
-  line-height: 1.5;
   margin: 0;
 }
 
-.onboarding-form {
-  display: flex;
-  flex-direction: column;
+.info-section {
+  padding: 2rem;
+  text-align: center;
 }
 
-.profile-list-container {
-  padding: 2rem;
-  max-height: 400px;
-  overflow-y: auto;
+.info-icon {
+  font-size: 3rem;
+  color: #f59e0b;
+  margin-bottom: 1rem;
+}
+
+.description {
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+}
+
+.sub-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .button-container {
@@ -181,73 +140,14 @@ const handleSubmit = async (event: Event) => {
   background-color: #3d473f;
 }
 
-.onboarding-button:disabled {
-  background-color: #6b7c6f;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .onboarding-container {
-    padding: 1.5rem;
-  }
-  
-  .logo-section {
-    padding: 1.5rem;
-  }
-  
-  .app-title {
-    font-size: 1.5rem;
-  }
-  
-  .description {
-    font-size: 0.9rem;
-  }
-  
-  .profile-list-container {
-    padding: 1.5rem;
-    max-height: 300px;
-  }
-  
-  .button-container {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
-  }
-  
-  .onboarding-button {
-    padding: 12px 24px;
-    font-size: 1rem;
-    width: 100%;
-    max-width: 300px;
-  }
-}
-
 @media (max-width: 480px) {
-  .onboarding-container {
-    padding: 1rem;
-  }
-  
-  .onboarding-card {
-    max-width: 100%;
-  }
-  
-  .logo-section {
-    padding: 1.25rem;
-  }
-  
-  .app-title {
-    font-size: 1.3rem;
-  }
-  
-  .description {
-    font-size: 0.85rem;
-  }
-  
-  .profile-list-container {
-    padding: 1.25rem;
-    max-height: 250px;
-  }
-  
-  .button-container {
-    padding: 1rem 1.25rem;
-  }
+  .onboarding-container { padding: 1rem; }
+  .logo-section { padding: 1.25rem; }
+  .app-title { font-size: 1.3rem; }
+  .info-section { padding: 1.25rem; }
+  .info-icon { font-size: 2.5rem; }
+  .description { font-size: 0.9rem; }
+  .sub-description { font-size: 0.85rem; }
+  .button-container { padding: 1rem 1.25rem; }
 }
 </style>
