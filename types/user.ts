@@ -4,7 +4,7 @@ export interface User {
   nome: string;
   foto_perfil: string | null;
   data_criacao_conta: string;
-  id_perfil: number;
+  id_perfil: number | null;
   nome_perfil: string | null;
   google_id?: string | null;
   tem_senha?: boolean;

@@ -1,92 +1,118 @@
-# Sistema de Gerenciamento de Laboratórios - Alocaí (Frontend)
+# Alocaí — Frontend
+
+Interface web do sistema **Alocaí**, uma plataforma para gerenciamento e agendamento de uso de laboratórios em instituições de ensino.
+
+Desenvolvido com **Nuxt 3**, **Vue 3** e **TypeScript**.
+
 ## :octocat: Integrantes
+
 [Gison Vilaça](https://github.com/gison-vilaca) | [Lucas Victor](https://github.com/lucasvictoor) | [Ricardo Martins](https://github.com/RickyM7) | [Sara Abreu](https://github.com/ynjisng)
+
 ## :page_with_curl: Sobre o Projeto
-Este repositório contém a interface frontend do sistema **Alocaí**, uma aplicação web para gerenciamento e agendamento de uso de laboratórios, desenvolvida com **Vue.js 3** e **Nuxt 3**. O projeto está sendo realizado para a disciplina de **Projeto de Desenvolvimento** do curso de **Bacharelado em Ciência da Computação** da **UFAPE**, sob orientação do professor [Rodrigo Gusmão de Carvalho Rocha](https://github.com/rgcrochaa), como parte da **2ª Verificação de Aprendizagem**.
 
-O Alocaí é um sistema que simula uma plataforma institucional para solicitação de uso de laboratórios por parte de servidores (docentes ou técnicos), com funcionalidades como:
+Projeto da disciplina de **Projeto de Desenvolvimento** do curso de **Bacharelado em Ciência da Computação** da **UFAPE**, orientado pelo professor [Rodrigo Gusmão de Carvalho Rocha](https://github.com/rgcrochaa).
 
-- Autenticação via e-mail institucional
-- Cadastro de laboratórios e configurações
-- Solicitação e agendamento de uso
-- Controle de permissões e acessos
-- Visualização dos agendamentos em calendário
+O Alocaí permite que servidores solicitem uso de laboratórios de forma digital e centralizada, substituindo fluxos manuais com planilhas e e-mails. O backend correspondente está em [alocai-backend](https://github.com/Projeto-Des-SW/alocai-backend).
 
-O frontend se comunica com um backend em Django, disponível [neste repositório](https://github.com/Projeto-Des-SW/alocai-backend.git).
+### Funcionalidades
 
-## :round_pushpin: Objetivos do Sistema
-- Permitir que servidores da instituição solicitem horários em laboratórios de forma digital, segura e centralizada.
-- Automatizar o fluxo antes realizado manualmente via planilhas e e-mail.
-- Oferecer diferentes visões conforme o tipo de usuário (ex: coordenador, secretaria, etc).
-- Permitir especificações como:
-  - Capacidade mínima de alunos
-  - Softwares específicos desejados
-  - Tipo de laboratório (comum ou especializado)
+- Login com conta Google (OAuth 2.0) e login admin com e-mail/senha
+- Fluxo completo de agendamento (selecionar recurso → datas → horários → confirmação)
+- Agendamentos por datas específicas ou período recorrente
+- Uso imediato de recursos com timer e auto-finalização
+- Painel admin: gerenciar solicitações, recursos e usuários
+- Notificações em tempo real com sino no header
+- Dashboard com calendário de disponibilidade
+- Página "Explorar" com visão consolidada de todos os recursos
+- Middleware de autenticação e autorização por perfil
 
-## :hammer_and_wrench: Tecnologias Usadas
- ### [Vue.js 3](https://vuejs.org/)
- ### [Nuxt 3](https://nuxt.com/)
+## :hammer_and_wrench: Tecnologias
 
-## :construction: Status do Projeto
-Finalizado.  
-Entrega Final referente à 2ª VA.
+- [Nuxt 3](https://nuxt.com/)
+- [Vue 3](https://vuejs.org/) (Composition API + `<script setup>`)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Pinia](https://pinia.vuejs.org/) (gerenciamento de estado)
+- [Nuxt UI](https://ui.nuxt.com/) (componentes e ícones)
+- [Vitest](https://vitest.dev/) (testes unitários)
 
-## 📂 Organização
+## 📂 Estrutura
 
-Este repositório está organizado com:
-- `pages/` – Arquivos `.vue` de cada tela (ex: login.vue)
-- `components/` – Componentes reutilizáveis
-- `assets/` – Estilos, imagens e variáveis SCSS
-- `public/` – Arquivos estáticos
-- `app.vue` – Layout principal
-- `nuxt.config.ts` – Configurações do projeto
+```
+pages/           → Páginas da aplicação (.vue)
+components/      → Componentes reutilizáveis (admin/, dashboard/, user/)
+stores/          → Stores Pinia em TypeScript (agendamento, user, admin, notificacao)
+utils/           → Utilitários (api.ts com refresh automático, formatters.ts)
+types/           → Definições de tipos TypeScript
+middleware/      → Guards de rota (auth.ts, admin-auth.ts)
+layouts/         → Layouts da aplicação (default, admin, dashboard)
+assets/css/      → Estilos globais (main.css, flow-layout.css)
+tests/           → Testes unitários com Vitest
+```
 
-## 🚀 Instruções para rodar localmente
+## 🚀 Configuração local
 
-1. **Clonar o repositório:**
+### 1. Clonar e instalar
 
+```bash
 git clone https://github.com/Projeto-Des-SW/alocai-frontend.git
-
 cd alocai-frontend
-
-2. **Instalar as dependências:**
-   
 npm install
+```
 
-Outras opções: pnpm install // yarn install // bun install
+### 2. Configurar variáveis de ambiente
 
-3. **Executar em ambiente de desenvolvimento:**
+Copie o arquivo de exemplo e preencha os valores:
 
+```bash
+cp .env.example .env
+```
+
+| Variável | Descrição |
+|---|---|
+| `NUXT_PUBLIC_API_URL` | URL do backend (ex: `http://localhost:8000`) |
+| `NUXT_PUBLIC_GOOGLE_CLIENT_ID` | Client ID do Google OAuth |
+
+### 3. Executar em desenvolvimento
+
+```bash
 npm run dev
+```
 
-Outras opções: pnpm dev // yarn dev // bun run dev
+O frontend estará disponível em `http://localhost:3000`.
 
-O sistema estará disponível em: http://localhost:3000
+### Produção
 
-## 📡 Produção
-
-1. **Build da aplicação para produção:**
-
+```bash
 npm run build
-
-Outras opções: pnpm build // yarn build // bun run build
-
-2. **Pré-visualização da build:**
-
 npm run preview
+```
 
-Outras opções: pnpm preview // yarn preview // bun run preview
+## 🧪 Testes
 
-## 🔐 Acesso
-Usuários reais ainda não foram cadastrados. A tela de login e rotas protegidas estão sendo integradas ao backend.
+```bash
+npm run test
+```
 
-## 📎 Links relacionados
-🔙 [Backend do Alocaí (Django)](https://github.com/Projeto-Des-SW/alocai-backend)
+O projeto possui **109 testes** cobrindo stores (agendamento, user, admin, notificação) e utilitários (formatters).
+
+## 📄 Páginas
+
+| Página | Rota | Descrição |
+|---|---|---|
+| Home | `/` | Dashboard admin ou ações do usuário |
+| Login | `/login` | Login com Google ou admin |
+| Onboarding | `/onboarding` | Primeiro acesso após login Google |
+| Perfil | `/profile` | Editar perfil e vincular Google |
+| Selecionar Recurso | `/agendamentoSelectRecurso` | Passo 1 do agendamento |
+| Datas e Horários | `/agendamentoData` | Passo 2 do agendamento |
+| Informações | `/agendamentoInfo` | Passo 3 do agendamento |
+| Conclusão | `/agendamentoConclusao` | Confirmação do agendamento |
+| Minhas Reservas | `/minhasReservas` | Listar reservas do usuário |
+| Uso Imediato | `/usoImediato` | Usar recurso com timer |
+| Explorar | `/explorar` | Calendário de todos os recursos |
 
 ## 👨‍🏫 Professor Responsável
+
 [Rodrigo Gusmão de Carvalho Rocha](https://github.com/rgcrochaa)
 
-Disciplina: Projeto de Desenvolvimento – UFAPE
-
-Período: 2025.1
-
+Disciplina: Projeto de Desenvolvimento — UFAPE · 2025.1

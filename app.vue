@@ -1,16 +1,12 @@
 <template>
-  <div>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <NuxtLoadingIndicator color="#515E54" />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <style>
-/* Estilos Globais */
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background-color: #f1f5f9;
+html {
+  scroll-behavior: smooth;
 }
 </style>

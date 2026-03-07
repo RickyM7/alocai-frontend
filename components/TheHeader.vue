@@ -4,77 +4,85 @@
       <NuxtLink to="/">
         <img src="/img/logo.webp" alt="Logo UFAPE" class="navbar-logo" />
       </NuxtLink>
-      <div class="navbar-actions"> 
-        <template v-if="isLoggedIn">
-          <div class="notification-container" ref="notificationRef">
-            <button @click="toggleNotificacoes" class="notification-button">
-              <Icon name="i-lucide-bell" class="navbar-icon" />
-              <span v-if="notificacaoStore.naoLidas > 0" class="notification-badge">{{ notificacaoStore.naoLidas }}</span>
-            </button>
-            <Transition name="dropdown">
-              <div v-if="isNotificacoesOpen" class="notification-dropdown">
-                <div class="notification-header">
-                  <h3>Notificações</h3>
-                  <button v-if="notificacaoStore.naoLidas > 0" @click.stop="marcarTodasComoLidas" class="mark-all-read-btn">
-                    Marcar todas como lidas
-                  </button>
-                </div>
-                <ul class="notification-list">
-                  <li v-for="notificacao in notificacaoStore.notificacoes" :key="notificacao.id_notificacao" :class="{ 'unread': !notificacao.lida }" class="notification-item-wrapper">
-                    <div @click="irParaAgendamento(notificacao)" class="notification-item">
-                      <span class="unread-dot" v-if="!notificacao.lida"></span>
-                      <div class="notification-content">
-                        <p class="notification-message">{{ notificacao.mensagem }}</p>
-                        <span class="notification-time">{{ formatarTempoRelativo(notificacao.data_criacao) }}</span>
-                      </div>
-                    </div>
-                    <button @click.stop="excluirNotificacao(notificacao.id_notificacao)" class="delete-notification-btn" title="Excluir notificação">
-                      <Icon name="i-lucide-x" />
+      <div class="navbar-actions">
+        <ClientOnly>
+          <template v-if="userStore.isAuthenticated">
+            <div class="notification-container" ref="notificationRef">
+              <button @click="toggleNotificacoes" class="notification-button" aria-label="Notificações">
+                <Icon name="i-lucide-bell" class="navbar-icon" />
+                <span v-if="notificacaoStore.naoLidas > 0" class="notification-badge">{{ notificacaoStore.naoLidas }}</span>
+              </button>
+              <Transition name="dropdown">
+                <div v-if="isNotificacoesOpen" class="notification-dropdown">
+                  <div class="notification-header">
+                    <h3>Notificações</h3>
+                    <button v-if="notificacaoStore.naoLidas > 0" @click.stop="marcarTodasComoLidas" class="mark-all-read-btn">
+                      Marcar todas como lidas
                     </button>
-                  </li>
-                  <li v-if="notificacaoStore.notificacoes.length === 0" class="empty-notifications">
-                    Nenhuma notificação.
-                  </li>
-                </ul>
+                  </div>
+                  <ul class="notification-list">
+                    <li v-for="notificacao in notificacaoStore.notificacoes" :key="notificacao.id_notificacao" :class="{ 'unread': !notificacao.lida }" class="notification-item-wrapper">
+                      <div @click="irParaAgendamento(notificacao)" class="notification-item">
+                        <span class="unread-dot" v-if="!notificacao.lida"></span>
+                        <div class="notification-content">
+                          <p class="notification-message">{{ notificacao.mensagem }}</p>
+                          <span class="notification-time">{{ formatarTempoRelativo(notificacao.data_criacao) }}</span>
+                        </div>
+                      </div>
+                      <button @click.stop="excluirNotificacao(notificacao.id_notificacao)" class="delete-notification-btn" title="Excluir notificação">
+                        <Icon name="i-lucide-x" />
+                      </button>
+                    </li>
+                    <li v-if="notificacaoStore.notificacoes.length === 0" class="empty-notifications">
+                      Nenhuma notificação.
+                    </li>
+                  </ul>
+                </div>
+              </Transition>
+            </div>
+          </template>
+          <div class="dropdown-container" ref="dropdownRef">
+            <template v-if="userStore.isAuthenticated">
+              <img 
+                v-if="userStore.user?.foto_perfil && !imageLoadError"
+                :src="userStore.user.foto_perfil"
+                alt="Foto do perfil"
+                class="profile-picture"
+                @click="toggleDropdown"
+                crossorigin="anonymous"
+                @error="handleImageError" />
+              <div v-else class="profile-picture-placeholder logged-in-placeholder" @click="toggleDropdown" role="button" aria-label="Menu do perfil">
+                <Icon name="i-lucide-user" /> 
+              </div>
+            </template>
+            <Icon 
+              v-else
+              name="i-lucide-user-circle" 
+              class="navbar-icon user-icon" 
+              @click="toggleDropdown"
+              role="button"
+              aria-label="Menu de login"
+            />
+            
+            <Transition name="dropdown">
+              <div v-if="isDropdownOpen" class="dropdown-menu">
+                <div 
+                  v-for="item in menuItems" 
+                  :key="item.label"
+                  class="dropdown-item"
+                  @click="item.action"
+                >
+                  <Icon :name="item.icon" class="dropdown-icon" />
+                  <span>{{ item.label }}</span>
+                </div>
               </div>
             </Transition>
           </div>
-        </template>
-        <div class="dropdown-container" ref="dropdownRef">
-          <template v-if="isLoggedIn">
-            <img 
-              v-if="userProfilePicture && !imageLoadError"
-              :src="userProfilePicture"
-              alt="Foto do perfil"
-              class="profile-picture"
-              @click="toggleDropdown"
-              crossorigin="anonymous"
-              @error="handleImageError" />
-            <div v-else class="profile-picture-placeholder logged-in-placeholder" @click="toggleDropdown">
-              <Icon name="i-lucide-user" /> 
-            </div>
+
+          <template #fallback>
+            <Icon name="i-lucide-user-circle" class="navbar-icon user-icon" />
           </template>
-          <Icon 
-            v-else
-            name="i-lucide-user-circle" 
-            class="navbar-icon user-icon" 
-            @click="toggleDropdown"
-          />
-          
-          <Transition name="dropdown">
-            <div v-if="isDropdownOpen" class="dropdown-menu">
-              <div 
-                v-for="item in menuItems" 
-                :key="item.label"
-                class="dropdown-item"
-                @click="item.action"
-              >
-                <Icon :name="item.icon" class="dropdown-icon" />
-                <span>{{ item.label }}</span>
-              </div>
-            </div>
-          </Transition>
-        </div>
+        </ClientOnly>
       </div>
     </div>
   </div>
@@ -83,20 +91,20 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import type { User } from '~/types/user';
 import type { Notificacao } from '~/types/notificacao';
 import { useNotificacaoStore } from '~/stores/notificacao';
+import { useAdminStore } from '~/stores/admin';
 
 const router = useRouter();
-const user = ref<User | null>(null);
-const isLoggedIn = ref(false);
+const userStore = useUserStore();
+const notificacaoStore = useNotificacaoStore();
+
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
-const userProfilePicture = ref<string | null>(null);
 const imageLoadError = ref(false);
-const notificacaoStore = useNotificacaoStore();
 const isNotificacoesOpen = ref(false);
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
 const formatarTempoRelativo = (dataString: string) => {
   const data = new Date(dataString);
@@ -113,32 +121,43 @@ const formatarTempoRelativo = (dataString: string) => {
 };
 
 onMounted(() => {
-  isLoggedIn.value = !!localStorage.getItem('access');
-  
-  const userDataString = localStorage.getItem('user_data');
-  if (userDataString) {
-    try {
-      user.value = JSON.parse(userDataString) as User;
-      userProfilePicture.value = user.value.foto_perfil || null;
-      imageLoadError.value = false; 
-    } catch (error) {
-      console.warn('Erro ao parsear dados do usuário:', error);
-    }
-  }
-  
   document.addEventListener('click', handleClickOutside);
 
-  if (isLoggedIn.value) {
+  if (userStore.isAuthenticated) {
     notificacaoStore.fetchNotificacoes();
-    setInterval(() => {
-      notificacaoStore.fetchNotificacoes();
-    }, 15000);
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
   }
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('visibilitychange', handleVisibility);
+  stopPolling();
 });
+
+const startPolling = () => {
+  stopPolling();
+  pollingInterval = setInterval(() => {
+    notificacaoStore.fetchNotificacoes();
+  }, 60000);
+};
+
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+};
+
+const handleVisibility = () => {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    notificacaoStore.fetchNotificacoes();
+    startPolling();
+  }
+};
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -163,15 +182,14 @@ const handleImageError = () => {
   imageLoadError.value = true;
 };
 
-const logout = () => {
-  localStorage.removeItem('access');
-  localStorage.removeItem('user_data');
-  isLoggedIn.value = false;
-  user.value = null;
-  userProfilePicture.value = null;
-  imageLoadError.value = false;
+const logout = async () => {
+  try {
+    await authenticatedFetch(`${useRuntimeConfig().public.apiUrl}/api/google-sign-out/`, { method: 'POST' });
+  } catch { /* ignora — vamos sair de qualquer forma */ }
+  userStore.clear();
+  useAdminStore().clearCache();
   closeDropdowns();
-  window.location.href = '/';
+  router.push('/login');
 };
 
 const goToProfile = () => {
@@ -182,11 +200,6 @@ const goToProfile = () => {
 const goToLogin = () => {
   closeDropdowns();
   router.push('/login');
-};
-
-const goToAdmin = () => {
-  closeDropdowns();
-  router.push('/admin');
 };
 
 const toggleNotificacoes = () => {
@@ -201,29 +214,32 @@ const excluirNotificacao = (id: number) => {
   notificacaoStore.excluirNotificacao(id);
 };
 
-const irParaAgendamento = (notificacao: Notificacao) => {
+const irParaAgendamento = async (notificacao: Notificacao) => {
   if (!notificacao.lida) {
-      notificacaoStore.marcarComoLidas();
+    await notificacaoStore.marcarComoLida(notificacao.id_notificacao);
   }
+  
   closeDropdowns();
-  if (user.value?.nome_perfil === 'Administrador') {
-    router.push('/admin');
+  
+  const msg = notificacao.mensagem.toLowerCase();
+  const isAdminNotification = msg.startsWith('nova sol') || msg.includes('cancelou o agendamento');
+  
+  if (userStore.isAdmin && isAdminNotification) {
+    if (router.currentRoute.value.path !== '/') {
+      router.push('/');
+    }
   } else {
-    router.push('/minhasReservas');
+    // Redireciona o usuário para Minhas Reservas mesmo se ele for Admin testando fluxo normal
+    if (router.currentRoute.value.path !== '/minhasReservas') {
+      router.push('/minhasReservas');
+    }
   }
 };
 
 const menuItems = computed(() => {
   const items = [];
 
-  if (isLoggedIn.value) {
-    if (user.value?.nome_perfil === 'Administrador') {
-      items.push({
-        label: 'Painel do Admin',
-        icon: 'i-lucide-shield-check',
-        action: goToAdmin
-      });
-    }
+  if (userStore.isAuthenticated) {
 
     items.push(
       {
@@ -257,8 +273,11 @@ const menuItems = computed(() => {
   height: 64px;
   display: flex;
   align-items: center;
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .navbar-content {

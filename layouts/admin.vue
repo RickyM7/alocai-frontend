@@ -44,7 +44,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import TheHeader from '~/components/TheHeader.vue';
 const isSidebarCollapsed = ref(false);
@@ -52,36 +52,195 @@ const toggleSidebar = () => { isSidebarCollapsed.value = !isSidebarCollapsed.val
 </script>
 
 <style scoped>
-.admin-layout{height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.app-header{position:fixed;top:0;left:0;right:0;z-index:100;flex-shrink:0}
-.admin-container{display:flex;flex-grow:1;padding-top:64px;overflow:hidden}
-.admin-sidebar{width:auto;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;flex-shrink:0;transition:width .15s ease-out}
-.admin-sidebar.is-collapsed{width:auto}
-.sidebar-content{padding:.75rem}
-.nav-item{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:.25rem;border-radius:6px;text-decoration:none;color:#374151;font-weight:500;font-size:.875rem;white-space:nowrap;transition:background-color .1s ease-out;position:relative;overflow:hidden}
-.nav-item:hover{background:#f3f4f6}
-.nav-item.is-active{background:#e0e7ff;color:#4338ca}
-.toggle-btn{width:100%;border:none;background:transparent;cursor:pointer;margin-bottom:.75rem}
-.nav-icon{width:18px;height:18px;flex-shrink:0}
-.nav-text{transition:opacity .1s ease-out;white-space:nowrap;margin-left:.25rem}
-.is-collapsed .nav-item{justify-content:center;gap:0;padding:.5rem}
-.is-collapsed .nav-text{opacity:0;width:0;margin-left:0;overflow:hidden}
-.is-collapsed .nav-item.is-active{border-radius:4px}
-.admin-main-content{flex-grow:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.content-wrapper{padding:0;width:100%;max-width:none;margin:0;display:flex;flex-direction:column;flex-grow:1;overflow:auto;min-width:0}
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;z-index:90;padding:.5rem;flex-direction:row;justify-content:space-around}
-.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:.25rem;padding:.5rem;border-radius:6px;text-decoration:none;color:#374151;font-weight:500;font-size:.75rem;min-width:0;text-align:center}
-.mobile-nav-item:hover{background:#f3f4f6}
-.mobile-nav-item.is-active{background:#e0e7ff;color:#4338ca}
-.mobile-nav-item span{font-size:.7rem;line-height:1}
-@media (min-width:1600px){
-  .sidebar-content{padding:0.8rem}
-  .nav-icon{width:20px;height:20px;}
+.admin-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-@media (max-width:768px){
-.admin-sidebar{display:none}
-.mobile-nav{display:flex}
-.admin-main-content{padding-bottom:80px}
-.content-wrapper{padding:0}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.admin-container {
+  display: flex;
+  flex-grow: 1;
+  padding-top: 64px;
+  overflow: hidden;
+}
+
+.admin-sidebar {
+  width: 200px;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.2s ease;
+}
+
+.admin-sidebar.is-collapsed {
+  width: 52px;
+}
+
+.sidebar-content {
+  padding: 0.75rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: background-color 0.1s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item:hover {
+  background: #f3f4f6;
+}
+
+.nav-item.is-active {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.toggle-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-text {
+  transition: opacity 0.15s ease-out;
+  white-space: nowrap;
+  margin-left: 0.25rem;
+}
+
+.is-collapsed .nav-item {
+  justify-content: center;
+  gap: 0;
+  padding: 0.5rem;
+}
+
+.is-collapsed .nav-text {
+  opacity: 0;
+  width: 0;
+  margin-left: 0;
+  overflow: hidden;
+}
+
+.is-collapsed .nav-item.is-active {
+  border-radius: 4px;
+}
+
+.admin-main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.content-wrapper {
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: auto;
+  min-width: 0;
+}
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  z-index: 90;
+  padding: 0.5rem;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.75rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.mobile-nav-item:hover {
+  background: #f3f4f6;
+}
+
+.mobile-nav-item.is-active {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.mobile-nav-item span {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+@media (min-width: 1600px) {
+  .sidebar-content {
+    padding: 0.8rem;
+  }
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    display: none;
+  }
+  .mobile-nav {
+    display: flex;
+  }
+  .admin-main-content {
+    padding-bottom: 80px;
+  }
+  .content-wrapper {
+    padding: 0;
+  }
 }
 </style>

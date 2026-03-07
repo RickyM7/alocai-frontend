@@ -32,8 +32,6 @@
       </div>
     </div>
   </div>
-  <NuxtLoadingIndicator />
-  <NuxtPage />
 </template>
 
 <script setup lang="ts">
@@ -41,26 +39,16 @@ import { ref, onMounted } from 'vue';
 import GoogleSignInButton from '~/components/GoogleSignInButton.vue';
 import type { User } from '~/types/user';
 
-definePageMeta({
-  layout: false
-})
+definePageMeta({ layout: false });
 
 const message = ref<string | null>(null);
 const erro = ref<string | null>(null);
-const config = useRuntimeConfig();
-const googleClientId = config.public.googleClientId;
+const userStore = useUserStore();
 
 const handleLoginSuccess = (userData: User) => {
   message.value = `Login bem-sucedido! Bem-vindo, ${userData.nome}!`;
-  if (userData) {
-    localStorage.setItem('user_data', JSON.stringify(userData));
-  }
-
-  if (userData.id_perfil) {
-    window.location.href = '/';
-  } else {
-    useRouter().push('/onboarding');
-  }
+  userStore.setUser(userData);
+  useRouter().push('/');
 };
 
 const handleLoginError = (error: string) => {
@@ -69,43 +57,23 @@ const handleLoginError = (error: string) => {
 };
 
 onMounted(() => {
-  const token = localStorage.getItem('access');
-  const userJson = localStorage.getItem('user_data');
-
-  if (token && userJson) {
-    try {
-      const user: User = JSON.parse(userJson);
-      if (user.id_perfil) {
-        window.location.href = '/';
-      } else {
-        useRouter().push('/onboarding');
-      }
-    } catch (e) {
-      console.error("Não foi possível ler os dados do usuário, limpando armazenamento local.", e);
-      localStorage.removeItem('access');
-      localStorage.removeItem('user_data');
-    }
+  if (userStore.isAuthenticated) {
+    useRouter().push('/');
   }
 });
 </script>
 
 <style scoped>
-:root {
-  --text-color: #333;
-  --light-text-color: #666;
-  --border-color: #ddd;
-  --background-color: #f0f2f5;
-}
-.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 0 1rem; background-color: var(--background-color); font-family: 'Arial', sans-serif; }
+.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 0 1rem; background-color: #f0f2f5; font-family: 'Arial', sans-serif; }
 .login-card { background-color: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 450px; box-sizing: border-box; }
 .logo-section { margin-bottom: 20px; }
 .logo { max-width: 80px; height: auto; margin-bottom: 10px; }
-.welcome-text { font-size: 1.2em; color: var(--light-text-color); margin-bottom: 5px; }
-.app-title { font-size: 1.5em; color: var(--text-color); font-weight: bold; }
+.welcome-text { font-size: 1.2em; color: #666; margin-bottom: 5px; }
+.app-title { font-size: 1.5em; color: #333; font-weight: bold; }
 .google-sign-in-button { display: inline-block; margin-top: 1rem; }
-.divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--light-text-color); }
-.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background-color: var(--border-color); }
-.divider span { padding: 0 15px; font-size: 0.9em; color: var(--light-text-color); }
+.divider { display: flex; align-items: center; margin: 1.5rem 0; color: #666; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background-color: #ddd; }
+.divider span { padding: 0 15px; font-size: 0.9em; color: #666; }
 .admin-login-container { text-align: center; }
 .admin-login-link {
   color: #6b7280;

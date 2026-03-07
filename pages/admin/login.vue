@@ -46,7 +46,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -54,11 +54,12 @@ definePageMeta({ layout: false });
 
 const config = useRuntimeConfig();
 const router = useRouter();
+const userStore = useUserStore();
 
 const email = ref('');
 const password = ref('');
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 const showPassword = ref(false);
 
 const handleLogin = async () => {
@@ -69,6 +70,7 @@ const handleLogin = async () => {
     const response = await fetch(`${config.public.apiUrl}/api/admin/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         email: email.value,
         password: password.value,
@@ -81,13 +83,12 @@ const handleLogin = async () => {
       throw new Error(data.error || 'Falha na autenticação.');
     }
 
-    localStorage.setItem('access', data.access);
-    localStorage.setItem('user_data', JSON.stringify(data.user_data));
+    userStore.handleLoginSuccess(data);
 
-    router.push('/admin');
+    router.push('/');
 
-  } catch (err) {
-    error.value = err.message;
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Erro ao realizar login.';
   } finally {
     isLoading.value = false;
   }
@@ -108,17 +109,17 @@ const handleLogin = async () => {
 .form-group input::placeholder { color: #9aa0a6; opacity: 1; }
 :deep(input:-webkit-autofill), :deep(textarea:-webkit-autofill), :deep(select:-webkit-autofill), input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill { -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important; box-shadow: 0 0 0px 1000px #ffffff inset !important; -webkit-text-fill-color: #111 !important; caret-color: #111 !important; transition: background-color 5000s ease-in-out 0s; }
 :deep(input:-moz-autofill), input:-moz-autofill { box-shadow: 0 0 0px 1000px #ffffff inset !important; -moz-text-fill-color: #111 !important; }
-.form-group input:focus { outline: none; border-color: #515E54; box-shadow: 0 0 0 3px rgba(81,94,84,0.15); }
+.form-group input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(81,94,84,0.15); }
 .password-input-wrapper { position: relative; display: flex; align-items: center; }
 .password-input-wrapper input { padding-right: 45px; }
 .password-toggle-btn { position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1.25rem; padding: 0.25rem; display: flex; align-items: center; }
 .action-container { padding: 1.5rem 2rem 2rem 2rem; text-align: center; border-top: 1px solid #f0f0f0; }
-.login-button { background-color: #515E54; color: white; padding: 14px 32px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s ease; min-width: 150px; width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; }
-.login-button:hover { background-color: #3d473f; }
+.login-button { background-color: var(--color-primary); color: white; padding: 14px 32px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s ease; min-width: 150px; width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; }
+.login-button:hover { background-color: var(--color-primary-hover); }
 .login-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
 .error-message { background-color: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 0.9em; margin-top: 1.5rem; text-align: left; }
 .back-link-container { margin-top: 1.5rem; }
-.back-link { font-size: 0.9em; color: #515E54; text-decoration: none; font-weight: 500; }
+.back-link { font-size: 0.9em; color: var(--color-primary); text-decoration: none; font-weight: 500; }
 .back-link:hover { text-decoration: underline; }
 .animate-spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -1,12 +1,11 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
-const isDev = process.env.NODE_ENV === 'development'
+const isDev = process.env.NODE_ENV === 'development';
+const apiUrl = process.env.API_URL || '';
 
-export default ({
+export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/flow-layout.css'],
   modules: [
-    '@nuxt/test-utils',
     '@nuxt/icon',
     '@nuxt/eslint',
     '@nuxt/ui',
@@ -23,10 +22,7 @@ export default ({
       collections: ['heroicons', 'lucide']
     }
   },
-  ui: {
-    icons: ['heroicons', 'lucide'],
-    global: true
-  },
+  ui: {},
   typescript: {
     typeCheck: !isDev
   },
@@ -68,8 +64,7 @@ export default ({
         '@fullcalendar/daygrid',
         '@fullcalendar/interaction',
         '@fullcalendar/timegrid',
-        '@fullcalendar/vue3',
-        '@vuepic/vue-datepicker'
+        '@fullcalendar/vue3'
       ]
     },
     build: {
@@ -77,7 +72,6 @@ export default ({
         output: {
           manualChunks: {
             calendar: ['@fullcalendar/daygrid', '@fullcalendar/interaction', '@fullcalendar/timegrid', '@fullcalendar/vue3'],
-            datepicker: ['@vuepic/vue-datepicker'],
             vendor: ['vue', 'vue-router', 'pinia']
           }
         }
@@ -92,12 +86,22 @@ export default ({
     host: 'localhost'
   } : {},
   experimental: {
-    payloadExtraction: !isDev,
-    inlineSSRStyles: !isDev
+    payloadExtraction: !isDev
   },
   nitro: {
     compressPublicAssets: true,
-    minify: true
+    minify: true,
+    routeRules: {
+      '/**': {
+        headers: {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+          'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; connect-src 'self' https://accounts.google.com https://api.iconify.design${apiUrl ? ' ' + apiUrl : ''}; img-src 'self' data: https:; font-src 'self' data:; frame-src 'self' https://accounts.google.com; frame-ancestors 'self'`
+        }
+      }
+    }
   },
   components: {
     global: false,

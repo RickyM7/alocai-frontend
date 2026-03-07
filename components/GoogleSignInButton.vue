@@ -4,17 +4,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRuntimeConfig } from '#app';
 import type { User } from '~/types/user';
 
-interface Props {
-  onSuccess: (response: any) => void;
-  onError: (error: string) => void;
-}
-
-const props = defineProps<Props>();
+const emit = defineEmits<{
+  success: [payload: any];
+  error: [message: string];
+}>();
 
 const config = useRuntimeConfig();
+const userStore = useUserStore();
 const googleSignInButton = ref<HTMLElement | null>(null);
 const apiUrl = config.public.apiUrl;
 
@@ -33,24 +31,24 @@ const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
       const backendResponse = await fetch(`${apiUrl}/api/google-sign-in/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ credential: response.credential }),
       });
 
       if (backendResponse.ok) {
         const data: UserResult = await backendResponse.json();
-        if (data.access) {
-          localStorage.setItem('access', data.access);
-        }
-        props.onSuccess(data.user_data);
+        userStore.handleLoginSuccess(data);
+        emit('success', data.user_data);
       } else {
         const errorData: { error: string } = await backendResponse.json();
-        props.onError(errorData.error || 'Erro desconhecido no backend.');
+        emit('error', errorData.error || 'Erro desconhecido no backend.');
       }
     } catch (error) {
-      props.onError('Erro de conexão ou ao processar o login.');
+      emit('error', 'Erro de conexão ou ao processar o login.');
     }
   } else {
-    props.onSuccess(response);
+    // Vinculação na página de perfil — envia credencial bruta
+    emit('success', response as any);
   }
 };
 
