@@ -1,0 +1,166 @@
+/* ==========================================================================
+   flow-layout.css — CSS compartilhado entre páginas de fluxo / wizard
+   ========================================================================== */
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ===== LAYOUT: container + panel ===== */
+.flow-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - 64px);
+  padding: 2rem;
+}
+
+.flow-panel {
+  width: 100%;
+  max-width: 900px;
+  height: 85dvh;
+  max-height: 800px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== PANEL: header ===== */
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #fff;
+  flex-shrink: 0;
+}
+
+.head-left { display: flex; align-items: center; gap: 1rem; }
+.head-left h2 { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0; }
+.head-left p { font-size: 0.85rem; color: #6b7280; margin: 0.2rem 0 0 0; }
+
+/* ===== PANEL: corpo rolável ===== */
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f9fafb;
+}
+
+.panel-padding { padding: 1.5rem; }
+
+/* ===== PANEL: footer fixo ===== */
+.panel-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #fff;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* ===== BOTÕES ===== */
+.btn-back {
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  color: #4b5563;
+  padding: 0.6rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.btn-back:hover { background: #e5e7eb; color: #111827; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background-color: var(--color-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background-color: var(--color-primary-hover); }
+.btn-primary:disabled { background-color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+
+/* ===== UTILITÁRIOS ===== */
+.center-msg {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.truncate-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+/* ===== INLINE ERROR ALERT ===== */
+.inline-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.error-icon { font-size: 1.25rem; flex-shrink: 0; }
+
+/* ===== RESPONSIVO (mobile ≤ 768px) ===== */
+@media (max-width: 768px) {
+  .flow-layout {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    min-height: 0;
+    height: calc(100dvh - 64px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .flow-panel {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-head { padding: 1rem; }
+  .panel-padding { padding: 1rem; }
+  .panel-footer {
+    padding: 1rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    justify-content: stretch;
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+}
