@@ -81,31 +81,48 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
+interface Schedule {
+  start: string;
+  end: string;
+}
+
+interface DateCell {
+  date: Date;
+  key: string;
+  inCurrentMonth: boolean;
+  isSelected: boolean;
+  isToday: boolean;
+  isDisabled: boolean;
+  schedules: Schedule[];
+  inRange: boolean;
+  isRangeStart: boolean;
+  isRangeEnd: boolean;
+}
+
 const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
-  horariosOcupados: { type: Object, default: () => ({}) },
+  modelValue: { type: Array as () => Date[], default: () => [] },
+  horariosOcupados: { type: Object as () => Record<string, Schedule[]>, default: () => ({}) },
   range: { type: Boolean, default: false }
 });
 const emit = defineEmits(['update:modelValue']);
 
-const calendarRef = ref(null);
+const calendarRef = ref<HTMLElement | null>(null);
 const visibleMonth = ref(new Date());
 const isMonthYearPickerOpen = ref(false);
 const pickerYear = ref(new Date().getFullYear());
-const tooltipVisible = ref(null);
+const tooltipVisible = ref<string | null>(null);
 const mobileTooltipVisible = ref(false);
-const mobileTooltipSchedules = ref([]);
+const mobileTooltipSchedules = ref<Schedule[]>([]);
 const isMobile = ref(false);
-const hideTimer = ref(null);
+const hideTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-const keyFromDate = (d) => {
-  if (!d || !(d instanceof Date)) return null;
+const keyFromDate = (d: Date): string => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -125,7 +142,7 @@ const monthCells = computed(() => {
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const cells = [];
 
-  const createCell = (date) => {
+  const createCell = (date: Date): DateCell => {
     const key = keyFromDate(date);
     let inRange = false;
     let isRangeStart = false;
@@ -165,27 +182,27 @@ const monthCells = computed(() => {
 
   const totalCells = cells.length > 35 ? 42 : 35;
   while (cells.length < totalCells) {
-    const last = cells[cells.length - 1].date;
-    cells.push(createCell(new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1)));
+    const last: DateCell = cells[cells.length - 1];
+    cells.push(createCell(new Date(last.date.getFullYear(), last.date.getMonth(), last.date.getDate() + 1)));
   }
   return cells;
 });
 
-const sortedSchedules = (schedules) => {
-  return [...schedules].sort((a, b) => a.start.localeCompare(b.start));
+const sortedSchedules = (schedules: Schedule[]) => {
+  return [...schedules].sort((a: Schedule, b: Schedule) => a.start.localeCompare(b.start));
 };
 
-const toggleDate = (cell) => {
+const toggleDate = (cell: DateCell) => {
   if (cell.isDisabled) return;
 
   if (!props.range) {
-    const newSelection = new Set(props.modelValue.map(d => keyFromDate(new Date(d))));
+    const newSelection = new Set(props.modelValue.map(d => keyFromDate(new Date(d as unknown as string))));
     if (newSelection.has(cell.key)) {
       newSelection.delete(cell.key);
     } else {
       newSelection.add(cell.key);
     }
-    const newDates = Array.from(newSelection).map(key => new Date(key + 'T00:00:00')).sort((a, b) => a - b);
+    const newDates = Array.from(newSelection).filter(Boolean).map(key => new Date(key + 'T00:00:00')).sort((a, b) => a.getTime() - b.getTime());
     emit('update:modelValue', newDates);
   } else {
     let dates = props.modelValue ? [...props.modelValue] : [];
@@ -193,13 +210,13 @@ const toggleDate = (cell) => {
         dates = [cell.date];
     } else { // length is 1
         dates.push(cell.date);
-        dates.sort((a, b) => a - b);
+        dates.sort((a, b) => a.getTime() - b.getTime());
     }
     emit('update:modelValue', dates);
   }
 };
 
-const showTooltip = (key) => {
+const showTooltip = (key: string) => {
   if (isMobile.value) return;
   if (hideTimer.value) clearTimeout(hideTimer.value);
   tooltipVisible.value = key;
@@ -217,7 +234,7 @@ const keepTooltipVisible = () => {
   }
 };
 
-const toggleTooltipMobile = (key) => {
+const toggleTooltipMobile = (key: string) => {
   if (isMobile.value) {
     const cell = monthCells.value.find(c => c.key === key);
     if (cell && cell.schedules.length > 0) {
@@ -238,18 +255,18 @@ const checkMobile = () => {
 
 const prevMonth = () => visibleMonth.value = new Date(visibleMonth.value.getFullYear(), visibleMonth.value.getMonth() - 1, 1);
 const nextMonth = () => visibleMonth.value = new Date(visibleMonth.value.getFullYear(), visibleMonth.value.getMonth() + 1, 1);
-const selectMonth = (monthIndex) => {
+const selectMonth = (monthIndex: number) => {
   visibleMonth.value = new Date(pickerYear.value, monthIndex, 1);
   isMonthYearPickerOpen.value = false;
 };
-const isSelectedMonth = (monthIndex) => visibleMonth.value.getMonth() === monthIndex && visibleMonth.value.getFullYear() === pickerYear.value;
-const isCurrentMonth = (monthIndex) => {
+const isSelectedMonth = (monthIndex: number) => visibleMonth.value.getMonth() === monthIndex && visibleMonth.value.getFullYear() === pickerYear.value;
+const isCurrentMonth = (monthIndex: number) => {
   const now = new Date();
   return now.getMonth() === monthIndex && pickerYear.value === now.getFullYear();
 };
 
-const handleClickOutside = (event) => {
-  if (calendarRef.value && !calendarRef.value.contains(event.target)) {
+const handleClickOutside = (event: Event) => {
+  if (calendarRef.value && !calendarRef.value.contains(event.target as Node)) {
     isMonthYearPickerOpen.value = false;
   }
 };

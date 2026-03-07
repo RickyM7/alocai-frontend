@@ -22,19 +22,29 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { authenticatedFetch } from '~/utils/api'
 
 const props = defineProps({ resourceId: { type: Number, default: null } })
 const emit = defineEmits(['date-clicked'])
 const config = useRuntimeConfig()
 
-const containerRef = ref(null)
+const containerRef = ref<HTMLElement | null>(null)
 const visibleMonth = ref(new Date())
-const calendarEvents = ref([])
 
-const pad = (n) => String(n).padStart(2, '0')
-const keyFromDate = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+interface CalendarEvent {
+  id: number;
+  title: string;
+  start: string;
+  end: string;
+  extendedProps: { finalidade: string; recurso: string };
+}
+
+const calendarEvents = ref<CalendarEvent[]>([])
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const keyFromDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
 
 const weekdays = ['dom.','seg.','ter.','qua.','qui.','sex.','sáb.']
 const monthTitle = computed(() => visibleMonth.value.toLocaleDateString('pt-BR',{ month:'long', year:'numeric' }))
@@ -43,11 +53,11 @@ const today = new Date()
 const todayKey = keyFromDate(today)
 
 const eventsByDate = computed(() => {
-  const map = new Map()
+  const map = new Map<string, CalendarEvent[]>()
   for (const e of calendarEvents.value) {
     const key = (e.start||'').split('T')[0]
     if (!map.has(key)) map.set(key, [])
-    map.get(key).push(e)
+    map.get(key)!.push(e)
   }
   return map
 })
@@ -85,15 +95,37 @@ const monthCells = computed(() => {
 const prevMonth = () => { const d = visibleMonth.value; visibleMonth.value = new Date(d.getFullYear(), d.getMonth()-1, 1) }
 const nextMonth = () => { const d = visibleMonth.value; visibleMonth.value = new Date(d.getFullYear(), d.getMonth()+1, 1) }
 
-const onDayClick = (cell) => { if (!cell.inCurrentMonth || cell.count===0) return; emit('date-clicked', { date:cell.date, events:cell.events }) }
+interface CalendarCell {
+  date: Date;
+  key: string;
+  inCurrentMonth: boolean;
+  events: CalendarEvent[];
+  count: number;
+  isToday: boolean;
+}
+
+const onDayClick = (cell: CalendarCell) => { if (!cell.inCurrentMonth || cell.count===0) return; emit('date-clicked', { date:cell.date, events:cell.events }) }
+
+interface AgendamentoRaw {
+  id_agendamento: number;
+  finalidade: string;
+  data_inicio: string;
+  data_fim: string;
+  hora_inicio: string;
+  hora_fim: string;
+  recurso: string;
+}
 
 const fetchCalendarData = async () => {
   let url = `${config.public.apiUrl}/api/dashboard/calendar/`
-  if (props.resourceId) url = `${config.public.apiUrl}/api/admin/recursos/${props.resourceId}/agendamentos/`
+  const useAuth = !!props.resourceId
+  if (useAuth) url = `${config.public.apiUrl}/api/admin/recursos/${props.resourceId}/agendamentos/`
   try {
-    const r = await fetch(url)
+    const r = useAuth
+      ? await authenticatedFetch(url)
+      : await fetch(url)
     if (!r.ok) throw new Error('Falha ao carregar dados do calendário.')
-    const data = await r.json()
+    const data: AgendamentoRaw[] = await r.json()
     calendarEvents.value = data.map(a => ({
       id:a.id_agendamento,
       title:a.finalidade||'Agendamento',
@@ -101,18 +133,18 @@ const fetchCalendarData = async () => {
       end:`${a.data_fim}T${a.hora_fim}`,
       extendedProps:{ finalidade:a.finalidade, recurso:a.recurso }
     }))
-  } catch (e) {
+  } catch (e: unknown) {
     console.error('Erro ao buscar dados do calendário:', e)
   }
 }
 
-let ro
+let ro: ResizeObserver | null = null
 const computeHeights = () => {
   const el = containerRef.value
   if (!el) return
-  const toolbar = el.querySelector('.cal-toolbar')
-  const grid = el.querySelector('.calendar-grid')
-  const weekday = grid?.querySelector('.weekday')
+  const toolbar = el.querySelector('.cal-toolbar') as HTMLElement | null
+  const grid = el.querySelector('.calendar-grid') as HTMLElement | null
+  const weekday = grid?.querySelector('.weekday') as HTMLElement | null
   const H = el.clientHeight || 0
   const th = toolbar?.offsetHeight || 0
   const hh = weekday?.offsetHeight || 0
@@ -126,7 +158,7 @@ const computeHeights = () => {
 onMounted(async () => {
   await nextTick()
   computeHeights()
-  if ('ResizeObserver' in window) {
+  if ('ResizeObserver' in window && containerRef.value) {
     ro = new ResizeObserver(() => computeHeights())
     ro.observe(containerRef.value)
   } else {
@@ -142,12 +174,12 @@ watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 .calendar-container { height: 100%; width: 100%; min-width: 0; display: flex; flex-direction: column; overflow: hidden; --day-cell-height: 96px; }
 .calendar-container,
 .calendar-container * { box-sizing: border-box; }
-.cal-toolbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0 0.25rem; }
+.cal-toolbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem 0.25rem 0; }
 .cal-toolbar-left,
 .cal-toolbar-right { display: flex; align-items: center; gap: 0.5rem; }
-.cal-title { text-align: center; font-weight: 800; font-size: 1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; text-transform: capitalize; }
-.btn-nav { background-color: #4f46e5; border: 1px solid #4f46e5; color: #fff; padding: 0.5rem 0.6rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
-.btn-nav:hover { background-color: #4338ca; }
+.cal-title { text-align: center; font-weight: 800; font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; text-transform: capitalize; }
+.btn-nav { background-color: var(--color-primary); border: 1px solid var(--color-primary); color: #fff; padding: 0.5rem 0.6rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.btn-nav:hover { background-color: var(--color-primary-hover); }
 .calendar-grid { width: 100%; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, var(--day-cell-height)); background: #e5e7eb; gap: 1px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1px; }
 .weekday { font-weight: 700; text-align: center; padding: 0.75rem 0.25rem; background: #f9fafb; color: #374151; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.025em; border: none; }
 .day-cell { position: relative; background: #fff; overflow: hidden; transition: all 0.2s; border: none; }
@@ -161,7 +193,7 @@ watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 .event-indicator { position: absolute; top: 6px; right: 6px; background: #ef4444; color: #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; z-index: 1; pointer-events: none; }
 
 @media (max-width: 1024px) {
-  .cal-title { font-size: 1.5rem; }
+  .cal-title { font-size: 1.1rem; }
   .btn-nav { padding: 0.45rem 0.55rem; }
   .weekday { padding: 0.625rem 0.25rem; font-size: 0.8125rem; }
   .day-number { font-size: 1rem; }
@@ -170,7 +202,7 @@ watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 
 @media (max-width: 768px) {
   .cal-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "title nav"; row-gap: 0.75rem; padding: 0; }
-  .cal-title { grid-area: title; font-size: 1.375rem; white-space: normal; text-align: left; }
+  .cal-title { grid-area: title; font-size: 1rem; white-space: normal; text-align: left; }
   .cal-toolbar-left { grid-area: nav; justify-self: end; }
   .weekday { font-size: 0.75rem; padding: 0.5rem 0.15rem; }
   .day-number { font-size: 0.9rem; }
@@ -181,7 +213,7 @@ watch(() => props.resourceId, fetchCalendarData, { immediate: true })
 
 @media (max-width: 480px) {
   .calendar-container { margin-bottom: 1rem; }
-  .cal-title { font-size: 1.25rem; }
+  .cal-title { font-size: 0.95rem; }
   .weekday { font-size: 0.7rem; padding: 0.375rem 0.125rem; }
   .day-number { font-size: 0.85rem; }
   .event-indicator { width: 14px; height: 14px; font-size: 8px; top: 3px; right: 3px; }

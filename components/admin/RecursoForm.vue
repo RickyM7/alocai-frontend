@@ -65,7 +65,11 @@
         </div>
       </div>
 
-      <div class="form-footer">
+      <div class="form-footer" style="justify-content: space-between;">
+        <button v-if="recursoInicial" type="button" class="btn btn-outline" style="color: #ef4444; border-color: #fca5a5;" @click="emit('excluir')">
+          <Icon name="i-lucide-trash" /> Excluir
+        </button>
+        <div style="flex-grow: 1;"></div>
         <button type="button" class="btn btn-outline" @click="emit('cancelado')">
           Cancelar
         </button>
@@ -74,23 +78,40 @@
           <span>{{ isSaving ? 'Salvando...' : 'Salvar Recurso' }}</span>
         </button>
       </div>
+      <div v-if="errorMessage" class="error-alert">{{ errorMessage }}</div>
     </form>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import { getStatusClass, formatarStatus } from '~/utils/formatters';
 
+interface RecursoFormData {
+  id_recurso?: number;
+  nome_recurso: string;
+  descricao: string | null;
+  localizacao: string;
+  capacidade: number | null;
+  status_recurso: string;
+}
+
 const props = defineProps({
-  recursoInicial: { type: Object, default: null }
+  recursoInicial: { type: Object as () => RecursoFormData | null, default: null }
 });
-const emit = defineEmits(['salvo', 'cancelado']);
+const emit = defineEmits(['salvo', 'cancelado', 'excluir']);
 
 const config = useRuntimeConfig();
-const form = ref({});
+const form = ref<RecursoFormData>({
+  nome_recurso: '',
+  descricao: '',
+  localizacao: '',
+  capacidade: null,
+  status_recurso: 'disponivel'
+});
 const isSaving = ref(false);
+const errorMessage = ref<string | null>(null);
 const statusOptions = ['disponivel', 'em_manutencao', 'indisponivel', 'reservado'];
 
 const initializeForm = () => {
@@ -100,13 +121,13 @@ const initializeForm = () => {
     localizacao: '',
     capacidade: null,
     status_recurso: 'disponivel'
-  };
+  } as RecursoFormData;
 };
 
 const validarCapacidade = () => {
   const valor = form.value.capacidade;
   
-  if (isNaN(valor) || valor === null || valor === undefined || valor < 1) {
+  if (valor === null || valor === undefined || isNaN(valor) || valor < 1) {
     form.value.capacidade = 1;
   } else {
     form.value.capacidade = Math.floor(Math.abs(valor));
@@ -137,8 +158,9 @@ const salvar = async () => {
       throw new Error(errorData.detail || 'Falha ao salvar o recurso.');
     }
     emit('salvo');
-  } catch (error) {
-    alert(`Erro: ${error.message}`);
+  } catch (error: unknown) {
+    errorMessage.value = error instanceof Error ? `Erro: ${error.message}` : 'Erro ao salvar o recurso.';
+    setTimeout(() => errorMessage.value = null, 4000);
   } finally {
     isSaving.value = false;
   }
@@ -157,11 +179,12 @@ const salvar = async () => {
 .status-options{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem}
 .form-footer{padding-top:1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.6rem 1.25rem;border-radius:8px;border:1px solid transparent;cursor:pointer;font-weight:600;transition:all 0.2s}
-.btn-primary{background-color:#4f46e5;color:white;border-color:#4f46e5}
-.btn-primary:hover{background-color:#4338ca}
+.btn-primary{background-color:var(--color-primary);color:white;border-color:var(--color-primary)}
+.btn-primary:hover{background-color:var(--color-primary-hover)}
 .btn-outline{background-color:transparent;color:#4b5563;border-color:#d1d5db}
 .btn-outline:hover{background-color:#f9fafb}
 .btn:disabled{opacity:0.7;cursor:not-allowed}
+.error-alert{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:0.65rem 1rem;font-size:0.85rem;margin-top:0.5rem}
 @media (min-width: 1600px) {.form-footer>button{font-size: 0.8rem}}
 @media (max-width:768px){.form-wrapper{padding:1.25rem}.form-grid{grid-template-columns:1fr;gap:1rem}.status-options{justify-content:center}.status-btn{padding:0.4rem 0.8rem;font-size:0.8125rem}.form-footer{justify-content:stretch}.btn{flex:1;min-width:120px}}
 @media (max-width:480px){.form-wrapper{padding:1rem}.form-grid{gap:0.5rem}.status-options{gap:0.5rem}.status-btn{padding:0.375rem 0.75rem;font-size:0.75rem}.form-footer{flex-direction:column}.btn{width:100%}}
