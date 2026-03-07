@@ -1,4 +1,5 @@
 const isDev = process.env.NODE_ENV === 'development';
+const apiUrl = process.env.API_URL || '';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
@@ -97,7 +98,7 @@ export default defineNuxtConfig({
           'X-Frame-Options': 'SAMEORIGIN',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; connect-src 'self' https://accounts.google.com https://api.iconify.design; img-src 'self' data: https:; font-src 'self' data:; frame-src 'self' https://accounts.google.com; frame-ancestors 'self'"
+          'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; connect-src 'self' https://accounts.google.com https://api.iconify.design${apiUrl ? ' ' + apiUrl : ''}; img-src 'self' data: https:; font-src 'self' data:; frame-src 'self' https://accounts.google.com; frame-ancestors 'self'`
         }
       }
     }
