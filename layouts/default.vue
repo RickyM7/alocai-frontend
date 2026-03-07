@@ -8,13 +8,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BackgroundImage from '~/components/BackgroundImage.vue';
 import TheHeader from '~/components/TheHeader.vue';
 </script>
 
 <style scoped>
-.default-layout { position: relative; height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
-.app-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; flex-shrink: 0; }
-.main-content { flex-grow: 1; padding: 5px; padding-top: 64px; overflow-y: auto; width: 100%; box-sizing: border-box; }
+.default-layout { position: relative; height: 100dvh; width: 100dvw; overflow: hidden; display: flex; flex-direction: column; }
+.app-header { flex-shrink: 0; }
+.main-content { flex: 1; display: flex; flex-direction: column; padding-top: 64px; overflow: hidden; width: 100%; box-sizing: border-box; }
 </style>
