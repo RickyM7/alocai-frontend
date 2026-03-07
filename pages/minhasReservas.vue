@@ -73,6 +73,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import { formatarData, formatarStatus, getStatusClass, calcularStatusGeral } from '~/utils/formatters';
+import { useAdminStore } from '~/stores/admin';
 import ConfirmModal from '~/components/ConfirmModal.vue';
 
 definePageMeta({ middleware: 'auth' });
@@ -95,6 +96,7 @@ interface GrupoDeReserva {
 }
 
 const config = useRuntimeConfig();
+const adminStore = useAdminStore();
 const reservasAgrupadas = ref<GrupoDeReserva[]>([]);
 const expandedGroups = ref<number[]>([]);
 const isLoading = ref(true);
@@ -181,6 +183,7 @@ const marcarGrupoComoConcluido = (grupo: GrupoDeReserva) => {
         });
         if (!response.ok) throw new Error('Falha ao atualizar o status.');
         await fetchReservas();
+        adminStore.lastFetchSolicitacoes = 0;
       } catch (err: unknown) {
         showActionMessage(err instanceof Error ? err.message : 'Erro ao concluir.');
       }
@@ -201,6 +204,7 @@ const cancelarGrupo = (grupo: GrupoDeReserva) => {
         });
         if (!response.ok) throw new Error('Falha ao cancelar os agendamentos.');
         await fetchReservas();
+        adminStore.lastFetchSolicitacoes = 0;
       } catch (err: unknown) {
         showActionMessage(err instanceof Error ? err.message : 'Erro ao cancelar.');
       }
@@ -216,6 +220,7 @@ const marcarHorarioComoConcluido = async (reserva: ReservaFilho) => {
     });
     if (!response.ok) throw new Error('Falha ao atualizar o status do horário.');
     await fetchReservas();
+    adminStore.lastFetchSolicitacoes = 0;
   } catch (err: unknown) {
     showActionMessage(err instanceof Error ? err.message : 'Erro ao concluir horário.');
   }
@@ -234,6 +239,7 @@ const cancelarHorario = (reserva: ReservaFilho) => {
         });
         if (!response.ok) throw new Error('Falha ao cancelar o horário.');
         await fetchReservas();
+        adminStore.lastFetchSolicitacoes = 0;
       } catch (err: unknown) {
         showActionMessage(err instanceof Error ? err.message : 'Erro ao cancelar horário.');
       }

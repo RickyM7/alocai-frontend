@@ -93,6 +93,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Notificacao } from '~/types/notificacao';
 import { useNotificacaoStore } from '~/stores/notificacao';
+import { useAdminStore } from '~/stores/admin';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -186,6 +187,7 @@ const logout = async () => {
     await authenticatedFetch(`${useRuntimeConfig().public.apiUrl}/api/google-sign-out/`, { method: 'POST' });
   } catch { /* ignora — vamos sair de qualquer forma */ }
   userStore.clear();
+  useAdminStore().clearCache();
   closeDropdowns();
   router.push('/login');
 };

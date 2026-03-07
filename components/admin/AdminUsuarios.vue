@@ -201,6 +201,7 @@ const confirmarDelecao = (usuario: Usuario) => {
 
         showMessage('Usuário removido com sucesso.', 'success');
         await fetchUsuarios(true);
+        adminStore.lastFetchSolicitacoes = 0;
         setTimeout(voltarParaLista, 1000);
       } catch (error: unknown) {
         showMessage(error instanceof Error ? `Erro: ${error.message}` : 'Erro ao remover usuário.', 'error');

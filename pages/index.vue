@@ -65,11 +65,14 @@
                           <span class="sol-sub"><Icon name="i-lucide-user" /> {{ s.solicitante }} · {{ fmtData(s.data_criacao) }}</span>
                         </div>
                         <div class="sol-right">
-                          <span :class="getStatusClass(s.status_geral)" class="badge-status">{{ formatarStatus(s.status_geral) }}</span>
-                          <div v-if="s.status_geral === 'pendente'" class="sol-btns" @click.stop>
-                            <button class="ibtn green" @click="statusPai(s, 'aprovado')" title="Aprovar"><Icon name="i-lucide-check" /></button>
-                            <button class="ibtn red" @click="statusPai(s, 'negado')" title="Negar"><Icon name="i-lucide-x" /></button>
-                          </div>
+                          <Icon v-if="loadingIds.has(s.id_agendamento_pai)" name="i-lucide-loader-2" class="spin" style="color: #9ca3af;" />
+                          <template v-else>
+                            <span :class="getStatusClass(s.status_geral)" class="badge-status">{{ formatarStatus(s.status_geral) }}</span>
+                            <div v-if="s.status_geral === 'pendente'" class="sol-btns" @click.stop>
+                              <button class="ibtn green" @click="statusPai(s, 'aprovado')" title="Aprovar"><Icon name="i-lucide-check" /></button>
+                              <button class="ibtn red" @click="statusPai(s, 'negado')" title="Negar"><Icon name="i-lucide-x" /></button>
+                            </div>
+                          </template>
                           <button class="ibtn gray" @click.stop="editSol(s)" title="Editar"><Icon name="i-lucide-pencil" /></button>
                         </div>
                       </div>
@@ -77,11 +80,14 @@
                         <p v-if="s.finalidade" style="margin-bottom:0.75rem;"><strong>Finalidade:</strong> {{ s.finalidade }}</p>
                         <div v-for="ag in s.agendamentos_filhos" :key="ag.id_agendamento" class="slot flex-slot">
                           <span style="flex:1;">{{ fmtData(ag.data_inicio) }} · {{ ag.hora_inicio.substring(0, 5) }}–{{ ag.hora_fim.substring(0, 5) }}</span>
-                          <span :class="getStatusClass(ag.status_agendamento)" class="badge-status sm">{{ formatarStatus(ag.status_agendamento) }}</span>
-                          <div v-if="ag.status_agendamento === 'pendente'" class="slot-btns" @click.stop>
-                            <button class="ibtn green sm" @click="statusFilho(s, ag, 'aprovado')" aria-label="Aprovar"><Icon name="i-lucide-check" /></button>
-                            <button class="ibtn red sm" @click="statusFilho(s, ag, 'negado')" aria-label="Negar"><Icon name="i-lucide-x" /></button>
-                          </div>
+                          <Icon v-if="loadingIds.has(ag.id_agendamento)" name="i-lucide-loader-2" class="spin" style="color: #9ca3af; font-size: 0.9rem;" />
+                          <template v-else>
+                            <span :class="getStatusClass(ag.status_agendamento)" class="badge-status sm">{{ formatarStatus(ag.status_agendamento) }}</span>
+                            <div v-if="ag.status_agendamento === 'pendente'" class="slot-btns" @click.stop>
+                              <button class="ibtn green sm" @click="statusFilho(s, ag, 'aprovado')" aria-label="Aprovar"><Icon name="i-lucide-check" /></button>
+                              <button class="ibtn red sm" @click="statusFilho(s, ag, 'negado')" aria-label="Negar"><Icon name="i-lucide-x" /></button>
+                            </div>
+                          </template>
                         </div>
                       </div>
                     </div>
@@ -103,8 +109,8 @@
           :is-open="showSolModal" 
           :solicitacao-id="selectedSolId || undefined" 
           @close="showSolModal = false" 
-          @updated="fetchSol" 
-          @deleted="fetchSol" 
+          @updated="() => fetchSol(true)" 
+          @deleted="() => fetchSol(true)" 
         />
       </template>
 
@@ -138,10 +144,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
+import { ref, computed, onMounted, reactive, defineAsyncComponent } from 'vue';
 import { authenticatedFetch } from '~/utils/api';
 import { useRouter } from 'vue-router';
-import { getStatusClass, formatarData, formatarStatus } from '~/utils/formatters';
+import { getStatusClass, formatarData, formatarStatus, calcularStatusGeral } from '~/utils/formatters';
 
 import { useAdminStore } from '~/stores/admin';
 
@@ -167,6 +173,7 @@ const tab = ref('andamento');
 
 const showSolModal = ref(false);
 const selectedSolId = ref<number | null>(null);
+const loadingIds = reactive(new Set<number>());
 
 const nPendentes = computed(() => solicitacoes.value.filter((s: any) => ['pendente', 'parcialmente_aprovado'].includes(s.status_geral)).length);
 const solFiltradas = computed(() => {
@@ -188,23 +195,35 @@ const toggleExpand = (id: number) => {
 };
 
 const statusPai = async (s: any, st: string) => {
+  loadingIds.add(s.id_agendamento_pai);
   try {
     const r = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/pai/${s.id_agendamento_pai}/`, {
       method: 'PUT', body: JSON.stringify({ status_agendamento: st }),
     });
     if (!r.ok) throw new Error('Falha.');
-    await fetchSol();
-  } catch (e: any) { errSol.value = e.message; }
+    s.agendamentos_filhos.forEach((f: any) => { if (f.status_agendamento === 'pendente') f.status_agendamento = st; });
+    s.status_geral = calcularStatusGeral(s.agendamentos_filhos);
+  } catch (e: any) {
+    errSol.value = e.message;
+  } finally {
+    loadingIds.delete(s.id_agendamento_pai);
+  }
 };
 
 const statusFilho = async (s: any, ag: any, st: string) => {
+  loadingIds.add(ag.id_agendamento);
   try {
     const r = await authenticatedFetch(`${config.public.apiUrl}/api/admin/agendamentos/${ag.id_agendamento}/status/`, {
       method: 'PUT', body: JSON.stringify({ status_agendamento: st }),
     });
     if (!r.ok) throw new Error('Falha.');
-    await fetchSol();
-  } catch (e: any) { errSol.value = e.message; }
+    ag.status_agendamento = st;
+    s.status_geral = calcularStatusGeral(s.agendamentos_filhos);
+  } catch (e: any) {
+    errSol.value = e.message;
+  } finally {
+    loadingIds.delete(ag.id_agendamento);
+  }
 };
 
 const editSol = (s: any) => {

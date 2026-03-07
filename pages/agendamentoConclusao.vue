@@ -104,6 +104,7 @@
 import { ref, onMounted } from 'vue';
 import { useAgendamentoStore } from '~/stores/agendamento';
 import { useUserStore } from '~/stores/user';
+import { useAdminStore } from '~/stores/admin';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 
 definePageMeta({ middleware: 'auth' });
@@ -185,6 +186,9 @@ async function executarSalvamento() {
       agendamentoSalvo.value = true;
       sessionStorage.setItem('alocai_agendamento_salvo', 'true');
       store.limparStore(); // Limpa estado para que o F5 não reenvie.
+      // Invalida o cache para que o index mostre a nova solicitação
+      const adminStore = useAdminStore();
+      adminStore.lastFetchSolicitacoes = 0;
     }
   } catch (err: unknown) {
     erro.value = err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.';
