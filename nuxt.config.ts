@@ -16,13 +16,12 @@ export default defineNuxtConfig({
     storesDirs: ['./stores/**'],
   },
   icon: {
-    provider: 'iconify',
-    collections: ['heroicons', 'lucide'],
-    serverBundle: {
-      collections: ['heroicons', 'lucide']
-    }
+    serverBundle: 'local',
+    endpoint: '/_nuxt_icon'
   },
-  ui: {},
+  ui: {
+    icons: ['lucide', 'heroicons']
+  },
   typescript: {
     typeCheck: !isDev
   },
@@ -56,6 +55,12 @@ export default defineNuxtConfig({
         '/api': {
           target: 'http://localhost:8000',
           changeOrigin: true,
+          bypass: (req) => {
+            // Se o Nuxt estiver pedindo um ícone, bloqueia o envio para o Django
+            if (req.url && req.url.startsWith('/api/_nuxt_icon')) {
+              return req.url;
+            }
+          }
         }
       }
     } : {},

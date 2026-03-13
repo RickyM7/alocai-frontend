@@ -21,7 +21,7 @@
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
           <!-- Excluir movido para edição -->
-          <button type="button" @click="confirmarDelecao(usuarioSelecionado)" class="btn btn-outline" style="color: #ef4444; border-color: #fca5a5;" :disabled="usuarioSelecionado.id_usuario === loggedInUser?.id_usuario" title="Remover Usuário">
+          <button type="button" @click="confirmarDelecao(usuarioSelecionado)" class="btn btn-outline" style="color: #ef4444; border-color: #fca5a5;" :disabled="usuarioSelecionado.id_usuario === loggedInUser?.id_usuario || usuarioSelecionado.is_superuser" title="Remover Usuário">
             <Icon name="i-lucide-trash" /> Excluir Conta
           </button>
           
@@ -49,7 +49,7 @@
             <span class="usr-sub">{{ usuario.nome_perfil || 'Não definido' }}</span>
           </div>
           <div class="usr-actions">
-            <button @click="iniciarEdicao(usuario)" class="ibtn gray sm" :disabled="usuario.id_usuario === loggedInUser?.id_usuario" title="Alterar Perfil">
+            <button @click="iniciarEdicao(usuario)" class="ibtn gray sm" :disabled="usuario.id_usuario === loggedInUser?.id_usuario || usuario.is_superuser" title="Alterar Perfil">
               <Icon name="i-lucide-pencil" />
             </button>
           </div>
@@ -84,6 +84,7 @@ interface Usuario {
   nome: string;
   nome_perfil: string;
   id_perfil: number;
+  is_superuser: boolean;
 }
 
 const config = useRuntimeConfig();
