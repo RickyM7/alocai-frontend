@@ -16,12 +16,9 @@ export default defineNuxtConfig({
     storesDirs: ['./stores/**'],
   },
   icon: {
-    serverBundle: 'local',
-    endpoint: '/_nuxt_icon'
+    serverBundle: 'local'
   },
-  ui: {
-    icons: ['lucide', 'heroicons']
-  },
+  ui: {},
   typescript: {
     typeCheck: !isDev
   },

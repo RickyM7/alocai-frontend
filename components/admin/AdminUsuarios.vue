@@ -84,7 +84,7 @@ interface Usuario {
   nome: string;
   nome_perfil: string;
   id_perfil: number;
-  is_superuser: boolean;
+  is_superuser?: boolean;
 }
 
 const config = useRuntimeConfig();
